@@ -1,0 +1,7 @@
+*.o
+*.a
+*.mod
+*.x
+
+!liblbfgsb.a
+

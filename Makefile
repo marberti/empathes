@@ -11,19 +11,20 @@ CFLAGS  = -std=f2008 -g -cpp -O2 -Wall -Wunused -Wpedantic -Wno-maybe-uninitiali
 LPATH = -L./lib
 LIBS = -llbfgsb
 
-SOURCES = mod_utility.f90      \
-	  mod_bfgs_wrapper.f90 \
-	  mod_rotation.f90     \
-	  mod_geometry.f90     \
-	  mod_idpp.f90         \
-	  mod_pes_data.f90     \
-	  mod_pes.f90          \
-	  mod_elastic.f90      \
-	  mod_climbing.f90     \
-	  mod_output.f90       \
-	  mod_optimization.f90 \
-	  mod_slave.f90        \
-	  mod_input.f90        \
+SOURCES = mod_utility.f90          \
+	  mod_bfgs_wrapper.f90     \
+	  mod_rotation.f90         \
+	  mod_geometry.f90         \
+	  mod_idpp.f90             \
+	  mod_pes_data.f90         \
+	  mod_pes.f90              \
+	  mod_elastic.f90          \
+	  mod_climbing.f90         \
+	  mod_output.f90           \
+	  mod_optimization.f90     \
+	  mod_slave.f90            \
+	  mod_computation_info.f90 \
+	  mod_input.f90            \
 	  main.f90
 
 OBJECTS = $(SOURCES:.f90=.o)

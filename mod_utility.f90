@@ -705,7 +705,7 @@ end function get_lines
 
 subroutine write_date(str)
 
-  character(len=*), intent(IN) :: str
+  character(*), intent(IN) :: str
   character(3), dimension(12), parameter :: month = &
     &[ "Jan", "Feb", "Mar", "Apr", "May", "Jun",&
     &  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" ]
@@ -769,6 +769,15 @@ subroutine human_time(str,scnt,ecnt,cnt_rate)
   character(*), intent(IN) :: str
   integer(LONG), intent(IN) :: scnt, ecnt, cnt_rate
   integer(LONG) :: msecs, secs, mins, hours, days
+  integer :: fnumb
+  logical :: is_open
+
+  inquire(unit=FILEOUT,opened=is_open)
+  if (is_open) then
+    fnumb=FILEOUT
+  else
+    fnumb=STDOUT
+  end if
 
   msecs=(ecnt-scnt)/(cnt_rate/1000)
   secs =msecs/1000
@@ -780,7 +789,7 @@ subroutine human_time(str,scnt,ecnt,cnt_rate)
   days =hours/24
   hours=hours-(24*days)
 
-  write(FILEOUT,'(" CLK ",A,": ",I5,"d ",I2,"h ",I2,"m ",I2,".",I3.3,"s")')&
+  write(fnumb,'(" CLK ",A,": ",I5,"d ",I2,"h ",I2,"m ",I2,".",I3.3,"s")')&
     &trim(str), days, hours, mins, secs, msecs
 
 end subroutine human_time

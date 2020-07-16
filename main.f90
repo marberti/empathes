@@ -14,6 +14,7 @@ program neb
   use optimization
   use output
   use input
+  use computation_info
 
   implicit none
 

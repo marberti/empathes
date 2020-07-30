@@ -1833,17 +1833,22 @@ subroutine get_siesta_output(i,dirname,fnumb_out,fname_out,flag_conv)
   character(*), intent(IN) :: dirname, fname_out
   logical, intent(OUT) :: flag_conv
   integer :: j, k
-  integer :: dflt_scfcycle, scfcycle
+  integer :: default_scfcycle ! max scf cycles for the siesta computation
+  integer :: read_scfcycle    ! last scf cycle read from siesta output
   character(30) :: field
   character(200) :: str
   character(120) :: path
   integer :: err_n
   character(120) :: err_msg
 
-  flag_conv=.true.
-  path=trim(dirname)//"/"//trim(fname_out)
-  dflt_scfcycle=get_scfcycle()
-  scfcycle=-1
+  ! variables initialization ------------------------------
+  flag_conv        = .true.
+  path             = trim(dirname)//"/"//trim(fname_out)
+  read_scfcycle    = -1
+  default_scfcycle = get_scfcycle()
+  default_scfcycle = default_scfcycle - 1 ! If we tell siesta
+    ! to do N scf cycles, we will find at most N - 1 scf cycles
+    ! in the output file
 
   ! open unit ---------------------------------------------
   open(unit=fnumb_out,file=path,status='OLD',action='READ',&
@@ -1877,9 +1882,9 @@ subroutine get_siesta_output(i,dirname,fnumb_out,fname_out,flag_conv)
     end if
 
     if (str=="") then
-      if (scfcycle==-1) then
+      if (read_scfcycle==-1) then
         call error("get_siesta_output: scf iterations not found")
-      else if (scfcycle>=dflt_scfcycle) then
+      else if (read_scfcycle>=default_scfcycle) then
         flag_conv=.false.
       else
         flag_conv=.true.
@@ -1894,7 +1899,7 @@ subroutine get_siesta_output(i,dirname,fnumb_out,fname_out,flag_conv)
     end if
 
     if (isinteger(trim(adjustl(field)))) then
-      read(field,*) scfcycle
+      read(field,*) read_scfcycle
     end if
   end do
 

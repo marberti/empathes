@@ -1636,14 +1636,18 @@ end subroutine clean_gaussian_file
 subroutine set_siesta_dir(i,dirname)
 
   !--------------------------------------------------------
-  ! Makes the working directory and copies in it the .psf files.
+  ! Makes the working directory
+  ! and copies in it the auxiliary files.
   !--------------------------------------------------------
 
   integer, intent(IN) :: i
   character(*), intent(INOUT) :: dirname
-  character(8) :: i_str, exit_n_str
-  character(140) :: cmd
-  integer :: exit_n, cmd_n
+  character(8)   :: i_str
+  character(8)   :: exit_n_str
+  character(300) :: cmd
+  integer :: j
+  integer :: exit_n
+  integer :: cmd_n
 
   write(i_str,'(I8)') i
   i_str=adjustl(i_str)
@@ -1665,20 +1669,27 @@ subroutine set_siesta_dir(i,dirname)
       &""" terminated with exit code: "//trim(exit_n_str))
   end if
 
-  ! copy the .psf files -----------------------------------
-  cmd="cp *.psf "//trim(dirname)//"/."
-  call execute_command_line(trim(cmd),&
-    &wait=.true.,exitstat=exit_n,cmdstat=cmd_n)
+  ! copy the auxiliary files ------------------------------
+  if (flag_pesd_auxiliary_files) then
+    cmd="cp"
+    do j=1, pesd_auxiliary_files_n
+      cmd=trim(cmd)//" "//trim(pesd_auxiliary_files(j))
+    end do
+    cmd=trim(cmd)//" "//trim(dirname)//"/."
 
-  if (cmd_n/=0) then
-    call error("set_siesta_dir: cannot execute command """//trim(cmd)//"""")
-  end if
+    call execute_command_line(trim(cmd),&
+      &wait=.true.,exitstat=exit_n,cmdstat=cmd_n)
 
-  if (exit_n/=0) then
-    write(exit_n_str,'(I8)') exit_n
-    exit_n_str=adjustl(exit_n_str)
-    call error("set_siesta_dir: """//trim(cmd)//&
-      &""" terminated with exit code: "//trim(exit_n_str))
+    if (cmd_n/=0) then
+      call error("set_siesta_dir: cannot execute command """//trim(cmd)//"""")
+    end if
+
+    if (exit_n/=0) then
+      write(exit_n_str,'(I8)') exit_n
+      exit_n_str=adjustl(exit_n_str)
+      call error("set_siesta_dir: """//trim(cmd)//&
+        &""" terminated with exit code: "//trim(exit_n_str))
+    end if
   end if
 
 end subroutine set_siesta_dir
@@ -1858,16 +1869,16 @@ subroutine get_siesta_output(i,dirname,fnumb_out,fname_out,flag_conv)
   end if
 
   ! search for convergence --------------------------------
-  ! read until the string "siesta: iscf" is found
+  ! read until the string "siesta: iscf" or "        iscf" is found
   do
     read(fnumb_out,'(A200)',iostat=err_n,iomsg=err_msg) str
     if (err_n/=0) then
       write(FILEOUT,*) "WAR get_siesta_output: ",&
-        &"string ""siesta: iscf"" not found"
+        &"string ""siesta: iscf"" or ""        iscf"" not found"
       call error("get_siesta_output: "//trim(err_msg))
     end if
 
-    if (str(1:12)=="siesta: iscf") then
+    if ((str(1:12)=="siesta: iscf").or.(str(1:12)=="        iscf")) then
       exit
     end if
   end do

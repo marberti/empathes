@@ -435,7 +435,7 @@ subroutine read_input(file_in)
 
       call set_idpp_tol(arg)
 
-    case ("#AUXFILES")
+    case ("#AUXINPUTFILES")
       call set_pesd_auxiliary_files(cmd_str)
 
     ! keywords to be ignored

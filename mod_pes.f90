@@ -1669,11 +1669,11 @@ subroutine set_siesta_dir(i,dirname)
       &""" terminated with exit code: "//trim(exit_n_str))
   end if
 
-  ! copy the auxiliary files ------------------------------
-  if (flag_pesd_auxiliary_files) then
+  ! copy the auxiliary input files ------------------------
+  if (flag_pesd_auxiliary_input_files) then
     cmd="cp"
-    do j=1, pesd_auxiliary_files_n
-      cmd=trim(cmd)//" "//trim(pesd_auxiliary_files(j))
+    do j=1, pesd_auxiliary_input_files_n
+      cmd=trim(cmd)//" "//trim(pesd_auxiliary_input_files(j))
     end do
     cmd=trim(cmd)//" "//trim(dirname)//"/."
 

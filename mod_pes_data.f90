@@ -9,36 +9,41 @@ module pes_data
   ! protected flags ---------------------------------------
   public    :: flag_pesd_scfcycle, flag_pesd_scfconv,&
     &flag_pesd_scfvshift, flag_pesd_intgrid, flag_pesd_additional_cmd,&
-    &flag_pesd_auxiliary_files
+    &flag_pesd_auxiliary_input_files, flag_pesd_auxiliary_output_files
   protected :: flag_pesd_scfcycle,&
                flag_pesd_scfconv,&
                flag_pesd_scfvshift,&
                flag_pesd_intgrid,&
                flag_pesd_additional_cmd,&
-               flag_pesd_auxiliary_files
+               flag_pesd_auxiliary_input_files,&
+               flag_pesd_auxiliary_output_files
   ! protected variables -----------------------------------
   public    :: pesd_scf_flag_count, pesd_scfcycle, pesd_scfconv,&
     &pesd_scfvshift, pesd_intgrid, pesd_additional_cmd,&
-    &pesd_auxiliary_files, pesd_auxiliary_files_n
+    &pesd_auxiliary_input_files, pesd_auxiliary_input_files_n,&
+    &pesd_auxiliary_output_files, pesd_auxiliary_output_files_n
   protected :: pesd_scf_flag_count,&
                pesd_scfcycle,&
                pesd_scfconv,&
                pesd_scfvshift,&
                pesd_intgrid,&
                pesd_additional_cmd,&
-               pesd_auxiliary_files,&
-               pesd_auxiliary_files_n
+               pesd_auxiliary_input_files,&
+               pesd_auxiliary_input_files_n,&
+               pesd_auxiliary_output_files,&
+               pesd_auxiliary_output_files_n
   ! public procedures -------------------------------------
   public :: set_pesd_scfcycle, set_pesd_scfconv, set_pesd_scfvshift,&
     &set_pesd_intgrid, set_pesd_additional_cmd, set_pesd_auxiliary_files
 
   !--------------------------------------------------------
-  logical :: flag_pesd_scfcycle        = .false.
-  logical :: flag_pesd_scfconv         = .false.
-  logical :: flag_pesd_scfvshift       = .false.
-  logical :: flag_pesd_intgrid         = .false.
-  logical :: flag_pesd_additional_cmd  = .false.
-  logical :: flag_pesd_auxiliary_files = .false.
+  logical :: flag_pesd_scfcycle               = .false.
+  logical :: flag_pesd_scfconv                = .false.
+  logical :: flag_pesd_scfvshift              = .false.
+  logical :: flag_pesd_intgrid                = .false.
+  logical :: flag_pesd_additional_cmd         = .false.
+  logical :: flag_pesd_auxiliary_input_files  = .false.
+  logical :: flag_pesd_auxiliary_output_files = .false.
   integer :: pesd_scf_flag_count=0 ! automatically incremented
                                    ! by set_pesd_scf* subroutines
 
@@ -47,8 +52,10 @@ module pes_data
   real(DBL) :: pesd_scfconv
   character(120) :: pesd_intgrid
   character(120) :: pesd_additional_cmd
-  character(120), allocatable, dimension(:) :: pesd_auxiliary_files
-  integer :: pesd_auxiliary_files_n
+  character(120), allocatable, dimension(:) :: pesd_auxiliary_input_files
+  character(120), allocatable, dimension(:) :: pesd_auxiliary_output_files
+  integer :: pesd_auxiliary_input_files_n
+  integer :: pesd_auxiliary_output_files_n
 
 contains
 
@@ -187,13 +194,15 @@ subroutine set_pesd_auxiliary_files(str)
   character(*), intent(IN) :: str
   character(120) :: field
   character(8)   :: i_str
+  integer :: files_n
+  character(120), allocatable, dimension(:) :: files
   integer :: i
   integer :: err_n
   character(120) :: err_msg
 
   ! preliminary checks ------------------------------------
-  if (flag_pesd_auxiliary_files) then
-    call error("set_pesd_auxiliary_files: auxiliary files already setted")
+  if (flag_pesd_auxiliary_input_files) then
+    call error("set_pesd_auxiliary_files: auxiliary input files already setted")
   end if
 
   ! get number of aux files -------------------------------
@@ -203,41 +212,41 @@ subroutine set_pesd_auxiliary_files(str)
   end if
 
   if (isinteger(trim(adjustl(field)))) then
-    read(field,*) pesd_auxiliary_files_n
+    read(field,*) files_n
   else
     call error("set_pesd_auxiliary_files: wrong argument """&
       &//trim(field)//""", expected integer")
   end if
 
-  if (pesd_auxiliary_files_n<=0) then
+  if (files_n<=0) then
     call error("set_pesd_auxiliary_files: argument must be a non-zero positive integer")
   end if
 
   ! allocation section ------------------------------------
-  allocate(pesd_auxiliary_files(pesd_auxiliary_files_n),stat=err_n,errmsg=err_msg)
+  allocate(files(files_n),stat=err_n,errmsg=err_msg)
   if (err_n/=0) then
     call error("set_pesd_auxiliary_files: "//trim(err_msg))
   end if
 
   ! get aux files -----------------------------------------
-  do i=1, pesd_auxiliary_files_n
-    call get_field(str,pesd_auxiliary_files(i),i+2,err_n,err_msg)
+  do i=1, files_n
+    call get_field(str,files(i),i+2,err_n,err_msg)
     if (err_n/=0) then
       call error("set_pesd_auxiliary_files: "//trim(err_msg))
     end if
   end do
 
   ! check that no more files are specified ----------------
-  call get_field(str,field,pesd_auxiliary_files_n+3,err_n,err_msg)
+  call get_field(str,field,files_n+3,err_n,err_msg)
   if (err_n==0) then ! yes, it's correct ==
-    write(i_str,'(I8)') pesd_auxiliary_files_n
+    write(i_str,'(I8)') files_n
     i_str=adjustl(i_str)
     call error("set_pesd_auxiliary_files: specified more than "&
       &//trim(i_str)//" auxiliary file(s)")
   end if
 
   ! finalize ----------------------------------------------
-  flag_pesd_auxiliary_files=.true.
+  flag_pesd_auxiliary_input_files=.true.
 
 end subroutine set_pesd_auxiliary_files
 

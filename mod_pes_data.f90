@@ -6,6 +6,8 @@ module pes_data
   save
   private
 
+  ! public parameters -------------------------------------
+  public :: PESD_AUX_INPUT_FILES, PESD_AUX_OUTPUT_FILES
   ! protected flags ---------------------------------------
   public    :: flag_pesd_scfcycle, flag_pesd_scfconv,&
     &flag_pesd_scfvshift, flag_pesd_intgrid, flag_pesd_additional_cmd,&
@@ -37,6 +39,9 @@ module pes_data
     &set_pesd_intgrid, set_pesd_additional_cmd, set_pesd_auxiliary_files
 
   !--------------------------------------------------------
+  integer, parameter :: PESD_AUX_INPUT_FILES  = 0
+  integer, parameter :: PESD_AUX_OUTPUT_FILES = 1
+
   logical :: flag_pesd_scfcycle               = .false.
   logical :: flag_pesd_scfconv                = .false.
   logical :: flag_pesd_scfvshift              = .false.
@@ -186,11 +191,17 @@ end subroutine set_pesd_additional_cmd
 
 !====================================================================
 
-subroutine set_pesd_auxiliary_files(str)
+subroutine set_pesd_auxiliary_files(mode,str)
 
   ! read the entire input file string of the kind:
   ! #KEYWORD int_N str_1 str_2 ... str_N
+  !
+  ! auxiliary input files are copied every time from the root
+  ! directory into the working directories.
+  ! auxiliary output files are kept, for each image,
+  ! at the end of the calculation and used for the next one.
 
+  integer, intent(IN) :: mode
   character(*), intent(IN) :: str
   character(120) :: field
   character(8)   :: i_str
@@ -201,9 +212,18 @@ subroutine set_pesd_auxiliary_files(str)
   character(120) :: err_msg
 
   ! preliminary checks ------------------------------------
-  if (flag_pesd_auxiliary_input_files) then
-    call error("set_pesd_auxiliary_files: auxiliary input files already setted")
-  end if
+  select case (mode)
+  case (PESD_AUX_INPUT_FILES)
+    if (flag_pesd_auxiliary_input_files) then
+      call error("set_pesd_auxiliary_files: auxiliary input files already setted")
+    end if
+  case (PESD_AUX_OUTPUT_FILES)
+    if (flag_pesd_auxiliary_output_files) then
+      call error("set_pesd_auxiliary_files: auxiliary output files already setted")
+    end if
+  case default
+    call error("set_pesd_auxiliary_files: invalid argument ""mode""")
+  end select
 
   ! get number of aux files -------------------------------
   call get_field(str,field,2,err_n,err_msg)
@@ -245,8 +265,35 @@ subroutine set_pesd_auxiliary_files(str)
       &//trim(i_str)//" auxiliary file(s)")
   end if
 
-  ! finalize ----------------------------------------------
-  flag_pesd_auxiliary_input_files=.true.
+  ! copy back to global variables -------------------------
+  select case (mode)
+  case (PESD_AUX_INPUT_FILES)
+    allocate(pesd_auxiliary_input_files(files_n),stat=err_n,errmsg=err_msg)
+    if (err_n/=0) then
+      call error("set_pesd_auxiliary_files: "//trim(err_msg))
+    end if
+
+    pesd_auxiliary_input_files       = files
+    pesd_auxiliary_input_files_n     = files_n
+    flag_pesd_auxiliary_input_files  = .true.
+  case (PESD_AUX_OUTPUT_FILES)
+    allocate(pesd_auxiliary_output_files(files_n),stat=err_n,errmsg=err_msg)
+    if (err_n/=0) then
+      call error("set_pesd_auxiliary_files: "//trim(err_msg))
+    end if
+
+    pesd_auxiliary_output_files      = files
+    pesd_auxiliary_output_files_n    = files_n
+    flag_pesd_auxiliary_output_files = .true.
+  case default
+    call error("set_pesd_auxiliary_files: invalid argument ""mode""")
+  end select
+
+  ! deallocation section ----------------------------------
+  deallocate(files,stat=err_n,errmsg=err_msg)
+  if (err_n/=0) then
+    call error("set_pesd_auxiliary_files: "//trim(err_msg))
+  end if
 
 end subroutine set_pesd_auxiliary_files
 

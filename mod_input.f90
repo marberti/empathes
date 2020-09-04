@@ -436,7 +436,10 @@ subroutine read_input(file_in)
       call set_idpp_tol(arg)
 
     case ("#AUXINPUTFILES")
-      call set_pesd_auxiliary_files(cmd_str)
+      call set_pesd_auxiliary_files(PESD_AUX_INPUT_FILES,cmd_str)
+
+    case ("#AUXOUTPUTFILES")
+      call set_pesd_auxiliary_files(PESD_AUX_OUTPUT_FILES,cmd_str)
 
     ! keywords to be ignored
     case ("#ENDLABEL")

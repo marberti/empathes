@@ -37,9 +37,10 @@ module pes
     &get_scfconv, get_scfcycle
 
   !--------------------------------------------------------
-  character(*), parameter :: base_name    = "neb"
-  character(*), parameter :: base_label   = "lbl_"
-  character(*), parameter :: base_dirname = "dir_neb"
+  character(*), parameter :: base_name       = "neb"
+  character(*), parameter :: base_label      = "lbl_"
+  character(*), parameter :: base_dirname    = "dir_neb"
+  character(*), parameter :: base_auxdirname = "dir_aux"
   logical :: flag_init_pes_module       = .false.
   logical :: flag_pes_program           = .false.
   logical :: flag_pes_exec              = .false.
@@ -360,7 +361,7 @@ subroutine init_pes_module()
   integer :: err_n
   character(120) :: err_msg
 
-  ! if I'm a slave, i go to... ----------------------------
+  ! if I'm a slave, I go to... ----------------------------
 #ifdef USE_MPI
   if (proc_id/=0) then
     call mmpi_init_pes_module()
@@ -496,7 +497,10 @@ subroutine get_pes_forces(i,tid,conv_threshold,flag_conv,ig,pesf,pesg)
   character(8) :: tid_lim_str, real_str
   integer, parameter :: fnumb_in  = 1000
   integer, parameter :: fnumb_out = 2000
-  character(100) :: fname_in, fname_out, dirname
+  character(120) :: fname_in
+  character(120) :: fname_out
+  character(120) :: dirname
+  character(120) :: auxdirname
   integer, parameter :: opt_arg = 3
   logical, dimension(opt_arg) :: arg_presence
 
@@ -563,10 +567,11 @@ subroutine get_pes_forces(i,tid,conv_threshold,flag_conv,ig,pesf,pesg)
       call error("get_pes_forces: convergence threshold above "//trim(real_str))
     end if
 
-    call set_siesta_dir(i,dirname)
+    call set_siesta_dir(i,dirname,auxdirname)
     call write_siesta_input(i,conv_threshold,dirname,fnumb_in+tid,fname_in,fname_out)
     call exec_siesta(dirname,fname_in,fname_out)
     call get_siesta_output(i,dirname,fnumb_out+tid,fname_out,flag_conv)
+    call get_siesta_auxiliary_files(dirname,auxdirname)
     call remove_siesta_dir(dirname)
   case default
     call error("get_pes_forces: unknown program """//trim(pes_program)//"""")
@@ -1303,7 +1308,8 @@ subroutine write_gaussian_input(i,conv_threshold,fnumb_in,fname_in,fname_out,ig)
   integer, intent(IN) :: i
   real(DBL), intent(IN) :: conv_threshold
   integer, intent(IN) :: fnumb_in
-  character(*), intent(OUT) :: fname_in,fname_out
+  character(*), intent(OUT) :: fname_in
+  character(*), intent(OUT) :: fname_out
   real(DBL), dimension(:), optional, intent(IN) :: ig
   integer :: j
   integer :: conv_val
@@ -1436,7 +1442,7 @@ end subroutine write_gaussian_input
 
 subroutine exec_gaussian(fname_in,flag_conv)
 
-  character(len=*), intent(IN) :: fname_in
+  character(*), intent(IN) :: fname_in
   logical, intent(OUT) :: flag_conv
   character(140) :: cmd
   integer :: exit_n, cmd_n
@@ -1600,9 +1606,11 @@ end subroutine get_gaussian_output
 
 subroutine clean_gaussian_file(fnumb_in,fname_in,fnumb_out,fname_out)
 
-  integer, intent(IN) :: fnumb_in, fnumb_out
-  character(len=*), intent(IN) :: fname_in, fname_out
-  character(len=120) :: err_msg
+  integer,      intent(IN) :: fnumb_in
+  character(*), intent(IN) :: fname_in
+  integer,      intent(IN) :: fnumb_out
+  character(*), intent(IN) :: fname_out
+  character(120) :: err_msg
   integer :: err_n
 
   ! Delete input ------------------------------------------
@@ -1633,7 +1641,7 @@ end subroutine clean_gaussian_file
 ! Siesta Section
 !====================================================================
 
-subroutine set_siesta_dir(i,dirname)
+subroutine set_siesta_dir(i,dirname,auxdirname)
 
   !--------------------------------------------------------
   ! Makes the working directory
@@ -1642,18 +1650,44 @@ subroutine set_siesta_dir(i,dirname)
 
   integer, intent(IN) :: i
   character(*), intent(INOUT) :: dirname
+  character(*), intent(INOUT) :: auxdirname
   character(8)   :: i_str
   character(8)   :: exit_n_str
   character(300) :: cmd
+  integer, save :: calling_count = 0
   integer :: j
   integer :: exit_n
   integer :: cmd_n
 
+  ! preliminary settings ----------------------------------
+  if (calling_count<=image_n) then
+    calling_count=calling_count+1
+  end if
+
   write(i_str,'(I8)') i
   i_str=adjustl(i_str)
   dirname=base_dirname//trim(i_str)
+  auxdirname=base_auxdirname//trim(i_str)
 
-  ! make the directory ------------------------------------
+  ! make directories for storing auxiliary output files ---
+  if ((flag_pesd_auxiliary_output_files).and.(calling_count<=image_n)) then
+    cmd="mkdir "//trim(auxdirname)
+    call execute_command_line(trim(cmd),&
+      &wait=.true.,exitstat=exit_n,cmdstat=cmd_n)
+
+    if (cmd_n/=0) then
+      call error("set_siesta_dir: cannot execute command """//trim(cmd)//"""")
+    end if
+
+    if (exit_n/=0) then
+      write(exit_n_str,'(I8)') exit_n
+      exit_n_str=adjustl(exit_n_str)
+      call error("set_siesta_dir: """//trim(cmd)//&
+        &""" terminated with exit code: "//trim(exit_n_str))
+    end if
+  end if
+
+  ! make the working directory ----------------------------
   cmd="mkdir "//trim(dirname)
   call execute_command_line(trim(cmd),&
     &wait=.true.,exitstat=exit_n,cmdstat=cmd_n)
@@ -1692,6 +1726,30 @@ subroutine set_siesta_dir(i,dirname)
     end if
   end if
 
+  ! copy the auxiliary output files ------------------------
+  if ((flag_pesd_auxiliary_output_files).and.(calling_count>image_n)) then
+    cmd="cp"
+    do j=1, pesd_auxiliary_output_files_n
+      cmd=trim(cmd)//" "//trim(auxdirname)//&
+        &"/"//trim(pesd_auxiliary_output_files(j))
+    end do
+    cmd=trim(cmd)//" "//trim(dirname)//"/."
+
+    call execute_command_line(trim(cmd),&
+      &wait=.true.,exitstat=exit_n,cmdstat=cmd_n)
+
+    if (cmd_n/=0) then
+      call error("set_siesta_dir: cannot execute command """//trim(cmd)//"""")
+    end if
+
+    if (exit_n/=0) then
+      write(exit_n_str,'(I8)') exit_n
+      exit_n_str=adjustl(exit_n_str)
+      call error("set_siesta_dir: """//trim(cmd)//&
+        &""" terminated with exit code: "//trim(exit_n_str))
+    end if
+  end if
+
 end subroutine set_siesta_dir
 
 !====================================================================
@@ -1702,7 +1760,8 @@ subroutine write_siesta_input(i,conv_threshold,dirname,fnumb_in,fname_in,fname_o
   real(DBL), intent(IN) :: conv_threshold
   character(*), intent(IN) :: dirname
   integer, intent(IN) :: fnumb_in
-  character(*), intent(OUT) :: fname_in,fname_out
+  character(*), intent(OUT) :: fname_in
+  character(*), intent(OUT) :: fname_out
   real(DBL), dimension(:), optional, intent(IN) :: ig
   character(30) :: label
   character(8) :: i_str
@@ -1800,7 +1859,9 @@ end subroutine write_siesta_input
 
 subroutine exec_siesta(dirname,fname_in,fname_out)
 
-  character(*), intent(IN) :: dirname, fname_in, fname_out
+  character(*), intent(IN) :: dirname
+  character(*), intent(IN) :: fname_in
+  character(*), intent(IN) :: fname_out
   character(140) :: cmd
   integer :: exit_n, cmd_n
   character(8) :: exit_n_str
@@ -2010,6 +2071,43 @@ subroutine get_siesta_output(i,dirname,fnumb_out,fname_out,flag_conv)
   end if
  
 end subroutine get_siesta_output
+
+!====================================================================
+
+subroutine get_siesta_auxiliary_files(dirname,auxdirname)
+
+  character(*), intent(IN) :: dirname
+  character(*), intent(IN) :: auxdirname
+  integer :: j
+  character(300) :: cmd
+  character(8)   :: exit_n_str
+  integer :: exit_n
+  integer :: cmd_n
+
+  if (flag_pesd_auxiliary_output_files) then
+    cmd="cp"
+    do j=1, pesd_auxiliary_output_files_n
+      cmd=trim(cmd)//" "//trim(dirname)//&
+        &"/"//trim(pesd_auxiliary_output_files(j))
+    end do
+    cmd=trim(cmd)//" "//trim(auxdirname)//"/."
+
+    call execute_command_line(trim(cmd),&
+      &wait=.true.,exitstat=exit_n,cmdstat=cmd_n)
+
+    if (cmd_n/=0) then
+      call error("set_siesta_dir: cannot execute command """//trim(cmd)//"""")
+    end if
+
+    if (exit_n/=0) then
+      write(exit_n_str,'(I8)') exit_n
+      exit_n_str=adjustl(exit_n_str)
+      call error("set_siesta_dir: """//trim(cmd)//&
+        &""" terminated with exit code: "//trim(exit_n_str))
+    end if
+  end if
+
+end subroutine get_siesta_auxiliary_files
 
 !====================================================================
 

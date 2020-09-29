@@ -352,6 +352,7 @@ subroutine write_transition_state()
   integer :: err_n
   character(120) :: err_msg
 
+  ! preliminary checks ------------------------------------
   if (flag_init_images.eqv..false.) then
     call error("write_transition_state: images not initialized")
   end if
@@ -360,11 +361,13 @@ subroutine write_transition_state()
     call error("write_transition_state: energy array not allocated")
   end if
 
+  ! allocation section ------------------------------------
   allocate(indx(image_n),stat=err_n,errmsg=err_msg)
   if (err_n/=0) then
     call error("write_transition_state: "//trim(err_msg))
   end if
 
+  ! init variables ----------------------------------------
   indx=.false.
   tot_ts=0
   do i=1, image_n
@@ -377,6 +380,7 @@ subroutine write_transition_state()
     end if
   end do
 
+  ! write transition state(s) -----------------------------
   write(FILEOUT,*) "**  Transition State"
   if (tot_ts==0) then
     write(FILEOUT,'(5X,"No Transition State Founded")')
@@ -392,9 +396,11 @@ subroutine write_transition_state()
       n=n+1
       write(FILEOUT,'(5X,"TS ",I3)') n
       call write_image(i,FILEOUT)
+      call write_delta_e(i)
     end if
   end do
 
+  ! deallocation section ----------------------------------
   deallocate(indx,stat=err_n,errmsg=err_msg)
   if (err_n/=0) then
     call error("write_transition_state: "//trim(err_msg))
@@ -494,6 +500,42 @@ subroutine write_image(n,fnumb)
   end do
 
 end subroutine write_image
+
+!====================================================================
+
+subroutine write_delta_e(n)
+
+  integer, intent(IN) :: n
+  real(DBL) :: de_rea
+  real(DBL) :: de_prod
+  real(DBL), dimension(2) :: de_au
+  real(DBL), dimension(2) :: de_kjmol
+  real(DBL), dimension(2) :: de_ev
+
+  de_rea  = pes_energy(n) - pes_energy(0)
+  de_prod = pes_energy(n) - pes_energy(image_n+1)
+
+  select case (pes_program)
+  case ("gaussian")
+    de_au(1) = de_rea
+    de_au(2) = de_prod
+    de_kjmol = de_au * AU_ON_J * 1.0E-3_DBL * AVOGADRO
+    de_ev    = de_au * AU_ON_EV
+  case ("siesta")
+    de_ev(1) = de_rea
+    de_ev(2) = de_prod
+    de_au    = de_ev / AU_ON_EV
+    de_kjmol = de_ev * EV_ON_J * 1.0E-3_DBL * AVOGADRO
+  case default
+    call error("write_delta_e: invalid option """//trim(pes_program)//"""")
+  end select
+
+  write(FILEOUT,'(5X,"DE_rea  : ",F12.6," a.u. ; ",&
+    &F12.1," kJ/mol ; ",F12.2," eV")') de_au(1), de_kjmol(1), de_ev(1)
+  write(FILEOUT,'(5X,"DE_prod : ",F12.6," a.u. ; ",&
+    &F12.1," kJ/mol ; ",F12.2," eV")') de_au(2), de_kjmol(2), de_ev(2)
+
+end subroutine write_delta_e
 
 !====================================================================
 

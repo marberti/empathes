@@ -17,8 +17,8 @@ module utility
   private
 
   ! public parameters -------------------------------------
-  public :: STDOUT, FILEOUT, SGL, DBL, QDR, LONG, BOHRONANG,&
-    &HARTREEONEV
+  public :: STDOUT, FILEOUT, SGL, DBL, QDR, LONG, AVOGADRO,&
+    &BOHR_ON_ANG, AU_ON_J, EV_ON_J, AU_ON_EV
   public :: PES_MODE
   public :: IDPP_MODE
 #ifdef USE_MPI
@@ -75,8 +75,13 @@ module utility
   integer, parameter   :: DBL         = REAL64
   integer, parameter   :: QDR         = REAL128
   integer, parameter   :: LONG        = INT64
-  real(DBL), parameter :: BOHRONANG   = 0.529177211_DBL
-  real(DBL), parameter :: HARTREEONEV = 27.211385_DBL
+  ! physical parameters taken from :
+  ! https://physics.nist.gov/cuu/Constants/
+  real(DBL), parameter :: AVOGADRO    = 6.02214076E23_DBL 
+  real(DBL), parameter :: BOHR_ON_ANG = 0.529177210903_DBL
+  real(DBL), parameter :: AU_ON_J     = 4.3597447222071E-18_DBL
+  real(DBL), parameter :: EV_ON_J     = 1.602176634E-19_DBL
+  real(DBL), parameter :: AU_ON_EV    = AU_ON_J / EV_ON_J
 
   ! ENUM
   integer, parameter :: PES_MODE  = 0

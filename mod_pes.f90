@@ -1589,9 +1589,9 @@ subroutine get_gaussian_output(i,fnumb_out,fname_out,pesf,pesg)
 
   ! Convert forces from Hartree/Bohr to Hartree/Ang -------
   if (arg_presence(1).eqv..true.) then
-    pesg=pesg*(1.0_DBL/BOHRONANG)
+    pesg=pesg*(1.0_DBL/BOHR_ON_ANG)
   else
-    pes_forces(i,:)=pes_forces(i,:)*(1.0_DBL/BOHRONANG)
+    pes_forces(i,:)=pes_forces(i,:)*(1.0_DBL/BOHR_ON_ANG)
   end if
  
   ! Close output file -------------------------------------
@@ -2062,7 +2062,7 @@ subroutine get_siesta_output(i,dirname,fnumb_out,fname_out,flag_conv)
   end if
 
   ! Convert forces from eV/Ang to Hartree/Ang -------------
-  pes_forces(i,:)=pes_forces(i,:)*(1.0_DBL/HARTREEONEV)
+  pes_forces(i,:)=pes_forces(i,:)*(1.0_DBL/AU_ON_EV)
 
   ! close unit --------------------------------------------
   close(unit=fnumb_out,iostat=err_n,iomsg=err_msg)

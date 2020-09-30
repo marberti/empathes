@@ -1977,35 +1977,17 @@ subroutine get_siesta_output(i,dirname,fnumb_out,fname_out,flag_conv)
 
   ! if converged, get energy and forces -------------------
   if (flag_conv) then
-    ! read until the string "siesta: Final energy" is found
+    ! read until the string "siesta: E_KS(eV)" is found,
+    ! then get the total energy value
     do
       read(fnumb_out,'(A200)',iostat=err_n,iomsg=err_msg) str
       if (err_n/=0) then
         write(FILEOUT,*) "WAR get_siesta_output: ",&
-          &"string ""siesta: Final energy"" not found"
+          &"string ""siesta: E_KS(eV)"" not found"
         call error("get_siesta_output: "//trim(err_msg))
       end if
 
-      if (str(1:20)=="siesta: Final energy") then
-        exit
-      end if
-    end do
-
-    ! get total energy value
-    do
-      read(fnumb_out,'(A200)',iostat=err_n,iomsg=err_msg) str
-      if (err_n/=0) then
-        write(FILEOUT,*) "WAR get_siesta_output: ",&
-          &"total energy not found"
-        call error("get_siesta_output: "//trim(err_msg))
-      end if
-
-      call get_field(str,field,2,err_n,err_msg)
-      if (err_n/=0) then
-        call error("get_siesta_output: "//trim(err_msg))
-      end if
-
-      if (field=="Total") then
+      if (str(1:16)=="siesta: E_KS(eV)") then
         call get_field(str,field,4,err_n,err_msg)
         if (err_n/=0) then
           call error("get_siesta_output: "//trim(err_msg))
@@ -2045,14 +2027,14 @@ subroutine get_siesta_output(i,dirname,fnumb_out,fname_out,flag_conv)
         call error("get_siesta_output: "//trim(err_msg))
       end if
       
-      do k=3,5
+      do k=2,4
         call get_field(str,field,k,err_n,err_msg)
         if (err_n/=0) then
           call error("get_siesta_output: "//trim(err_msg))
         end if
 
         if (isreal(trim(adjustl(field)))) then
-          read(field,*) pes_forces(i,3*(j-1)+(k-2))
+          read(field,*) pes_forces(i,3*(j-1)+(k-1))
         else
           call error("get_siesta_output: wrong field """//&
             &trim(field)//""" while reading atomic forces")

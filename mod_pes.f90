@@ -1901,13 +1901,18 @@ end subroutine exec_siesta
 
 subroutine get_siesta_output(i,dirname,fnumb_out,fname_out,flag_conv)
 
-  integer, intent(IN) :: i, fnumb_out
-  character(*), intent(IN) :: dirname, fname_out
-  logical, intent(OUT) :: flag_conv
-  integer :: j, k
+  integer,      intent(IN)  :: i
+  character(*), intent(IN)  :: dirname
+  integer,      intent(IN)  :: fnumb_out
+  character(*), intent(IN)  :: fname_out
+  logical,      intent(OUT) :: flag_conv
+  integer :: j
+  integer :: k
+  integer :: k_start
   integer :: default_scfcycle ! max scf cycles for the siesta computation
   integer :: read_scfcycle    ! last scf cycle read from siesta output
-  character(30) :: field
+  logical :: correct_one
+  character(200) :: field
   character(200) :: str
   character(120) :: path
   integer :: err_n
@@ -1915,6 +1920,7 @@ subroutine get_siesta_output(i,dirname,fnumb_out,fname_out,flag_conv)
 
   ! variables initialization ------------------------------
   flag_conv        = .true.
+  correct_one      = .false.
   path             = trim(dirname)//"/"//trim(fname_out)
   read_scfcycle    = -1
   default_scfcycle = get_scfcycle()
@@ -2014,7 +2020,38 @@ subroutine get_siesta_output(i,dirname,fnumb_out,fname_out,flag_conv)
       end if
 
       if (str(1:21)=="siesta: Atomic forces") then
-        exit
+        ! check if it's the correct one
+        read(fnumb_out,'(A200)',iostat=err_n,iomsg=err_msg) str
+        if (err_n/=0) then
+          write(FILEOUT,*) "WAR get_siesta_output: ",&
+            &"string ""siesta: Atomic forces"" not found"
+          call error("get_siesta_output: "//trim(err_msg))
+        end if
+
+        call get_field(str,field,1,err_n,err_msg)
+        if (err_n/=0) then
+          call error("get_siesta_output: "//trim(err_msg))
+        end if
+
+        if (field=="siesta:") then
+          k_start = 3
+          correct_one = .true.
+        else if (isinteger(trim(adjustl(field)))) then
+          k_start = 2
+          correct_one = .true.
+        end if
+
+        if (correct_one) then
+          backspace(unit=fnumb_out,iostat=err_n,iomsg=err_msg)
+          if (err_n/=0) then
+            write(FILEOUT,*) "WAR get_siesta_output: ",&
+              &"error while backspacing"
+            call error("get_siesta_output: "//trim(err_msg))
+          end if
+
+          ! continue to get forces values
+          exit
+        end if
       end if
     end do
 
@@ -2026,15 +2063,15 @@ subroutine get_siesta_output(i,dirname,fnumb_out,fname_out,flag_conv)
           &"error while reading atomic forces"
         call error("get_siesta_output: "//trim(err_msg))
       end if
-      
-      do k=2,4
+
+      do k=k_start, k_start+2
         call get_field(str,field,k,err_n,err_msg)
         if (err_n/=0) then
           call error("get_siesta_output: "//trim(err_msg))
         end if
 
         if (isreal(trim(adjustl(field)))) then
-          read(field,*) pes_forces(i,3*(j-1)+(k-1))
+          read(field,*) pes_forces(i,3*(j-1)+(k-(k_start-1)))
         else
           call error("get_siesta_output: wrong field """//&
             &trim(field)//""" while reading atomic forces")

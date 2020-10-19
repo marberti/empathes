@@ -1,4 +1,4 @@
-program driver
+program main
 
   use utility
 
@@ -71,5 +71,5 @@ program driver
     write(*,*) i,a(i)
   end do
 
-end program driver
+end program main
 

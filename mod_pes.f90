@@ -1816,6 +1816,10 @@ subroutine write_siesta_input(i,conv_threshold,dirname,fnumb_in,fname_in,fname_o
   write(fnumb_in,'("NumberOfAtoms ",I8)') geom_len/3
   write(fnumb_in,*)
 
+  ! write forces
+  write(fnumb_in,'("WriteForces true")')
+  write(fnumb_in,*)
+
   ! geometry
   write(fnumb_in,'("AtomicCoordinatesFormat    Ang")')
   write(fnumb_in,'("%block AtomicCoordinatesAndAtomicSpecies")')

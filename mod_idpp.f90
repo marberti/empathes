@@ -18,22 +18,27 @@ module idpp
   private
 
   ! protected variables -----------------------------------
-  public    :: flag_idpp, idpp_energy, idpp_forces
-  protected :: flag_idpp, idpp_energy, idpp_forces
+  public    :: flag_idpp,   &
+               idpp_energy, &
+               idpp_forces
+  protected :: flag_idpp,   &
+               idpp_energy, &
+               idpp_forces
   ! public procedures -------------------------------------
-  public :: set_idpp, init_idpp, compute_idpp_enfo,&
-    &driver_idpp
+  public    :: set_idpp,          &
+               init_idpp,         &
+               compute_idpp_enfo, &
+               driver_idpp
 
   !--------------------------------------------------------
-  logical :: flag_idpp = .false.
-  real(DBL), allocatable, dimension(:) :: idpp_energy
+  logical                                :: flag_idpp      = .false.
+  logical                                :: flag_init_idpp = .false.
+  integer                                :: d_idpp_len
+  real(DBL), allocatable, dimension(:)   :: idpp_energy
   real(DBL), allocatable, dimension(:,:) :: idpp_forces
-
-  logical :: flag_init_idpp = .false.
   real(DBL), allocatable, dimension(:,:) :: d_idpp ! contains
     ! the interpolated pair distances (0:images+1,d_idpp_len)
-  integer :: d_idpp_len
-  
+
 contains
 
 !====================================================================
@@ -43,7 +48,8 @@ contains
 subroutine set_idpp(flag)
 
   logical, intent(IN) :: flag
-  logical, save :: first_call=.true.
+
+  logical, save       :: first_call = .true.
 
   if (first_call.eqv..false.) then
     call error("set_idpp: subroutine called more than once");
@@ -66,9 +72,13 @@ subroutine init_idpp()
   !--------------------------------------------------------
 
   real(DBL), allocatable, dimension(:) :: delta
-  integer :: i, j, k, atoms, indx
-  integer :: err_n
-  character(120) :: err_msg
+  integer                              :: i
+  integer                              :: j
+  integer                              :: k
+  integer                              :: atoms
+  integer                              :: indx
+  integer                              :: err_n
+  character(120)                       :: err_msg
 
   ! preliminary checks ------------------------------------
   if (flag_idpp.eqv..false.) then
@@ -173,9 +183,15 @@ subroutine get_idpp_energy(k)
   !--------------------------------------------------------
 
   integer, intent(IN) :: k
-  integer :: i, j, atoms, indx
-  character(8) :: i_str
-  real(DBL) :: res, w, d
+
+  integer             :: i
+  integer             :: j
+  integer             :: atoms
+  integer             :: indx
+  character(8)        :: i_str
+  real(DBL)           :: res
+  real(DBL)           :: w
+  real(DBL)           :: d
 
   ! preliminary checks ------------------------------------
   if ((k<0).or.(k>image_n+1)) then
@@ -210,16 +226,19 @@ subroutine get_idpp_forces(k)
   ! Results are stored in idpp_forces matrix.
   !--------------------------------------------------------
 
-  integer, intent(IN) :: k ! image number
-  character(8) :: i_str
-  integer :: atoms ! number of atoms
-  integer :: i, j  ! atom labels
-  integer :: c   ! dummy coordinate, used for x, y and z
-  integer :: ci  ! dummy coordinate, used for xi, yi and zi
-  integer :: cj  ! dummy coordinate, used for xj, yj and zj
-  real(DBL) :: s ! derivative of sij
-  real(DBL) :: d ! atomic distance between i and j
-  real(DBL) :: dc, t ! intermediate terms
+  integer, intent(IN) :: k     ! image number
+
+  character(8)        :: i_str
+  integer             :: atoms ! number of atoms
+  integer             :: i     ! atom label
+  integer             :: j     ! atom label
+  integer             :: c     ! dummy coordinate, used for x, y and z
+  integer             :: ci    ! dummy coordinate, used for xi, yi and zi
+  integer             :: cj    ! dummy coordinate, used for xj, yj and zj
+  real(DBL)           :: s     ! derivative of sij
+  real(DBL)           :: d     ! atomic distance between i and j
+  real(DBL)           :: dc    ! intermediate term
+  real(DBL)           :: t     ! intermediate term
 
   ! preliminary checks ------------------------------------
   if ((k<1).or.(k>image_n)) then
@@ -263,8 +282,11 @@ integer function get_d_idpp_index(r,c)
   ! it returns the relative d_idpp array index.
   !--------------------------------------------------------
 
-  integer, intent(IN) :: r, c
-  integer :: atoms, a
+  integer, intent(IN) :: r
+  integer, intent(IN) :: c
+
+  integer             :: atoms
+  integer             :: a
 
   atoms=geom_len/3
 
@@ -302,10 +324,14 @@ real(DBL) function atomic_distance(k,i,j)
   ! If i and j are the same atom, distance = 0.0 is returned.
   !--------------------------------------------------------
 
-  integer, intent(IN) :: k,i,j
-  integer :: atoms, coor
-  real(DBL) :: tot
-  character(8) :: str
+  integer, intent(IN) :: k
+  integer, intent(IN) :: i
+  integer, intent(IN) :: j
+
+  integer             :: atoms
+  integer             :: coor
+  real(DBL)           :: tot
+  character(8)        :: str
 
   atoms=geom_len/3
 
@@ -349,8 +375,11 @@ subroutine driver_idpp()
   ! For testing purposes only.
   !--------------------------------------------------------
 
-  integer :: atoms, indx
-  integer :: i, j, k
+  integer :: atoms
+  integer :: indx
+  integer :: i
+  integer :: j
+  integer :: k
 
   ! preliminary checks ------------------------------------
   if (flag_init_idpp.eqv..false.) then

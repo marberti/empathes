@@ -30,33 +30,34 @@ subroutine read_input(file_in)
   ! and when it's done close the stream
   !--------------------------------------------------------
 
-  character(len=*), intent(IN) :: file_in
+  character(*),                intent(IN) :: file_in
 
-  integer, parameter :: file_n = 100
-  integer :: ri_start_atoms, ri_end_atoms
-  character(200) :: cmd_str
-  character(50)  :: keyword, arg
-  character(3), allocatable, dimension(:) :: ri_start_elem, ri_end_elem
+  integer, parameter                      :: file_n = 100
+  integer                                 :: ri_start_atoms
+  integer                                 :: ri_end_atoms
+  character(200)                          :: cmd_str
+  character(50)                           :: keyword
+  character(50)                           :: arg
+  character(3), allocatable, dimension(:) :: ri_start_elem
+  character(3), allocatable, dimension(:) :: ri_end_elem
   character(3), allocatable, dimension(:) :: ri_elabel
-  logical :: got_error
-
+  logical                                 :: got_error
+  integer                                 :: err_n
+  character(120)                          :: err_msg
   ! got flags exist only for mandatory keywords
-  logical :: got_start
-  logical :: got_end
-  logical :: got_charge
-  logical :: got_multip
-  logical :: got_images
-  logical :: got_start_energy
-  logical :: got_end_energy
-  logical :: got_pes_program
-  logical :: got_pes_exec
-  logical :: got_geometries_file
-  logical :: got_elabel
-  logical :: got_pes_input_template
-  logical :: got_idpp
-
-  integer :: err_n
-  character(120) :: err_msg
+  logical                                 :: got_start
+  logical                                 :: got_end
+  logical                                 :: got_charge
+  logical                                 :: got_multip
+  logical                                 :: got_images
+  logical                                 :: got_start_energy
+  logical                                 :: got_end_energy
+  logical                                 :: got_pes_program
+  logical                                 :: got_pes_exec
+  logical                                 :: got_geometries_file
+  logical                                 :: got_elabel
+  logical                                 :: got_pes_input_template
+  logical                                 :: got_idpp
 
   open(unit=file_n,file=file_in,status='OLD',action='READ',&
     &iostat=err_n,iomsg=err_msg,position='REWIND')
@@ -506,15 +507,20 @@ end subroutine read_input
 
 subroutine get_geometry(file_n,point,atoms,elem)
 
-  integer, intent(IN) :: file_n
-  character(*), intent(IN) :: point
-  integer, intent(OUT) :: atoms
+  integer,                                 intent(IN)  :: file_n
+  character(*),                            intent(IN)  :: point
+  integer,                                 intent(OUT) :: atoms
   character(3), allocatable, dimension(:), intent(OUT) :: elem
-  integer :: g_len, i, indx
-  character(120) :: str
-  real(DBL) :: x,y,z
-  integer :: err_n
-  character(120) :: err_msg
+
+  integer                                              :: g_len
+  integer                                              :: i
+  integer                                              :: indx
+  character(120)                                       :: str
+  real(DBL)                                            :: x
+  real(DBL)                                            :: y
+  real(DBL)                                            :: z
+  integer                                              :: err_n
+  character(120)                                       :: err_msg
 
   read(file_n,*,iostat=err_n) str
   if (err_n/=0) then
@@ -577,14 +583,18 @@ end subroutine get_geometry
 subroutine consistency_check(got_geometries_file,ri_start_atoms,&
     &ri_end_atoms,ri_start_elem,ri_end_elem,ri_elabel)
 
-  logical, intent(IN) :: got_geometries_file
-  integer, intent(IN) :: ri_start_atoms, ri_end_atoms
-  character(3), allocatable, dimension(:) :: ri_start_elem, ri_end_elem
-  character(3), allocatable, dimension(:) :: ri_elabel
-  integer :: i
-  character(8) :: i_str
-  logical :: flag_alloc_s, flag_alloc_e
-  logical :: flag_not_consistent
+  logical,                                 intent(IN) :: got_geometries_file
+  integer,                                 intent(IN) :: ri_start_atoms
+  integer,                                 intent(IN) :: ri_end_atoms
+  character(3), allocatable, dimension(:), intent(IN) :: ri_start_elem
+  character(3), allocatable, dimension(:), intent(IN) :: ri_end_elem
+  character(3), allocatable, dimension(:), intent(IN) :: ri_elabel
+
+  integer                                             :: i
+  character(8)                                        :: i_str
+  logical                                             :: flag_alloc_s
+  logical                                             :: flag_alloc_e
+  logical                                             :: flag_not_consistent
 
   flag_not_consistent=.false.
 
@@ -698,13 +708,15 @@ subroutine read_elabel(fnumb,ending,ri_elabel)
 
   ! Reads the #LABEL block
 
-  integer, intent(IN) :: fnumb
-  character(*), intent(IN) :: ending
+  integer,                                 intent(IN)  :: fnumb
+  character(*),                            intent(IN)  :: ending
   character(3), allocatable, dimension(:), intent(OUT) :: ri_elabel
-  integer :: i, lines
-  character(30) :: lab
-  integer :: err_n
-  character(120) :: err_msg
+
+  integer                                              :: i
+  integer                                              :: lines
+  character(30)                                        :: lab
+  integer                                              :: err_n
+  character(120)                                       :: err_msg
 
   lines=get_lines(fnumb,ending)
   if (lines==0) then
@@ -744,12 +756,14 @@ subroutine read_user_basis_set(fnumb,ending)
 
   ! Reads the #USERBASISSET block
 
-  integer, intent(IN) :: fnumb
+  integer,      intent(IN) :: fnumb
   character(*), intent(IN) :: ending
-  integer :: i, lines
-  character(120) :: str
-  integer :: err_n
-  character(120) :: err_msg
+
+  integer                  :: i
+  integer                  :: lines
+  character(120)           :: str
+  integer                  :: err_n
+  character(120)           :: err_msg
 
   lines=get_lines(fnumb,ending)
   if (lines==0) then
@@ -790,12 +804,14 @@ subroutine read_user_pseudo_potential(fnumb,ending)
 
   ! Reads the #USERPSEUDOPOTENTIAL block
 
-  integer, intent(IN) :: fnumb
+  integer,      intent(IN) :: fnumb
   character(*), intent(IN) :: ending
-  integer :: i, lines
-  character(120) :: str
-  integer :: err_n
-  character(120) :: err_msg
+
+  integer                  :: i
+  integer                  :: lines
+  character(120)           :: str
+  integer                  :: err_n
+  character(120)           :: err_msg
 
   lines=get_lines(fnumb,ending)
   if (lines==0) then
@@ -836,12 +852,14 @@ subroutine read_pes_input_template(fnumb,ending)
 
   ! Reads the #PESINPUTTEMPLATE block
 
-  integer, intent(IN) :: fnumb
+  integer,      intent(IN) :: fnumb
   character(*), intent(IN) :: ending
-  integer :: i, lines
-  character(120) :: str
-  integer :: err_n
-  character(120) :: err_msg
+
+  integer                  :: i
+  integer                  :: lines
+  character(120)           :: str
+  integer                  :: err_n
+  character(120)           :: err_msg
 
   lines=get_lines(fnumb,ending)
   if (lines==0) then
@@ -888,14 +906,19 @@ subroutine read_geometries_file(gf_fname)
   ! Finally, sets flag_geometries_file on true.
   !--------------------------------------------------------
 
-  character(len=*), intent(IN) :: gf_fname
-  integer, parameter :: gf_fnumb=101
-  integer :: i, j, ngeom, natom
-  character(120) :: str
-  character(3), allocatable, dimension(:) :: elem_arr, elem_dfl
-  real(DBL), allocatable, dimension(:) :: geom_arr
-  integer :: err_n
-  character(120) :: err_msg
+  character(*),                intent(IN) :: gf_fname
+
+  integer, parameter                      :: gf_fnumb = 101
+  integer                                 :: i
+  integer                                 :: j
+  integer                                 :: ngeom
+  integer                                 :: natom
+  character(120)                          :: str
+  character(3), allocatable, dimension(:) :: elem_arr
+  character(3), allocatable, dimension(:) :: elem_dfl
+  real(DBL),    allocatable, dimension(:) :: geom_arr
+  integer                                 :: err_n
+  character(120)                          :: err_msg
 
   ! open unit ---------------------------------------------
   open(unit=gf_fnumb,file=gf_fname,status='OLD',action='READ',&
@@ -1001,10 +1024,13 @@ subroutine get_geometries_info(fnumb,ngeom,natom)
   !--------------------------------------------------------
 
   integer, intent(IN)  :: fnumb
-  integer, intent(OUT) :: ngeom, natom
-  character(120) :: str
-  integer :: i, tmp_atom
-  integer :: err_n
+  integer, intent(OUT) :: ngeom
+  integer, intent(OUT) :: natom
+
+  character(120)       :: str
+  integer              :: i
+  integer              :: tmp_atom
+  integer              :: err_n
 
   ngeom=0
   do
@@ -1049,15 +1075,18 @@ subroutine read_xyz(fnumb,elem_arr,geom_arr)
   ! and coordinates in geom_arr.
   !--------------------------------------------------------
 
-  integer, intent(IN) :: fnumb
-  character(len=*), dimension(:), intent(OUT) :: elem_arr
-  real(DBL), dimension(:), intent(OUT) :: geom_arr
-  logical :: is_open
-  integer :: i, j, atoms
-  character(120) :: str
-  character(40)  :: field
-  integer :: err_n
-  character(120) :: err_msg
+  integer,                    intent(IN)  :: fnumb
+  character(*), dimension(:), intent(OUT) :: elem_arr
+  real(DBL),    dimension(:), intent(OUT) :: geom_arr
+
+  logical                                 :: is_open
+  integer                                 :: i
+  integer                                 :: j
+  integer                                 :: atoms
+  character(120)                          :: str
+  character(40)                           :: field
+  integer                                 :: err_n
+  character(120)                          :: err_msg
 
   inquire(unit=fnumb,opened=is_open)
   if (.not.is_open) then

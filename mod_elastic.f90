@@ -18,29 +18,41 @@ module elastic
   private
 
   ! protected variables -----------------------------------
-  public    :: total_forces, parall_elastic_forces, perpen_pes_forces,&
-    &norm_tangent
-  protected :: total_forces, parall_elastic_forces, perpen_pes_forces,&
-    &norm_tangent
+  public    :: total_forces,          &
+               parall_elastic_forces, &
+               perpen_pes_forces,     &
+               norm_tangent
+  protected :: total_forces,          &
+               parall_elastic_forces, &
+               perpen_pes_forces,     &
+               norm_tangent
   ! pubic procedures --------------------------------------
-  public :: set_spring_k, set_spring_mode, init_elastic_module,&
-    &compute_total_forces, arbitrary_geom_total_forces,&
-    &init_tangents, set_total_forces_on_i
+  public    :: set_spring_k,                &
+               set_spring_mode,             &
+               init_elastic_module,         &
+               compute_total_forces,        &
+               arbitrary_geom_total_forces, &
+               init_tangents,               &
+               set_total_forces_on_i
 
   !--------------------------------------------------------
   ! ENUM
-  integer, parameter :: STATIC_SPRING  = 0
-  integer, parameter :: DYNAMIC_SPRING = 1
-  integer, parameter :: HYBRID_SPRING  = 2
-  integer :: spring_mode = DYNAMIC_SPRING
+  integer, parameter                     :: STATIC_SPRING  = 0
+  integer, parameter                     :: DYNAMIC_SPRING = 1
+  integer, parameter                     :: HYBRID_SPRING  = 2
+  integer                                :: spring_mode = DYNAMIC_SPRING
 
-  logical :: flag_spring_k=.false.
-  logical :: flag_init_elastic_module=.false.
-  real(DBL), allocatable, dimension(:) :: dynamic_spring_k
-  real(DBL), allocatable, dimension(:,:) :: total_forces,&
-    &parall_elastic_forces, perpen_pes_forces,&
-    &perpen_idpp_forces, tangent, norm_tangent, half_tangent
-  real(DBL) :: spring_k
+  logical                                :: flag_spring_k            = .false.
+  logical                                :: flag_init_elastic_module = .false.
+  real(DBL), allocatable, dimension(:)   :: dynamic_spring_k
+  real(DBL), allocatable, dimension(:,:) :: total_forces
+  real(DBL), allocatable, dimension(:,:) :: parall_elastic_forces
+  real(DBL), allocatable, dimension(:,:) :: perpen_pes_forces
+  real(DBL), allocatable, dimension(:,:) :: perpen_idpp_forces
+  real(DBL), allocatable, dimension(:,:) :: tangent
+  real(DBL), allocatable, dimension(:,:) :: norm_tangent
+  real(DBL), allocatable, dimension(:,:) :: half_tangent
+  real(DBL)                              :: spring_k
 
 contains
 
@@ -67,7 +79,8 @@ end subroutine set_spring_k
 subroutine set_spring_mode(str)
 
   character(*), intent(INOUT) :: str
-  logical, save :: first_call=.true.
+
+  logical, save               :: first_call = .true.
 
   if (first_call.eqv..false.) then
     call error("set_spring_mode: subroutine called more than once")
@@ -104,8 +117,8 @@ subroutine init_elastic_module()
   ! don't need to check if their arguments are valid.
   !--------------------------------------------------------
 
-  integer :: err_n
-  character(len=120) :: err_msg
+  integer        :: err_n
+  character(120) :: err_msg
 
   ! preliminary checks ------------------------------------
   if (flag_init_images.eqv..false.) then
@@ -176,8 +189,9 @@ subroutine compute_total_forces(mode,fixed)
 
   integer, intent(IN) :: mode
   logical, intent(IN) :: fixed
-  integer :: atoms
-  character(8) :: istr
+
+  integer             :: atoms
+  character(8)        :: istr
 
   if (flag_init_elastic_module.eqv..false.) then
     call error("compute_total_forces: module elastic not initialized")
@@ -215,21 +229,31 @@ end subroutine compute_total_forces
 
 subroutine arbitrary_geom_total_forces(i,ig,f,g)
 
-  integer, intent(IN) :: i                  ! image number
-  real(DBL), dimension(:), intent(IN) :: ig ! image geometry (Ang)
-  real(DBL), intent(OUT) :: f               ! pes energy in point ig (Hartree)
-  real(DBL), dimension(:), intent(OUT) :: g ! total forces in point ig (Hartree/Ang)
-  real(DBL), save, allocatable, dimension(:) :: pesg    ! pes forces (Hartree/Ang)
-  real(DBL), save, allocatable, dimension(:) :: taup, taum ! t+ and t-
-  real(DBL), save, allocatable, dimension(:) :: tg, ntg ! tangent and normalized tangent
-  real(DBL), save, allocatable, dimension(:) :: paelfo  ! parallel elastic forces
-  real(DBL), save, allocatable, dimension(:) :: pepefo  ! perpendicular pes forces
-  real(DBL) :: prev, curr, next
-  real(DBL) :: c1, c2, coeff, e_max, e_min, dp
-  real(DBL) :: conv_threshold
-  logical :: converged
-  integer :: err_n
-  character(len=120) :: err_msg
+  integer,                 intent(IN)        :: i      ! image number
+  real(DBL), dimension(:), intent(IN)        :: ig     ! image geometry (Ang)
+  real(DBL),               intent(OUT)       :: f      ! pes energy in point ig (Hartree)
+  real(DBL), dimension(:), intent(OUT)       :: g      ! total forces in point ig (Hartree/Ang)
+
+  real(DBL), save, allocatable, dimension(:) :: pesg   ! pes forces (Hartree/Ang)
+  real(DBL), save, allocatable, dimension(:) :: taup   ! t+
+  real(DBL), save, allocatable, dimension(:) :: taum   ! t-
+  real(DBL), save, allocatable, dimension(:) :: tg     ! tangent
+  real(DBL), save, allocatable, dimension(:) :: ntg    ! normalized tangent
+  real(DBL), save, allocatable, dimension(:) :: paelfo ! parallel elastic forces
+  real(DBL), save, allocatable, dimension(:) :: pepefo ! perpendicular pes forces
+  real(DBL)                                  :: prev
+  real(DBL)                                  :: curr
+  real(DBL)                                  :: next
+  real(DBL)                                  :: c1
+  real(DBL)                                  :: c2
+  real(DBL)                                  :: coeff
+  real(DBL)                                  :: e_max
+  real(DBL)                                  :: e_min
+  real(DBL)                                  :: dp
+  real(DBL)                                  :: conv_threshold
+  logical                                    :: converged
+  integer                                    :: err_n
+  character(120)                             :: err_msg
 
   if (.not.flag_init_elastic_module) then
     call error("arbitrary_geom_total_forces: module elastic not initialized")
@@ -382,7 +406,7 @@ end subroutine init_tangents
 
 subroutine set_total_forces_on_i(i,forces)
 
-  integer, intent(IN) :: i
+  integer,                 intent(IN) :: i
   real(DBL), dimension(:), intent(IN) :: forces
 
   if ((i<1).or.(i>image_n)) then
@@ -410,13 +434,13 @@ subroutine compute_dynamic_spring_k()
   !--------------------------------------------------------
 
   real(DBL), allocatable, dimension(:) :: e
-  real(DBL) :: e_max
-  real(DBL) :: e_ref
-  real(DBL) :: k_max
-  real(DBL) :: dk
-  integer :: i
-  integer :: err_n
-  character(120) :: err_msg
+  real(DBL)                            :: e_max
+  real(DBL)                            :: e_ref
+  real(DBL)                            :: k_max
+  real(DBL)                            :: dk
+  integer                              :: i
+  integer                              :: err_n
+  character(120)                       :: err_msg
 
   ! preliminary checks ------------------------------------
   select case (spring_mode)
@@ -462,8 +486,10 @@ end subroutine compute_dynamic_spring_k
 
 subroutine compute_parall_elastic_forces()
 
-  integer :: i
-  real(DBL) :: coeff, c1, c2
+  integer   :: i
+  real(DBL) :: coeff
+  real(DBL) :: c1
+  real(DBL) :: c2
 
   select case (spring_mode)
   case (STATIC_SPRING)
@@ -491,7 +517,7 @@ end subroutine compute_parall_elastic_forces
 
 subroutine compute_perpen_pes_forces()
 
-  integer :: i
+  integer   :: i
   real(DBL) :: dp
 
   do i=1, image_n
@@ -505,7 +531,7 @@ end subroutine compute_perpen_pes_forces
 
 subroutine compute_perpen_idpp_forces()
 
-  integer :: i
+  integer   :: i
   real(DBL) :: dp
 
   do i=1, image_n
@@ -539,14 +565,18 @@ subroutine compute_tangent(mode)
   ! Do not call directly, use init_tangents instead
   !--------------------------------------------------------
 
-  integer, intent(IN) :: mode
-  integer :: i
-  real(DBL) :: prev, curr, next
-  real(DBL) :: e_max, e_min
+  integer, intent(IN)                  :: mode
+
+  integer                              :: i
+  real(DBL)                            :: prev
+  real(DBL)                            :: curr
+  real(DBL)                            :: next
+  real(DBL)                            :: e_max
+  real(DBL)                            :: e_min
   real(DBL), allocatable, dimension(:) :: energy
-  character(8) :: istr
-  integer :: err_n
-  character(120) :: err_msg
+  character(8)                         :: istr
+  integer                              :: err_n
+  character(120)                       :: err_msg
 
   ! allocation section ------------------------------------
   allocate(energy(0:image_n+1),stat=err_n,errmsg=err_msg)

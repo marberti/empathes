@@ -11,34 +11,61 @@ module geometry
   private
 
   ! public variables --------------------------------------
-  public :: start_geom, end_geom
+  public    :: start_geom, &
+               end_geom
   ! protected variables -----------------------------------
-  public    :: element, elabel, geom_len, geom_charge, geom_multip,&
-    &image_n, image_geom, flag_init_images, flag_only_interpolation
-  protected :: element, elabel, geom_len, geom_charge, geom_multip,&
-    &image_n, image_geom, flag_init_images, flag_only_interpolation
+  public    :: element,                &
+               elabel,                 &
+               geom_len,               &
+               geom_charge,            &
+               geom_multip,            &
+               image_n,                &
+               image_geom,             &
+               flag_init_images,       &
+               flag_only_interpolation
+  protected :: element,                &
+               elabel,                 &
+               geom_len,               &
+               geom_charge,            &
+               geom_multip,            &
+               image_n,                &
+               image_geom,             &
+               flag_init_images,       &
+               flag_only_interpolation
   ! public procedures -------------------------------------
-  public :: allocate_geom, allocate_image_geom, set_geom_len,&
-    &set_image_n, init_images, update_images, update_image_geom,&
-    &init_element, update_element, init_elabel, update_elabel,&
-    &set_geom_charge, set_geom_multip, set_only_interpolation,&
-    &set_geometries_file
+  public    :: allocate_geom,          &
+               allocate_image_geom,    &
+               set_geom_len,           &
+               set_image_n,            &
+               init_images,            &
+               update_images,          &
+               update_image_geom,      &
+               init_element,           &
+               update_element,         &
+               init_elabel,            &
+               update_elabel,          &
+               set_geom_charge,        &
+               set_geom_multip,        &
+               set_only_interpolation, &
+               set_geometries_file
 
   !--------------------------------------------------------
-  logical :: flag_init_images        = .false.
-  logical :: flag_only_interpolation = .false.
-  logical :: flag_init_element       = .false.
-  logical :: flag_init_elabel        = .false.
-  logical :: flag_set_image_n        = .false.
-  logical :: flag_set_geom_len       = .false.
-  logical :: flag_geometries_file    = .false.
-  integer :: geom_len  ! length of start and end geometries = 3*atoms
-  integer :: image_n   ! number of images
-  integer :: geom_charge, geom_multip
-  character(3), allocatable, dimension(:) :: element
-  character(3), allocatable, dimension(:) :: elabel
-  real(DBL), allocatable, dimension(:) :: start_geom, end_geom
-  real(DBL), allocatable, dimension(:,:) :: image_geom ! geometry for each image (image,coordinate)
+  logical                                   :: flag_init_images        = .false.
+  logical                                   :: flag_only_interpolation = .false.
+  logical                                   :: flag_init_element       = .false.
+  logical                                   :: flag_init_elabel        = .false.
+  logical                                   :: flag_set_image_n        = .false.
+  logical                                   :: flag_set_geom_len       = .false.
+  logical                                   :: flag_geometries_file    = .false.
+  integer                                   :: geom_len   ! length of start and end geometries = 3*atoms
+  integer                                   :: image_n    ! number of images
+  integer                                   :: geom_charge
+  integer                                   :: geom_multip
+  character(3), allocatable, dimension(:)   :: element
+  character(3), allocatable, dimension(:)   :: elabel
+  real(DBL),    allocatable, dimension(:)   :: start_geom
+  real(DBL),    allocatable, dimension(:)   :: end_geom
+  real(DBL),    allocatable, dimension(:,:) :: image_geom ! geometry for each image (image,coordinate)
 
 contains
 
@@ -49,9 +76,10 @@ contains
 subroutine allocate_geom(geom,len)
 
   character(*), intent(IN) :: geom
-  integer, intent(IN) :: len
-  integer :: err_n
-  character(120) :: err_msg
+  integer,      intent(IN) :: len
+
+  integer                  :: err_n
+  character(120)           :: err_msg
 
   if (geom=="#START") then
     allocate(start_geom(len),stat=err_n,errmsg=err_msg)
@@ -71,7 +99,7 @@ end subroutine allocate_geom
 
 subroutine allocate_image_geom()
 
-  integer :: err_n
+  integer        :: err_n
   character(120) :: err_msg
 
   ! preliminary checks ------------------------------------
@@ -153,12 +181,12 @@ subroutine init_images()
   ! Currently only linear interpolation is supported.
   !--------------------------------------------------------
 
-  integer :: i
+  integer                              :: i
   real(DBL), allocatable, dimension(:) :: tmp_start
   real(DBL), allocatable, dimension(:) :: tmp_end
   real(DBL), allocatable, dimension(:) :: delta
-  integer :: err_n
-  character(120) :: err_msg
+  integer                              :: err_n
+  character(120)                       :: err_msg
 
   ! if I'm a slave, i go to... ----------------------------
 #ifdef USE_MPI
@@ -282,7 +310,7 @@ end subroutine update_images
 
 subroutine update_image_geom(i,arr)
 
-  integer, intent(IN) :: i
+  integer,                 intent(IN) :: i
   real(DBL), dimension(:), intent(IN) :: arr
 
   ! preliminary checks ------------------------------------
@@ -308,8 +336,9 @@ end subroutine update_image_geom
 subroutine init_element(n)
 
   integer, intent(IN) :: n
-  integer :: err_n
-  character(120) :: err_msg
+
+  integer             :: err_n
+  character(120)      :: err_msg
 
   ! preliminary checks ------------------------------------
   if (flag_init_element) then
@@ -355,8 +384,9 @@ end subroutine update_element
 subroutine init_elabel(n)
 
   integer, intent(IN) :: n
-  integer :: err_n
-  character(120) :: err_msg
+
+  integer             :: err_n
+  character(120)      :: err_msg
 
   ! preliminary checks ------------------------------------
   if (flag_init_elabel) then
@@ -402,7 +432,8 @@ end subroutine update_elabel
 subroutine set_geom_charge(str)
   
   character(*), intent(IN) :: str
-  logical, save :: first_call=.true.
+
+  logical, save            :: first_call = .true.
 
   ! preliminary checks ------------------------------------
   if (first_call.eqv..false.) then
@@ -416,7 +447,7 @@ subroutine set_geom_charge(str)
     call error("set_geom_charge: argument """//str//""" is not valid")
   end if
 
-  first_call=.false.
+  first_call = .false.
 
 end subroutine set_geom_charge
 
@@ -425,7 +456,8 @@ end subroutine set_geom_charge
 subroutine set_geom_multip(str)
 
   character(*), intent(IN) :: str
-  logical, save :: first_call=.true.
+
+  logical, save            :: first_call = .true.
 
   ! preliminary checks ------------------------------------
   if (first_call.eqv..false.) then
@@ -443,7 +475,7 @@ subroutine set_geom_multip(str)
     call error("set_geom_multip: argument must be a non-zero positive integer")
   end if
 
-  first_call=.false.
+  first_call = .false.
 
 end subroutine set_geom_multip
 
@@ -453,7 +485,7 @@ subroutine set_only_interpolation(flag)
 
   logical, intent(IN) :: flag
 
-  flag_only_interpolation=flag
+  flag_only_interpolation = flag
 
 end subroutine set_only_interpolation
 
@@ -463,7 +495,7 @@ subroutine set_geometries_file(flag)
 
   logical, intent(IN) :: flag
 
-  flag_geometries_file=flag
+  flag_geometries_file = flag
 
 end subroutine set_geometries_file
 
@@ -478,15 +510,15 @@ subroutine mmpi_init_images()
   ! Init all slave processes
   !--------------------------------------------------------
 
-  character(8) :: istr
-  integer :: cmd
-  integer :: sz
-  integer :: i
-  character(30) :: str30
+  character(8)                            :: istr
+  integer                                 :: cmd
+  integer                                 :: sz
+  integer                                 :: i
+  character(30)                           :: str30
   character(3), allocatable, dimension(:) :: e_buff
-  logical :: flag
-  integer :: err_n
-  character(120) :: err_msg
+  logical                                 :: flag
+  integer                                 :: err_n
+  character(120)                          :: err_msg
 
   ! master gets slaves into this subroutine ---------------
   if (proc_id==0) then

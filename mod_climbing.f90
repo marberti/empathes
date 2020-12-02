@@ -25,16 +25,23 @@ module climbing
   private
 
   ! protected variables -----------------------------------
-  public    :: flag_climbing_image, flag_climbing_quick_start,&
-    &flag_descending_image, flag_descending_quick_start,&
-    &climbing_image_n
-  protected :: flag_climbing_image, flag_climbing_quick_start,&
-    &flag_descending_image, flag_descending_quick_start,&
-    &climbing_image_n
+  public    :: flag_climbing_image,&
+               flag_climbing_quick_start,&
+               flag_descending_image,&
+               flag_descending_quick_start,&
+               climbing_image_n
+  protected :: flag_climbing_image,&
+               flag_climbing_quick_start,&
+               flag_descending_image,&
+               flag_descending_quick_start,&
+               climbing_image_n
   ! public procedures -------------------------------------
-  public :: set_climbing_image, set_climbing_quick_start,&
-    &set_descending_image, set_descending_quick_start,&
-    &exec_climbing, exec_descending
+  public    :: set_climbing_image,&
+               set_climbing_quick_start,&
+               set_descending_image,&
+               set_descending_quick_start,&
+               exec_climbing,&
+               exec_descending
 
   !--------------------------------------------------------
   logical :: flag_climbing_image=.false.
@@ -121,19 +128,20 @@ end subroutine set_descending_quick_start
 
 subroutine exec_climbing(fixed,write_output)
 
-  logical, intent(IN) :: fixed
-  logical, intent(IN) :: write_output
+  logical, intent(IN)                  :: fixed
+  logical, intent(IN)                  :: write_output
 
-  logical, allocatable, dimension(:) :: mask
+  logical,   allocatable, dimension(:) :: mask
   real(DBL), allocatable, dimension(:) :: forces
-  character(8) :: istr
-  integer :: i, indx
-  integer :: atoms
-  integer :: tot_maxima
-  integer :: up_lim
-  real(DBL) :: dp
-  integer :: err_n
-  character(120) :: err_msg
+  character(8)                         :: istr
+  integer                              :: i
+  integer                              :: indx
+  integer                              :: atoms
+  integer                              :: tot_maxima
+  integer                              :: up_lim
+  real(DBL)                            :: dp
+  integer                              :: err_n
+  character(120)                       :: err_msg
 
   ! preliminary checks ------------------------------------
   if (flag_climbing_image.eqv..false.) then
@@ -206,17 +214,18 @@ end subroutine exec_climbing
 
 subroutine exec_descending(fixed,write_output)
 
-  logical, intent(IN) :: fixed
-  logical, intent(IN) :: write_output
+  logical, intent(IN)                  :: fixed
+  logical, intent(IN)                  :: write_output
 
-  logical, allocatable, dimension(:) :: mask
+  logical,   allocatable, dimension(:) :: mask
   real(DBL), allocatable, dimension(:) :: forces
-  character(8) :: istr
-  integer :: i, indx
-  integer :: atoms
-  integer :: tot_minima
-  integer :: err_n
-  character(120) :: err_msg
+  character(8)                         :: istr
+  integer                              :: i
+  integer                              :: indx
+  integer                              :: atoms
+  integer                              :: tot_minima
+  integer                              :: err_n
+  character(120)                       :: err_msg
 
   ! preliminary checks ------------------------------------
   if (flag_descending_image.eqv..false.) then

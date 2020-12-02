@@ -29,19 +29,27 @@ subroutine lbfgs(n,m,x,f,g,factr,pgtol,task,iprint)
   ! without the boundary conditions.
   !--------------------------------------------------------
 
-  integer, intent(IN) :: n, m, iprint
-  real(DBL), intent(IN) :: factr, pgtol
-  real(DBL), intent(INOUT) :: f
-  real(DBL), dimension(n), intent(INOUT) :: x, g
-  character(len=60), intent(INOUT) :: task
-  integer, allocatable, dimension(:), save :: nbd, iwa
-  real(DBL), allocatable, dimension(:), save :: l, u, wa
-  character(len=60), save        :: csave
-  logical, dimension(4), save    :: lsave
-  integer, dimension(44), save   :: isave
-  real(DBL), dimension(29), save :: dsave
-  integer :: err_n
-  character(len=120) :: err_msg
+  integer,                 intent(IN)        :: n
+  integer,                 intent(IN)        :: m
+  real(DBL), dimension(n), intent(INOUT)     :: x
+  real(DBL),               intent(INOUT)     :: f
+  real(DBL), dimension(n), intent(INOUT)     :: g
+  real(DBL),               intent(IN)        :: factr
+  real(DBL),               intent(IN)        :: pgtol
+  character(60),           intent(INOUT)     :: task
+  integer,                 intent(IN)        :: iprint
+
+  integer,   allocatable, dimension(:), save :: nbd
+  integer,   allocatable, dimension(:), save :: iwa
+  real(DBL), allocatable, dimension(:), save :: l
+  real(DBL), allocatable, dimension(:), save :: u
+  real(DBL), allocatable, dimension(:), save :: wa
+  character(60)                       , save :: csave
+  logical,   dimension(4)             , save :: lsave
+  integer,   dimension(44)            , save :: isave
+  real(DBL), dimension(29)            , save :: dsave
+  integer                                    :: err_n
+  character(120)                             :: err_msg
 
   ! allocation and initialization -------------------------
   if (.not.allocated(nbd)) then

@@ -14,21 +14,25 @@ module optimization
   private
 
   ! public procedures -------------------------------------
-  public :: set_optmz_algo, set_optmz_nsteps, set_optmz_tol,&
-    &set_idpp_tol, optmz_pes, optmz_idpp
+  public :: set_optmz_algo,   &
+            set_optmz_nsteps, &
+            set_optmz_tol,    &
+            set_idpp_tol,     &
+            optmz_pes,        &
+            optmz_idpp
 
   !--------------------------------------------------------
-  logical :: flag_optmz_nsteps = .false.
-  logical :: flag_optmz_tol    = .false.
   ! ENUM
-  integer, parameter :: ALGO_SD    = 0
-  integer, parameter :: ALGO_LBFGS = 1
-  integer, parameter :: ALGO_FIRE  = 2
+  integer, parameter :: ALGO_SD           = 0
+  integer, parameter :: ALGO_LBFGS        = 1
+  integer, parameter :: ALGO_FIRE         = 2
+  integer            :: optmz_algo        = ALGO_FIRE ! default algorithm
 
-  integer   :: optmz_algo = ALGO_FIRE ! default algorithm
-  integer   :: optmz_nsteps
-  real(DBL) :: optmz_tol
-  real(DBL) :: idpp_tol = 1.0E-3_DBL ! default idpp convergence threshold
+  logical            :: flag_optmz_nsteps = .false.
+  logical            :: flag_optmz_tol    = .false.
+  integer            :: optmz_nsteps
+  real(DBL)          :: optmz_tol
+  real(DBL)          :: idpp_tol          = 1.0E-3_DBL ! default idpp convergence threshold
 
 contains
 
@@ -42,7 +46,8 @@ subroutine set_optmz_algo(str)
   ! It must be called at most once.
 
   character(*), intent(INOUT) :: str
-  logical, save :: first_call = .true.
+
+  logical, save               :: first_call = .true.
 
   if (first_call.eqv..false.) then
     call error("set_optmz_algo: subroutine called more than once")
@@ -115,7 +120,8 @@ end subroutine set_optmz_tol
 subroutine set_idpp_tol(str)
   
   character(*), intent(IN) :: str
-  logical, save :: first_call=.true.
+
+  logical, save            :: first_call = .true.
 
   if (first_call.eqv..false.) then
     call error("set_idpp_tol: subroutine called more than once")
@@ -136,7 +142,8 @@ end subroutine set_idpp_tol
 subroutine optmz_pes(flag_out)
 
   logical, intent(OUT) :: flag_out ! true if convergent, false otherwise
-  character(8) :: istr
+
+  character(8)         :: istr
 
   select case (optmz_algo)
   case (ALGO_SD)
@@ -171,23 +178,43 @@ end subroutine optmz_idpp
 subroutine optmz_steepest_descent(mode,flag_out,nsteps,stepsize,tol,&
     &writegp,writegeom,fixed,savelastgeom,verbose)
 
-  integer, intent(IN) :: mode
-  logical, intent(OUT) :: flag_out ! true if convergent, false otherwise
-  integer, optional, intent(IN) :: nsteps, writegp, writegeom
-  real(DBL), optional, intent(IN) :: stepsize, tol
-  logical, optional, intent(IN) :: fixed, savelastgeom, verbose
-  integer :: p_nsteps, p_writegp, p_writegeom
-  real(DBL) :: p_stepsize, p_tol
-  logical :: p_fixed, p_savelastgeom, p_verbose
+  integer,                   intent(IN)  :: mode
+  logical,                   intent(OUT) :: flag_out ! true if convergent, false otherwise
+  integer,   optional,       intent(IN)  :: nsteps
+  real(DBL), optional,       intent(IN)  :: stepsize
+  real(DBL), optional,       intent(IN)  :: tol
+  integer,   optional,       intent(IN)  :: writegp
+  integer,   optional,       intent(IN)  :: writegeom
+  logical,   optional,       intent(IN)  :: fixed
+  logical,   optional,       intent(IN)  :: savelastgeom
+  logical,   optional,       intent(IN)  :: verbose
 
-  integer :: i, j
-  character(8) :: istr
-  logical :: flag_converged
-  logical, allocatable, dimension(:) :: perpen_conv, total_conv, delta_total_conv
-  real(DBL), allocatable, dimension(:,:) :: new_geom, old_geom, delta_geom, old_forces, delta_forces
-  real(DBL) :: max_disp, max_force_norm, tmp_real
-  integer :: err_n
-  character(120) :: err_msg
+  integer                                :: p_nsteps
+  integer                                :: p_writegp
+  integer                                :: p_writegeom
+  real(DBL)                              :: p_stepsize
+  real(DBL)                              :: p_tol
+  logical                                :: p_fixed
+  logical                                :: p_savelastgeom
+  logical                                :: p_verbose
+
+  integer                                :: i
+  integer                                :: j
+  character(8)                           :: istr
+  logical                                :: flag_converged
+  logical,   allocatable, dimension(:)   :: perpen_conv
+  logical,   allocatable, dimension(:)   :: total_conv
+  logical,   allocatable, dimension(:)   :: delta_total_conv
+  real(DBL), allocatable, dimension(:,:) :: new_geom
+  real(DBL), allocatable, dimension(:,:) :: old_geom
+  real(DBL), allocatable, dimension(:,:) :: delta_geom
+  real(DBL), allocatable, dimension(:,:) :: old_forces
+  real(DBL), allocatable, dimension(:,:) :: delta_forces
+  real(DBL)                              :: max_disp
+  real(DBL)                              :: max_force_norm
+  real(DBL)                              :: tmp_real
+  integer                                :: err_n
+  character(120)                         :: err_msg
 
   ! checking arguments ------------------------------------
   if (present(nsteps)) then
@@ -464,26 +491,38 @@ end subroutine optmz_steepest_descent
 subroutine optmz_lbfgs(mode,flag_out,nsteps,memsize,prec,tol,verblvl,&
     &fixed,savelastgeom)
 
-  integer, intent(IN) :: mode
-  logical, intent(OUT) :: flag_out ! true if convergent, false otherwise
-  integer, optional, intent(IN) :: nsteps, memsize, verblvl
-  real(DBL), optional, intent(IN) :: prec, tol
-  logical, optional, intent(IN) :: fixed, savelastgeom
-  integer :: n, m, iprint                                                                     
-  real(DBL) :: factr, pgtol
-  real(DBL), allocatable, dimension(:)   :: f ! energy
-  real(DBL), allocatable, dimension(:,:) :: x ! coordinates
-  real(DBL), allocatable, dimension(:,:) :: g ! gradient
-  character(len=60) :: task
-  logical :: p_fixed, p_savelastgeom
+  integer,                   intent(IN)  :: mode
+  logical,                   intent(OUT) :: flag_out         ! true if convergent, false otherwise
+  integer,   optional,       intent(IN)  :: nsteps
+  integer,   optional,       intent(IN)  :: memsize
+  real(DBL), optional,       intent(IN)  :: prec
+  real(DBL), optional,       intent(IN)  :: tol
+  integer,   optional,       intent(IN)  :: verblvl
+  logical,   optional,       intent(IN)  :: fixed
+  logical,   optional,       intent(IN)  :: savelastgeom
 
-  logical, allocatable, dimension(:) :: image_conv
-  logical :: flag_converged, flag_first_bfgs
-  integer :: p_nsteps, i, j
-  character(8) :: j_str
-  character(8) :: istr
-  character(120) :: err_msg
-  integer :: err_n
+  integer                                :: p_nsteps
+  logical                                :: p_fixed
+  logical                                :: p_savelastgeom
+
+  integer                                :: n
+  integer                                :: m
+  integer                                :: iprint
+  real(DBL)                              :: factr
+  real(DBL)                              :: pgtol
+  real(DBL), allocatable, dimension(:)   :: f                ! energy
+  real(DBL), allocatable, dimension(:,:) :: x                ! coordinates
+  real(DBL), allocatable, dimension(:,:) :: g                ! gradient
+  character(60)                          :: task
+  logical, allocatable, dimension(:)     :: image_conv
+  logical                                :: flag_converged
+  logical                                :: flag_first_bfgs
+  integer                                :: i
+  integer                                :: j
+  character(8)                           :: j_str
+  character(8)                           :: istr
+  character(120)                         :: err_msg
+  integer                                :: err_n
 
   ! checking arguments ------------------------------------
   if (present(nsteps)) then
@@ -690,30 +729,40 @@ end subroutine optmz_lbfgs
 subroutine optmz_fire(mode,flag_out,nsteps,maxstepsize,tol,&
     &fixed,savelastgeom)
 
-  integer, intent(IN) :: mode
-  logical, intent(OUT) :: flag_out ! true if convergent, false otherwise
-  integer, optional, intent(IN) :: nsteps
-  real(DBL), optional, intent(IN) :: maxstepsize, tol
-  logical, optional, intent(IN) :: fixed, savelastgeom
-  integer :: p_nsteps
-  real(DBL) :: p_tol
-  logical :: p_fixed, p_savelastgeom
+  integer,             intent(IN)        :: mode
+  logical,             intent(OUT)       :: flag_out       ! true if convergent, false otherwise
+  integer,   optional, intent(IN)        :: nsteps
+  real(DBL), optional, intent(IN)        :: maxstepsize
+  real(DBL), optional, intent(IN)        :: tol
+  logical,   optional, intent(IN)        :: fixed
+  logical,   optional, intent(IN)        :: savelastgeom
 
-  real(DBL), parameter :: dtdec=0.5_DBL
-  real(DBL), parameter :: dtinc=1.1_DBL
-  real(DBL), parameter :: alpha_start=0.1_DBL
-  real(DBL), parameter :: alpha_dec=0.99_DBL
-  integer, parameter   :: stepi_min=5
-  logical, allocatable, dimension(:) :: total_conv
-  real(DBL), allocatable, dimension(:,:) :: x, dx, velocity
-  real(DBL) :: dt, dtmax
-  real(DBL) :: power, alpha
-  logical :: flag_converged
-  integer :: i, j, stepi
-  real(DBL) :: rtmp
-  character(8) :: istr
-  integer :: err_n
-  character(120) :: err_msg
+  integer                                :: p_nsteps
+  real(DBL)                              :: p_tol
+  logical                                :: p_fixed
+  logical                                :: p_savelastgeom
+
+  real(DBL), parameter                   :: dtdec          = 0.5_DBL
+  real(DBL), parameter                   :: dtinc          = 1.1_DBL
+  real(DBL), parameter                   :: alpha_start    = 0.1_DBL
+  real(DBL), parameter                   :: alpha_dec      = 0.99_DBL
+  integer,   parameter                   :: stepi_min      = 5
+  logical,   allocatable, dimension(:)   :: total_conv
+  real(DBL), allocatable, dimension(:,:) :: x
+  real(DBL), allocatable, dimension(:,:) :: dx
+  real(DBL), allocatable, dimension(:,:) :: velocity
+  real(DBL)                              :: dt
+  real(DBL)                              :: dtmax
+  real(DBL)                              :: power
+  real(DBL)                              :: alpha
+  logical                                :: flag_converged
+  integer                                :: i
+  integer                                :: j
+  integer                                :: stepi
+  real(DBL)                              :: rtmp
+  character(8)                           :: istr
+  integer                                :: err_n
+  character(120)                         :: err_msg
 
   ! checking arguments ------------------------------------
   if (present(nsteps)) then
@@ -927,16 +976,16 @@ subroutine total_forces_modifiers(mode,p_nsteps,i,p_fixed)
   ! like climbing or descending image.
   !--------------------------------------------------------
 
-  integer, intent(IN) :: mode     ! caller operating mode
-  integer, intent(IN) :: p_nsteps ! caller iteration total steps
-  integer, intent(IN) :: i        ! caller current iteration
-  logical, intent(IN) :: p_fixed  ! manipulates degrees of freedom
+  integer,  intent(IN) :: mode                       ! caller operating mode
+  integer,  intent(IN) :: p_nsteps                   ! caller iteration total steps
+  integer,  intent(IN) :: i                          ! caller current iteration
+  logical,  intent(IN) :: p_fixed                    ! manipulates degrees of freedom
 
-  real(DBL), parameter :: cap=0.1_DBL  ! climbing activation percentage
-  integer, parameter   :: cam=10       ! climbing activation maximum steps
-  logical :: flag_climbing_iteration   ! can i do climbing?
-  logical :: flag_descending_iteration ! can i do descending?
-  logical :: write_output=.true.       ! can called subroutines write output?
+  real(DBL), parameter :: cap          = 0.1_DBL     ! climbing activation percentage
+  integer,   parameter :: cam          = 10          ! climbing activation maximum steps
+  logical              :: flag_climbing_iteration    ! can i do climbing?
+  logical              :: flag_descending_iteration  ! can i do descending?
+  logical              :: write_output = .true.      ! can called subroutines write output?
 
   ! works only in PES_MODE --------------------------------
   if (mode/=PES_MODE) then

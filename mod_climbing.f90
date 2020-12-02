@@ -25,31 +25,31 @@ module climbing
   private
 
   ! protected variables -----------------------------------
-  public    :: flag_climbing_image,&
-               flag_climbing_quick_start,&
-               flag_descending_image,&
-               flag_descending_quick_start,&
+  public    :: flag_climbing_image,         &
+               flag_climbing_quick_start,   &
+               flag_descending_image,       &
+               flag_descending_quick_start, &
                climbing_image_n
-  protected :: flag_climbing_image,&
-               flag_climbing_quick_start,&
-               flag_descending_image,&
-               flag_descending_quick_start,&
+  protected :: flag_climbing_image,         &
+               flag_climbing_quick_start,   &
+               flag_descending_image,       &
+               flag_descending_quick_start, &
                climbing_image_n
   ! public procedures -------------------------------------
-  public    :: set_climbing_image,&
-               set_climbing_quick_start,&
-               set_descending_image,&
-               set_descending_quick_start,&
-               exec_climbing,&
+  public    :: set_climbing_image,         &
+               set_climbing_quick_start,   &
+               set_descending_image,       &
+               set_descending_quick_start, &
+               exec_climbing,              &
                exec_descending
 
   !--------------------------------------------------------
-  logical :: flag_climbing_image=.false.
-  logical :: flag_climbing_quick_start=.false.
-  logical :: flag_descending_image=.false.
-  logical :: flag_descending_quick_start=.false.
-  logical :: flag_all_maxima_climbing=.false.
-  integer :: climbing_image_n=0
+  logical :: flag_climbing_image         = .false.
+  logical :: flag_climbing_quick_start   = .false.
+  logical :: flag_descending_image       = .false.
+  logical :: flag_descending_quick_start = .false.
+  logical :: flag_all_maxima_climbing    = .false.
+  integer :: climbing_image_n            = 0
 
 contains
 

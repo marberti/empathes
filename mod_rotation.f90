@@ -10,10 +10,11 @@ module rotation
   public    :: flag_rotation
   protected :: flag_rotation
   ! public procedures -------------------------------------
-  public :: set_rotation, rotate_geometry
+  public    :: set_rotation,   &
+               rotate_geometry
 
   !--------------------------------------------------------
-  logical :: flag_rotation=.false.
+  logical :: flag_rotation = .false.
 
 contains
 
@@ -24,15 +25,16 @@ contains
 subroutine set_rotation(flag)
 
   logical, intent(IN) :: flag
-  logical, save :: first_call=.true.
+
+  logical, save       :: first_call = .true.
 
   if (first_call.eqv..false.) then
     call error("set_rotation: subroutine called more than once")
   end if
 
-  flag_rotation=flag
+  flag_rotation = flag
 
-  first_call=.false.
+  first_call = .false.
 
 end subroutine set_rotation
 
@@ -40,34 +42,44 @@ end subroutine set_rotation
 
 subroutine rotate_geometry(geom_in,geom_out)
 
-  real(DBL), dimension(:), intent(IN)  :: geom_in
-  real(DBL), dimension(:), intent(OUT) :: geom_out
+  real(DBL), dimension(:),   intent(IN)  :: geom_in
+  real(DBL), dimension(:),   intent(OUT) :: geom_out
 
-  real(DBL), dimension(3,3), parameter :: rx  =&
+  real(DBL), dimension(3,3), parameter   :: rx  =&
     &reshape([1.0_DBL,0.0_DBL,0.0_DBL,0.0_DBL,0.0_DBL,-1.0_DBL,0.0_DBL,1.0_DBL,0.0_DBL],[3,3])
-  real(DBL), dimension(3,3), parameter :: ry  =&
+  real(DBL), dimension(3,3), parameter   :: ry  =&
     &reshape([0.0_DBL,0.0_DBL,1.0_DBL,0.0_DBL,1.0_DBL,0.0_DBL,-1.0_DBL,0.0_DBL,0.0_DBL],[3,3])
-  real(DBL), dimension(3,3), parameter :: rzp =&
+  real(DBL), dimension(3,3), parameter   :: rzp =&
     &reshape([-1.0_DBL,0.0_DBL,0.0_DBL,0.0_DBL,-1.0_DBL,0.0_DBL,0.0_DBL,0.0_DBL,1.0_DBL],[3,3])
-  real(DBL), dimension(3,3), parameter :: rxp =&
+  real(DBL), dimension(3,3), parameter   :: rxp =&
     &reshape([1.0_DBL,0.0_DBL,0.0_DBL,0.0_DBL,-1.0_DBL,0.0_DBL,0.0_DBL,0.0_DBL,-1.0_DBL],[3,3])
-  integer :: atoms
-  integer :: geom_len
-  integer :: i, j, indx
+  integer                                :: atoms
+  integer                                :: geom_len
+  integer                                :: i
+  integer                                :: j
+  integer                                :: indx
   real(DBL), allocatable, dimension(:,:) :: geom     ! contains input geom
   real(DBL), allocatable, dimension(:,:) :: geom_rot ! contains output geom
-  real(DBL) :: aa, bb, cc, ad, bd, cd, d
-  real(DBL) :: rot(3,3)
-  real(DBL) :: xpr, ypr, theta
-  integer :: err_n
-  character(120) :: err_msg
+  real(DBL)                              :: aa
+  real(DBL)                              :: bb
+  real(DBL)                              :: cc
+  real(DBL)                              :: ad
+  real(DBL)                              :: bd
+  real(DBL)                              :: cd
+  real(DBL)                              :: d
+  real(DBL), dimension(3,3)              :: rot
+  real(DBL)                              :: xpr
+  real(DBL)                              :: ypr
+  real(DBL)                              :: theta
+  integer                                :: err_n
+  character(120)                         :: err_msg
 
   ! preliminary checks ------------------------------------
   if (flag_rotation.eqv..false.) then
     call error("rotate_geometry: called with false flag_rotation")
   end if
 
-  geom_len=size(geom_in,1)
+  geom_len = size(geom_in,1)
 
   if (geom_len/=size(geom_out,1)) then
     call error("rotate_geometry: inconsistent argument lengths")
@@ -77,7 +89,7 @@ subroutine rotate_geometry(geom_in,geom_out)
     call error("rotate_geometry: argument lengths must be multiples of 3")
   end if
 
-  atoms=geom_len/3
+  atoms = geom_len/3
 
   !TODO implement rotation for atoms < 3
   if (atoms<3) then
@@ -99,8 +111,8 @@ subroutine rotate_geometry(geom_in,geom_out)
   ! initialization section --------------------------------
   do i=1, atoms
     do j=1, 3
-      indx=3*(i-1)+j
-      geom(i,j)=geom_in(indx)
+      indx      = 3*(i-1)+j
+      geom(i,j) = geom_in(indx)
     end do
   end do
 
@@ -152,8 +164,8 @@ subroutine rotate_geometry(geom_in,geom_out)
   ! copy result -------------------------------------------
   do i=1, atoms
     do j=1, 3
-      indx=3*(i-1)+j
-      geom_out(indx)=geom_rot(i,j)
+      indx           = 3*(i-1)+j
+      geom_out(indx) = geom_rot(i,j)
     end do
   end do
 
@@ -176,11 +188,19 @@ end subroutine rotate_geometry
 
 subroutine ppptp(p,aa,bb,cc)
 
-  real(DBL), dimension(3,3), intent(IN) :: p
-  real(DBL), intent(OUT) :: aa, bb, cc
+  real(DBL), dimension(3,3), intent(IN)  :: p
+  real(DBL),                 intent(OUT) :: aa
+  real(DBL),                 intent(OUT) :: bb
+  real(DBL),                 intent(OUT) :: cc
 
-  real(DBL), dimension(5) :: coef
-  real(DBL) :: m, mp, n, np, o, op, A
+  real(DBL), dimension(5)                :: coef
+  real(DBL)                              :: m
+  real(DBL)                              :: mp
+  real(DBL)                              :: n
+  real(DBL)                              :: np
+  real(DBL)                              :: o
+  real(DBL)                              :: op
+  real(DBL)                              :: A
 
   ! parametric equation of plane
   m  = p(2,1) - p(1,1)
@@ -210,10 +230,14 @@ end subroutine ppptp
 subroutine rot_mat(rot,aa,bb,cc)
 
   real(DBL), dimension(3,3), intent(OUT) :: rot
-  real(DBL), intent(IN) :: aa, bb, cc
+  real(DBL),                 intent(IN)  :: aa
+  real(DBL),                 intent(IN)  :: bb
+  real(DBL),                 intent(IN)  :: cc
 
-  real(DBL), parameter :: PI = 3.14159265358979323846264338327950288_DBL
-  real(DBL) :: phi, tet, bbp
+  real(DBL), parameter                   :: PI  = 3.14159265358979323846264338327950288_DBL
+  real(DBL)                              :: phi
+  real(DBL)                              :: tet
+  real(DBL)                              :: bbp
 
   phi = -PI/2.0_DBL
   tet = -PI/2.0_DBL

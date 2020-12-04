@@ -19,51 +19,79 @@ module pes
   private
 
   ! public variables --------------------------------------
-  public :: pes_input_template, user_basis_set, user_pseudo_potential
+  public    :: pes_input_template,        &
+               user_basis_set,            &
+               user_pseudo_potential
   ! protected variables -----------------------------------
-  public    :: pes_program, pes_exec, method, basis_set,&
-    &pes_forces, pes_energy, start_energy, end_energy,&
-    &flag_init_pes_module
-  protected :: pes_program, pes_exec, method, basis_set,&
-    &pes_forces, pes_energy, start_energy, end_energy,&
-    &flag_init_pes_module
+  public    :: pes_program,               &
+               pes_exec,                  &
+               method,                    &
+               basis_set,                 &
+               pes_forces,                &
+               pes_energy,                &
+               start_energy,              &
+               end_energy,                &
+               flag_init_pes_module
+  protected :: pes_program,               &
+               pes_exec,                  &
+               method,                    &
+               basis_set,                 &
+               pes_forces,                &
+               pes_energy,                &
+               start_energy,              &
+               end_energy,                &
+               flag_init_pes_module
   ! public procedures -------------------------------------
-  public :: init_pes_module, set_start_energy, set_end_energy,&
-    &set_pes_program, set_pes_exec, set_pes_proc, set_pes_mem,&
-    &set_pes_input_template, set_method, set_basis_set,&
-    &compute_pes_forces, get_pes_forces,&
-    &update_pes_energy, update_pes_forces,&
-    &set_user_basis_set, set_user_pseudo_potential,&
-    &get_scfconv, get_scfcycle
+  public    :: init_pes_module,           &
+               set_start_energy,          &
+               set_end_energy,            &
+               set_pes_program,           &
+               set_pes_exec,              &
+               set_pes_proc,              &
+               set_pes_mem,               &
+               set_pes_input_template,    &
+               set_method,                &
+               set_basis_set,             &
+               compute_pes_forces,        &
+               get_pes_forces,            &
+               update_pes_energy,         &
+               update_pes_forces,         &
+               set_user_basis_set,        &
+               set_user_pseudo_potential, &
+               get_scfconv,               &
+               get_scfcycle
 
   !--------------------------------------------------------
-  character(*), parameter :: base_name       = "neb"
-  character(*), parameter :: base_label      = "lbl_"
-  character(*), parameter :: base_dirname    = "dir_neb"
-  character(*), parameter :: base_auxdirname = "dir_aux"
-  logical :: flag_init_pes_module       = .false.
-  logical :: flag_pes_program           = .false.
-  logical :: flag_pes_exec              = .false.
-  logical :: flag_pes_proc              = .false.
-  logical :: flag_pes_mem               = .false.
-  logical :: flag_method                = .false.
-  logical :: flag_basis_set             = .false.
-  logical :: flag_user_basis_set        = .false.
-  logical :: flag_user_pseudo_potential = .false.
-  logical :: flag_pes_input_template    = .false.
-  logical :: flag_start_energy          = .false.
-  logical :: flag_end_energy            = .false.
-  character(30)  :: pes_program, method, basis_set
-  character(120) :: pes_exec
-  integer :: pes_proc
-  integer :: pes_mem
-  character :: pes_mem_scale
+  character(*), parameter                   :: base_name                  = "neb"
+  character(*), parameter                   :: base_label                 = "lbl_"
+  character(*), parameter                   :: base_dirname               = "dir_neb"
+  character(*), parameter                   :: base_auxdirname            = "dir_aux"
+  logical                                   :: flag_init_pes_module       = .false.
+  logical                                   :: flag_pes_program           = .false.
+  logical                                   :: flag_pes_exec              = .false.
+  logical                                   :: flag_pes_proc              = .false.
+  logical                                   :: flag_pes_mem               = .false.
+  logical                                   :: flag_method                = .false.
+  logical                                   :: flag_basis_set             = .false.
+  logical                                   :: flag_user_basis_set        = .false.
+  logical                                   :: flag_user_pseudo_potential = .false.
+  logical                                   :: flag_pes_input_template    = .false.
+  logical                                   :: flag_start_energy          = .false.
+  logical                                   :: flag_end_energy            = .false.
+  character(30)                             :: pes_program
+  character(30)                             :: method
+  character(30)                             :: basis_set
+  character(120)                            :: pes_exec
+  integer                                   :: pes_proc
+  integer                                   :: pes_mem
+  character                                 :: pes_mem_scale
   character(120), allocatable, dimension(:) :: pes_input_template
   character(120), allocatable, dimension(:) :: user_basis_set
   character(120), allocatable, dimension(:) :: user_pseudo_potential
-  real(DBL), allocatable, dimension(:) :: pes_energy
-  real(DBL), allocatable, dimension(:,:) :: pes_forces
-  real(DBL) :: start_energy, end_energy
+  real(DBL), allocatable, dimension(:)      :: pes_energy
+  real(DBL), allocatable, dimension(:,:)    :: pes_forces
+  real(DBL)                                 :: start_energy
+  real(DBL)                                 :: end_energy
 
 contains
 
@@ -85,7 +113,7 @@ subroutine set_start_energy(str)
 
   read(str,*) start_energy
 
-  flag_start_energy=.true.
+  flag_start_energy = .true.
 
 end subroutine set_start_energy
 
@@ -105,7 +133,7 @@ subroutine set_end_energy(str)
 
   read(str,*) end_energy
 
-  flag_end_energy=.true.
+  flag_end_energy = .true.
 
 end subroutine set_end_energy
 
@@ -114,9 +142,10 @@ end subroutine set_end_energy
 subroutine set_pes_program(str)
 
   character(*), intent(INOUT) :: str
+
 #ifdef USE_MPI
-  character(8) :: istr
-  logical :: flag_warning
+  character(8)                :: istr
+  logical                     :: flag_warning
 #endif
 
   ! preliminary checks ------------------------------------
@@ -129,7 +158,7 @@ subroutine set_pes_program(str)
   end if
 
 #ifdef USE_MPI
-  flag_warning=.false.
+  flag_warning = .false.
 #endif
   call tolower(str)
   pes_program=str
@@ -139,7 +168,7 @@ subroutine set_pes_program(str)
   case ("gaussian")
   case ("siesta")
 #ifdef USE_MPI
-    flag_warning=.true.
+    flag_warning = .true.
 #endif
   case default
     call error("set_pes_program: invalid option """//trim(pes_program)//"""")
@@ -156,7 +185,7 @@ subroutine set_pes_program(str)
   end if
 #endif
 
-  flag_pes_program=.true.
+  flag_pes_program = .true.
 
 end subroutine set_pes_program
 
@@ -164,7 +193,7 @@ end subroutine set_pes_program
 
 subroutine set_pes_exec(str)
 
-  character(len=*), intent(IN) :: str
+  character(*), intent(IN) :: str
 
   if (flag_pes_exec) then
     call error("set_pes_exec: pes exec already setted")
@@ -173,10 +202,10 @@ subroutine set_pes_exec(str)
   if (len_trim(str)==0) then
     call error("set_pes_exec: pes exec not specified")
   else
-    pes_exec=str
+    pes_exec = str
   end if
 
-  flag_pes_exec=.true.
+  flag_pes_exec = .true.
 
 end subroutine set_pes_exec
 
@@ -184,7 +213,7 @@ end subroutine set_pes_exec
 
 subroutine set_pes_proc(str)
 
-  character(len=*), intent(IN) :: str
+  character(*), intent(IN) :: str
 
   if (flag_pes_proc) then
     call error("set_pes_proc: pes processors already setted")
@@ -204,7 +233,7 @@ subroutine set_pes_proc(str)
     call error("set_pes_proc: argument must be a non-zero positive integer")
   end if
 
-  flag_pes_proc=.true.
+  flag_pes_proc = .true.
 
 end subroutine set_pes_proc
 
@@ -212,9 +241,10 @@ end subroutine set_pes_proc
 
 subroutine set_pes_mem(str)
 
-  character(len=*), intent(IN) :: str
-  integer :: i
-  character :: c
+  character(*), intent(IN) :: str
+
+  integer                  :: i
+  character                :: c
 
   if (flag_pes_mem) then
     call error("set_pes_mem: pes memory already setted")
@@ -227,12 +257,12 @@ subroutine set_pes_mem(str)
   i=len_trim(str)
 
   if (isalpha(str(i:i))) then
-    c=str(i:i)
+    c = str(i:i)
     call tolower(c)
     if (.not.((c=="k").or.(c=="m").or.(c=="g"))) then
       call error("set_pes_mem: scale """//c//""" is not valid")
     end if
-    pes_mem_scale=c
+    pes_mem_scale = c
 
     if (isinteger(trim(adjustl(str(:i-1))))) then
       read(str(:i-1),*) pes_mem
@@ -240,7 +270,7 @@ subroutine set_pes_mem(str)
       call error("set_pes_mem: wrong argument """//trim(str)//"""")
     end if
   else
-    pes_mem_scale="0"
+    pes_mem_scale = "0"
 
     if (isinteger(trim(adjustl(str)))) then
       read(str,*) pes_mem
@@ -249,7 +279,7 @@ subroutine set_pes_mem(str)
     end if
   end if
 
-  flag_pes_mem=.true.
+  flag_pes_mem = .true.
 
 end subroutine set_pes_mem
 
@@ -257,30 +287,31 @@ end subroutine set_pes_mem
 
 subroutine set_method(str)
 
-  character(len=*), optional, intent(INOUT) :: str
-  character(len=30) :: deflt
+  character(*), optional, intent(INOUT) :: str
+
+  character(30)                         :: deflt
 
   if (.not.present(str)) then
-    str=""
+    str = ""
   end if
 
   if (flag_method) then
     write(FILEOUT,*) "Old definition: #METHOD -> ", trim(method)
   end if
 
-  deflt="hf"
+  deflt = "hf"
   if (len_trim(str)==0) then
-    method=deflt
+    method = deflt
   else
     call tolower(str)
-    method=str
+    method = str
   end if
 
   if (flag_method) then
     write(FILEOUT,*) "New definition: #METHOD -> ", trim(method)
   end if
 
-  flag_method=.true.
+  flag_method = .true.
 
 end subroutine set_method
 
@@ -288,30 +319,31 @@ end subroutine set_method
 
 subroutine set_basis_set(str)
 
-  character(len=*), optional, intent(INOUT) :: str
-  character(len=30) :: deflt
+  character(*), optional, intent(INOUT) :: str
+
+  character(30)                         :: deflt
 
   if (.not.present(str)) then
-    str=""
+    str = ""
   end if
 
   if (flag_basis_set) then
     write(FILEOUT,*) "Old definition: #BASISSET -> ", trim(basis_set)
   end if
 
-  deflt="sto-3g"
+  deflt = "sto-3g"
   if (len_trim(str)==0) then
-    basis_set=deflt
+    basis_set = deflt
   else
     call tolower(str)
-    basis_set=str
+    basis_set = str
   end if
 
   if (flag_basis_set) then
     write(FILEOUT,*) "New definition: #BASISSET -> ", trim(basis_set)
   end if
 
-  flag_basis_set=.true.
+  flag_basis_set = .true.
 
 end subroutine set_basis_set
 
@@ -321,7 +353,7 @@ subroutine set_user_basis_set(flag)
 
   logical, intent(IN) :: flag
 
-  flag_user_basis_set=flag
+  flag_user_basis_set = flag
 
 end subroutine set_user_basis_set
 
@@ -331,7 +363,7 @@ subroutine set_user_pseudo_potential(flag)
 
   logical, intent(IN) :: flag
 
-  flag_user_pseudo_potential=flag
+  flag_user_pseudo_potential = flag
 
 end subroutine set_user_pseudo_potential
 
@@ -341,7 +373,7 @@ subroutine set_pes_input_template(flag)
 
   logical, intent(IN) :: flag
 
-  flag_pes_input_template=flag
+  flag_pes_input_template = flag
 
 end subroutine set_pes_input_template
 
@@ -358,7 +390,7 @@ subroutine init_pes_module()
   ! don't need to check if their arguments are valid.
   !--------------------------------------------------------
 
-  integer :: err_n
+  integer        :: err_n
   character(120) :: err_msg
 
   ! if I'm a slave, I go to... ----------------------------
@@ -403,7 +435,7 @@ subroutine init_pes_module()
     call set_basis_set()
   end if
 
-  flag_init_pes_module=.true.
+  flag_init_pes_module = .true.
 
   ! Master finished its initialization. -------------------
   ! If slave processes exist,
@@ -427,9 +459,10 @@ subroutine compute_pes_forces()
 
   use omp_lib
 
-  integer :: i, tid
+  integer   :: i
+  integer   :: tid
   real(DBL) :: conv_threshold
-  logical :: converged
+  logical   :: converged
 
   ! use MPI variant? --------------------------------------
 #ifdef USE_MPI
@@ -445,7 +478,7 @@ subroutine compute_pes_forces()
   end if
 
   ! working section ---------------------------------------
-  tid=0
+  tid = 0
 
   !$omp  parallel num_threads(neb_threads) default(none) &
   !$omp& shared(image_n)                                 &
@@ -485,38 +518,41 @@ subroutine get_pes_forces(i,tid,conv_threshold,flag_conv,ig,pesf,pesg)
   ! and removes all the intermediary files
   !--------------------------------------------------------
   
-  integer, intent(IN) :: i, tid
-  real(DBL), intent(IN) :: conv_threshold
-  logical, intent(INOUT) :: flag_conv
-  real(DBL), dimension(:), optional, intent(IN) :: ig
-  real(DBL), optional, intent(OUT) :: pesf
-  real(DBL), dimension(:), optional, intent(OUT) :: pesg
-  real(DBL), parameter :: max_gaussian_threshold = 1.0E-5
-  real(DBL), parameter :: max_siesta_threshold   = 1.0E-1
-  integer, parameter :: tid_lim   =  999
-  character(8) :: tid_lim_str, real_str
-  integer, parameter :: fnumb_in  = 1000
-  integer, parameter :: fnumb_out = 2000
-  character(120) :: fname_in
-  character(120) :: fname_out
-  character(120) :: dirname
-  character(120) :: auxdirname
-  integer, parameter :: opt_arg = 3
-  logical, dimension(opt_arg) :: arg_presence
+  integer,                           intent(IN)    :: i
+  integer,                           intent(IN)    :: tid
+  real(DBL),                         intent(IN)    :: conv_threshold
+  logical,                           intent(INOUT) :: flag_conv
+  real(DBL), dimension(:), optional, intent(IN)    :: ig
+  real(DBL),               optional, intent(OUT)   :: pesf
+  real(DBL), dimension(:), optional, intent(OUT)   :: pesg
+
+  real(DBL), parameter                             :: max_gaussian_threshold = 1.0E-5
+  real(DBL), parameter                             :: max_siesta_threshold   = 1.0E-1
+  integer,   parameter                             :: tid_lim                =  999
+  integer,   parameter                             :: fnumb_in               = 1000
+  integer,   parameter                             :: fnumb_out              = 2000
+  integer,   parameter                             :: opt_arg                = 3
+  character(8)                                     :: tid_lim_str
+  character(8)                                     :: real_str
+  character(120)                                   :: fname_in
+  character(120)                                   :: fname_out
+  character(120)                                   :: dirname
+  character(120)                                   :: auxdirname
+  logical, dimension(opt_arg)                      :: arg_presence
 
   ! checking argument presence ----------------------------
-  arg_presence=.false.
+  arg_presence = .false.
 
   if (present(ig)) then
-    arg_presence(1)=.true.
+    arg_presence(1) = .true.
   end if
 
   if (present(pesf)) then
-    arg_presence(2)=.true.
+    arg_presence(2) = .true.
   end if
 
   if (present(pesg)) then
-    arg_presence(3)=.true.
+    arg_presence(3) = .true.
   end if
 
   if (alltrue(arg_presence)) then
@@ -563,7 +599,7 @@ subroutine get_pes_forces(i,tid,conv_threshold,flag_conv,ig,pesf,pesg)
   case ("siesta")
     if (conv_threshold>max_siesta_threshold) then
       write(real_str,'(ES8.1)') max_siesta_threshold
-      real_str=adjustl(real_str)
+      real_str = adjustl(real_str)
       call error("get_pes_forces: convergence threshold above "//trim(real_str))
     end if
 
@@ -634,12 +670,12 @@ real(DBL) function get_scfconv()
   real(DBL), parameter :: siesta_conv   = 1.0E-4_DBL
 
   if (flag_pesd_scfconv) then
-    get_scfconv=pesd_scfconv
+    get_scfconv = pesd_scfconv
   else
     if (pes_program=="gaussian") then
-      get_scfconv=gaussian_conv
+      get_scfconv = gaussian_conv
     else if (pes_program=="siesta") then
-      get_scfconv=siesta_conv
+      get_scfconv = siesta_conv
     else
       call error("get_scfconv: unknown program """//&
         &trim(pes_program)//"""")
@@ -663,12 +699,12 @@ integer function get_scfcycle()
   integer, parameter :: siesta_cycle   = 50
 
   if (flag_pesd_scfcycle) then
-    get_scfcycle=pesd_scfcycle
+    get_scfcycle = pesd_scfcycle
   else
     if (pes_program=="gaussian") then
-      get_scfcycle=gaussian_cycle
+      get_scfcycle = gaussian_cycle
     else if (pes_program=="siesta") then
-      get_scfcycle=siesta_cycle
+      get_scfcycle = siesta_cycle
     else
       call error("get_scfcycle: unknown program """//&
         &trim(pes_program)//"""")
@@ -688,83 +724,83 @@ subroutine mmpi_init_pes_module()
   ! Init all slave processes
   !--------------------------------------------------------
 
-  character(8) :: istr
-  integer :: cmd
-  integer :: sz
+  character(8)   :: istr
+  integer        :: cmd
+  integer        :: sz
   character(30)  :: str30
   character(120) :: str120
-  logical :: flag
-  integer :: err_n
+  logical        :: flag
+  integer        :: err_n
   character(120) :: err_msg
 
   ! master gets slaves into this subroutine ---------------
   if (proc_id==0) then
-    cmd=MMPI_MSG_INIT_PES_MODULE
+    cmd = MMPI_MSG_INIT_PES_MODULE
     call mpi_bcast(cmd,1,MPI_INTEGER,0,MPI_COMM_WORLD,err_n)
   end if
 
   if (proc_id==0) then ! master stuffs --------------------
     ! mandatory variables ---------------------------------
     ! bcast pes_program
-    str30=pes_program
+    str30 = pes_program
     call mpi_bcast(str30,len(str30),MPI_CHARACTER,0,MPI_COMM_WORLD,err_n)
 
     ! bcast pes_exec
-    str120=pes_exec
+    str120 = pes_exec
     call mpi_bcast(str120,len(str120),MPI_CHARACTER,0,MPI_COMM_WORLD,err_n)
 
     ! bcast method
-    str30=method
+    str30 = method
     call mpi_bcast(str30,len(str30),MPI_CHARACTER,0,MPI_COMM_WORLD,err_n)
 
     ! bcast basis_set
-    str30=basis_set
+    str30 = basis_set
     call mpi_bcast(str30,len(str30),MPI_CHARACTER,0,MPI_COMM_WORLD,err_n)
 
     ! optional variables ----------------------------------
     ! bcast pes_proc
-    flag=flag_pes_proc
+    flag = flag_pes_proc
     call mpi_bcast(flag,1,MPI_LOGICAL,0,MPI_COMM_WORLD,err_n)
     if (flag) then
       write(str30,*) pes_proc
-      str30=adjustl(str30)
+      str30 = adjustl(str30)
       call mpi_bcast(str30,len(str30),MPI_CHARACTER,0,MPI_COMM_WORLD,err_n)
     end if
 
     ! bcast pes_mem
-    flag=flag_pes_mem
+    flag = flag_pes_mem
     call mpi_bcast(flag,1,MPI_LOGICAL,0,MPI_COMM_WORLD,err_n)
     if (flag) then
       write(str30,'(I29,A1)') pes_mem, pes_mem_scale
-      str30=adjustl(str30)
+      str30 = adjustl(str30)
       call mpi_bcast(str30,len(str30),MPI_CHARACTER,0,MPI_COMM_WORLD,err_n)
     end if
 
     ! bcast user_basis_set
-    flag=flag_user_basis_set
+    flag = flag_user_basis_set
     call mpi_bcast(flag,1,MPI_LOGICAL,0,MPI_COMM_WORLD,err_n)
     if (flag) then
-      sz=size(user_basis_set,1)
+      sz = size(user_basis_set,1)
       call mpi_bcast(sz,1,MPI_INTEGER,0,MPI_COMM_WORLD,err_n)
       call mpi_bcast(user_basis_set,sz*len(user_basis_set),&
         &MPI_CHARACTER,0,MPI_COMM_WORLD,err_n)
     end if
 
     ! bcast user_pseudo_potential
-    flag=flag_user_pseudo_potential
+    flag = flag_user_pseudo_potential
     call mpi_bcast(flag,1,MPI_LOGICAL,0,MPI_COMM_WORLD,err_n)
     if (flag) then
-      sz=size(user_pseudo_potential,1)
+      sz = size(user_pseudo_potential,1)
       call mpi_bcast(sz,1,MPI_INTEGER,0,MPI_COMM_WORLD,err_n)
       call mpi_bcast(user_pseudo_potential,sz*len(user_pseudo_potential),&
         &MPI_CHARACTER,0,MPI_COMM_WORLD,err_n)
     end if
 
     ! bcast pes_input_template
-    flag=flag_pes_input_template
+    flag = flag_pes_input_template
     call mpi_bcast(flag,1,MPI_LOGICAL,0,MPI_COMM_WORLD,err_n)
     if (flag) then
-      sz=size(pes_input_template,1)
+      sz = size(pes_input_template,1)
       call mpi_bcast(sz,1,MPI_INTEGER,0,MPI_COMM_WORLD,err_n)
       call mpi_bcast(pes_input_template,sz*len(pes_input_template),&
         &MPI_CHARACTER,0,MPI_COMM_WORLD,err_n)
@@ -772,47 +808,47 @@ subroutine mmpi_init_pes_module()
 
     ! pes_data variables ----------------------------------
     ! bcast pesd_scfcycle
-    flag=flag_pesd_scfcycle
+    flag = flag_pesd_scfcycle
     call mpi_bcast(flag,1,MPI_LOGICAL,0,MPI_COMM_WORLD,err_n)
     if (flag) then
       write(str30,*) pesd_scfcycle
-      str30=adjustl(str30)
+      str30 = adjustl(str30)
       call mpi_bcast(str30,len(str30),MPI_CHARACTER,0,MPI_COMM_WORLD,err_n)
     end if
 
     ! bcast pesd_scfconv
-    flag=flag_pesd_scfconv
+    flag = flag_pesd_scfconv
     call mpi_bcast(flag,1,MPI_LOGICAL,0,MPI_COMM_WORLD,err_n)
     if (flag) then
       write(str30,*) pesd_scfconv
-      str30=adjustl(str30)
+      str30 = adjustl(str30)
       call mpi_bcast(str30,len(str30),MPI_CHARACTER,0,MPI_COMM_WORLD,err_n)
     end if
 
     ! bcast pesd_scfvshift
-    flag=flag_pesd_scfvshift
+    flag = flag_pesd_scfvshift
     call mpi_bcast(flag,1,MPI_LOGICAL,0,MPI_COMM_WORLD,err_n)
     if (flag) then
       write(str30,*) pesd_scfvshift
-      str30=adjustl(str30)
+      str30 = adjustl(str30)
       call mpi_bcast(str30,len(str30),MPI_CHARACTER,0,MPI_COMM_WORLD,err_n)
     end if
 
     ! bcast pesd_intgrid
-    flag=flag_pesd_intgrid
+    flag = flag_pesd_intgrid
     call mpi_bcast(flag,1,MPI_LOGICAL,0,MPI_COMM_WORLD,err_n)
     if (flag) then
       write(str120,'(A)') pesd_intgrid
-      str120=adjustl(str120)
+      str120 = adjustl(str120)
       call mpi_bcast(str120,len(str120),MPI_CHARACTER,0,MPI_COMM_WORLD,err_n)
     end if
 
     ! bcast pesd_additional_cmd
-    flag=flag_pesd_additional_cmd
+    flag = flag_pesd_additional_cmd
     call mpi_bcast(flag,1,MPI_LOGICAL,0,MPI_COMM_WORLD,err_n)
     if (flag) then
       write(str120,'(A)') pesd_additional_cmd
-      str120=adjustl(str120)
+      str120 = adjustl(str120)
       call mpi_bcast(str120,len(str120),MPI_CHARACTER,0,MPI_COMM_WORLD,err_n)
     end if
 
@@ -823,7 +859,7 @@ subroutine mmpi_init_pes_module()
     ! preliminary checks ----------------------------------
     if (flag_init_pes_module) then
       write(istr,'(I8)') proc_id
-      istr=adjustl(istr)
+      istr = adjustl(istr)
       err_msg="mmpi_init_pes_module: process "//trim(istr)//&
         &": module pes already initialized"
       call error(err_msg)
@@ -831,7 +867,7 @@ subroutine mmpi_init_pes_module()
 
     if (flag_init_images.eqv..false.) then
       write(istr,'(I8)') proc_id
-      istr=adjustl(istr)
+      istr = adjustl(istr)
       err_msg="mmpi_init_pes_module: process "//trim(istr)//&
         &": module geometry not initialized"
       call error(err_msg)
@@ -977,7 +1013,7 @@ subroutine mmpi_init_pes_module()
     end if
 
     ! finalize --------------------------------------------
-    flag_init_pes_module=.true.
+    flag_init_pes_module = .true.
 
 !DEBUG: used to check if message passing was successful
 !    write(*,*) proc_id," prog  ",trim(pes_program)
@@ -1022,24 +1058,24 @@ subroutine mmpi_compute_pes_forces()
   ! and executing processes are more than one.
   !--------------------------------------------------------
 
-  character(8) :: istr
-  integer :: i
-  integer :: total_computations
-  integer :: cmd
-  real(DBL) :: real_buff
+  character(8)                           :: istr
+  integer                                :: i
+  integer                                :: total_computations
+  integer                                :: cmd
+  real(DBL)                              :: real_buff
   real(DBL), allocatable, dimension(:)   :: real_r1_buff
   real(DBL), allocatable, dimension(:)   :: energies_buff
   real(DBL), allocatable, dimension(:,:) :: forces_buff
   real(DBL), allocatable, dimension(:,:) :: image_geom_buff
-  real(DBL) :: conv_threshold
-  logical :: converged
-  integer, dimension(MPI_STATUS_SIZE) :: mstatus
-  integer :: err_n
-  character(120) :: err_msg
+  real(DBL)                              :: conv_threshold
+  logical                                :: converged
+  integer, dimension(MPI_STATUS_SIZE)    :: mstatus
+  integer                                :: err_n
+  character(120)                         :: err_msg
 
   ! master gets slaves into this subroutine ---------------
   if (proc_id==0) then
-    cmd=MMPI_MSG_COMPUTE_PES_FORCES
+    cmd = MMPI_MSG_COMPUTE_PES_FORCES
     call mpi_bcast(cmd,1,MPI_INTEGER,0,MPI_COMM_WORLD,err_n)
   end if
 
@@ -1050,8 +1086,8 @@ subroutine mmpi_compute_pes_forces()
   ! preliminary checks ------------------------------------
   if (flag_init_pes_module.eqv..false.) then
     write(istr,'(I8)') proc_id
-    istr=adjustl(istr)
-    err_msg="mmpi_compute_pes_forces: process "//trim(istr)//&
+    istr = adjustl(istr)
+    err_msg = "mmpi_compute_pes_forces: process "//trim(istr)//&
       &": module pes not initialized"
     call error(err_msg)
   end if
@@ -1060,7 +1096,7 @@ subroutine mmpi_compute_pes_forces()
   allocate (image_geom_buff(image_n,geom_len),stat=err_n,errmsg=err_msg)
   if (err_n/=0) then
     write(istr,'(I8)') proc_id
-    istr=adjustl(istr)
+    istr = adjustl(istr)
     call error("mmpi_compute_pes_forces: process "//&
       &trim(istr)//": "//trim(err_msg))
   end if
@@ -1068,7 +1104,7 @@ subroutine mmpi_compute_pes_forces()
   allocate (real_r1_buff(geom_len),stat=err_n,errmsg=err_msg)
   if (err_n/=0) then
     write(istr,'(I8)') proc_id
-    istr=adjustl(istr)
+    istr = adjustl(istr)
     call error("mmpi_compute_pes_forces: process "//&
       &trim(istr)//": "//trim(err_msg))
   end if
@@ -1077,7 +1113,7 @@ subroutine mmpi_compute_pes_forces()
     allocate (energies_buff(image_n),stat=err_n,errmsg=err_msg)
     if (err_n/=0) then
       write(istr,'(I8)') proc_id
-      istr=adjustl(istr)
+      istr = adjustl(istr)
       call error("mmpi_compute_pes_forces: process "//&
         &trim(istr)//": "//trim(err_msg))
     end if
@@ -1085,7 +1121,7 @@ subroutine mmpi_compute_pes_forces()
     allocate (forces_buff(image_n,geom_len),stat=err_n,errmsg=err_msg)
     if (err_n/=0) then
       write(istr,'(I8)') proc_id
-      istr=adjustl(istr)
+      istr = adjustl(istr)
       call error("mmpi_compute_pes_forces: process "//&
         &trim(istr)//": "//trim(err_msg))
     end if
@@ -1093,7 +1129,7 @@ subroutine mmpi_compute_pes_forces()
 
   ! bcast image_geom --------------------------------------
   if (proc_id==0) then
-    image_geom_buff=image_geom(1:image_n,:)
+    image_geom_buff = image_geom(1:image_n,:)
     call mpi_bcast(image_geom_buff,image_n*geom_len,MPI_REAL8,0,MPI_COMM_WORLD,err_n)
   else
     call mpi_bcast(image_geom_buff,image_n*geom_len,MPI_REAL8,0,MPI_COMM_WORLD,err_n)
@@ -1101,12 +1137,12 @@ subroutine mmpi_compute_pes_forces()
   end if
 
   ! working section ---------------------------------------
-  total_computations=0
+  total_computations = 0
 
   do i=1, image_n
     if (proc_id==mod(i,comm_sz)) then
-      total_computations=total_computations+1
-      conv_threshold=get_scfconv()
+      total_computations = total_computations+1
+      conv_threshold = get_scfconv()
 
       do
         call get_pes_forces(i,proc_id,conv_threshold,converged)
@@ -1114,7 +1150,7 @@ subroutine mmpi_compute_pes_forces()
         if (converged) then
           exit
         else
-          conv_threshold=conv_threshold*10.0_DBL
+          conv_threshold = conv_threshold*10.0_DBL
           write(FILEOUT,'(5X,"compute_pes_forces: Process ",I3,&
             &": convergence threshold on image ",I3,&
             &" reduced to ",ES8.1)') proc_id,i,conv_threshold
@@ -1164,7 +1200,7 @@ subroutine mmpi_compute_pes_forces()
     ! send energies to master
     do i=1, image_n
       if (proc_id==mod(i,comm_sz)) then
-        real_buff=pes_energy(i)
+        real_buff = pes_energy(i)
         call mpi_send(real_buff,1,MPI_REAL8,0,i,MPI_COMM_WORLD,err_n)
       end if
     end do
@@ -1176,7 +1212,7 @@ subroutine mmpi_compute_pes_forces()
     ! send forces to master
     do i=1, image_n
       if (proc_id==mod(i,comm_sz)) then
-        real_r1_buff=pes_forces(i,:)
+        real_r1_buff = pes_forces(i,:)
         call mpi_send(real_r1_buff,size(real_r1_buff,1),MPI_REAL8,&
           &0,i,MPI_COMM_WORLD,err_n)
       end if
@@ -1188,7 +1224,7 @@ subroutine mmpi_compute_pes_forces()
   deallocate (image_geom_buff,stat=err_n,errmsg=err_msg)
   if (err_n/=0) then
     write(istr,'(I8)') proc_id
-    istr=adjustl(istr)
+    istr = adjustl(istr)
     call error("mmpi_compute_pes_forces: process "//&
       &trim(istr)//": "//trim(err_msg))
   end if
@@ -1196,7 +1232,7 @@ subroutine mmpi_compute_pes_forces()
   deallocate (real_r1_buff,stat=err_n,errmsg=err_msg)
   if (err_n/=0) then
     write(istr,'(I8)') proc_id
-    istr=adjustl(istr)
+    istr = adjustl(istr)
     call error("mmpi_compute_pes_forces: process "//&
       &trim(istr)//": "//trim(err_msg))
   end if
@@ -1205,7 +1241,7 @@ subroutine mmpi_compute_pes_forces()
     deallocate (energies_buff,stat=err_n,errmsg=err_msg)
     if (err_n/=0) then
       write(istr,'(I8)') proc_id
-      istr=adjustl(istr)
+      istr = adjustl(istr)
       call error("mmpi_compute_pes_forces: process "//&
         &trim(istr)//": "//trim(err_msg))
     end if
@@ -1213,7 +1249,7 @@ subroutine mmpi_compute_pes_forces()
     deallocate (forces_buff,stat=err_n,errmsg=err_msg)
     if (err_n/=0) then
       write(istr,'(I8)') proc_id
-      istr=adjustl(istr)
+      istr = adjustl(istr)
       call error("mmpi_compute_pes_forces: process "//&
         &trim(istr)//": "//trim(err_msg))
     end if
@@ -1235,13 +1271,15 @@ subroutine write_user_basis_set(fnumb)
   !--------------------------------------------------------
 
   integer, intent(IN) :: fnumb
-  integer :: i, buff_len
+
+  integer             :: i
+  integer             :: buff_len
 
   if (flag_user_basis_set.eqv..false.) then
     call error("write_user_basis_set: user_basis_set is not setted")
   end if
 
-  buff_len=size(user_basis_set,1)
+  buff_len = size(user_basis_set,1)
 
   do i=1, buff_len
     write(fnumb,'(A)') trim(user_basis_set(i))
@@ -1260,13 +1298,15 @@ subroutine write_user_pseudo_potential(fnumb)
   !--------------------------------------------------------
 
   integer, intent(IN) :: fnumb
-  integer :: i, buff_len
+
+  integer             :: i
+  integer             :: buff_len
 
   if (flag_user_pseudo_potential.eqv..false.) then
     call error("write_user_pseudo_potential: user_pseudo_potential is not setted")
   end if
 
-  buff_len=size(user_pseudo_potential,1)
+  buff_len = size(user_pseudo_potential,1)
 
   do i=1, buff_len
     write(fnumb,'(A)') trim(user_pseudo_potential(i))
@@ -1285,13 +1325,15 @@ subroutine write_pes_input_template(fnumb)
   !--------------------------------------------------------
 
   integer, intent(IN) :: fnumb
-  integer :: i, buff_len
+
+  integer             :: i
+  integer             :: buff_len
 
   if (flag_pes_input_template.eqv..false.) then
     call error("write_pes_input_template: pes_input_template is not setted")
   end if
 
-  buff_len=size(pes_input_template,1)
+  buff_len = size(pes_input_template,1)
 
   do i=1, buff_len
     write(fnumb,'(A)') trim(pes_input_template(i))
@@ -1305,18 +1347,20 @@ end subroutine write_pes_input_template
 
 subroutine write_gaussian_input(i,conv_threshold,fnumb_in,fname_in,fname_out,ig)
 
-  integer, intent(IN) :: i
-  real(DBL), intent(IN) :: conv_threshold
-  integer, intent(IN) :: fnumb_in
-  character(*), intent(OUT) :: fname_in
-  character(*), intent(OUT) :: fname_out
-  real(DBL), dimension(:), optional, intent(IN) :: ig
-  integer :: j
-  integer :: conv_val
-  character(30) :: tmp_str
-  character(8) :: i_str, charge_str
-  character(120) :: err_msg
-  integer :: err_n
+  integer,                           intent(IN)  :: i
+  real(DBL),                         intent(IN)  :: conv_threshold
+  integer,                           intent(IN)  :: fnumb_in
+  character(*),                      intent(OUT) :: fname_in
+  character(*),                      intent(OUT) :: fname_out
+  real(DBL), dimension(:), optional, intent(IN)  :: ig
+
+  integer                                        :: j
+  integer                                        :: conv_val
+  character(30)                                  :: tmp_str
+  character(8)                                   :: i_str
+  character(8)                                   :: charge_str
+  character(120)                                 :: err_msg
+  integer                                        :: err_n
 
   if (present(ig)) then
     if (size(ig)/=geom_len) then
@@ -1325,11 +1369,11 @@ subroutine write_gaussian_input(i,conv_threshold,fnumb_in,fname_in,fname_out,ig)
   end if
 
   write(i_str,'(I8)') i
-  i_str=adjustl(i_str)
-  fname_in =base_name//trim(i_str)//".com"
-  fname_out=base_name//trim(i_str)//".log"
+  i_str     = adjustl(i_str)
+  fname_in  = base_name//trim(i_str)//".com"
+  fname_out = base_name//trim(i_str)//".log"
 
-  conv_val=abs(nint(log10(conv_threshold)))
+  conv_val  = abs(nint(log10(conv_threshold)))
 
   ! open unit ---------------------------------------------
   open(unit=fnumb_in,file=fname_in,status='NEW',action='WRITE',&
@@ -1342,14 +1386,14 @@ subroutine write_gaussian_input(i,conv_threshold,fnumb_in,fname_in,fname_out,ig)
   ! proc
   if (flag_pes_proc) then
     write(tmp_str,'(I4)') pes_proc
-    tmp_str=adjustl(tmp_str)
+    tmp_str = adjustl(tmp_str)
     write(fnumb_in,'("%nproc=",A)') trim(tmp_str)
   end if
 
   ! mem
   if (flag_pes_mem) then
     write(tmp_str,'(I20)') pes_mem
-    tmp_str=adjustl(tmp_str)
+    tmp_str = adjustl(tmp_str)
     write(fnumb_in,'("%mem=",A)',advance="NO") trim(tmp_str)
     if (pes_mem_scale=="k") then
       write(fnumb_in,'("KB")')
@@ -1367,18 +1411,18 @@ subroutine write_gaussian_input(i,conv_threshold,fnumb_in,fname_in,fname_out,ig)
   write(fnumb_in,'(A,A,A,A)') "#p ",trim(method),"/",trim(basis_set)
 
   write(tmp_str,'(I30)') abs(nint(log10(conv_threshold)))
-  tmp_str=adjustl(tmp_str)
+  tmp_str = adjustl(tmp_str)
   write(fnumb_in,'(A,A,A)') "#scf(conver=",trim(tmp_str),")"
 
   if (flag_pesd_scfcycle) then
     write(tmp_str,'(I30)') pesd_scfcycle
-    tmp_str=adjustl(tmp_str)
+    tmp_str = adjustl(tmp_str)
     write(fnumb_in,'(A,A,A)') "#scf(maxcycle=",trim(tmp_str),")"
   end if
 
   if (flag_pesd_scfvshift) then
     write(tmp_str,'(I30)') pesd_scfvshift
-    tmp_str=adjustl(tmp_str)
+    tmp_str = adjustl(tmp_str)
     write(fnumb_in,'(A,A,A)') "#scf(vshift=",trim(tmp_str),")"
   end if
   
@@ -1442,15 +1486,17 @@ end subroutine write_gaussian_input
 
 subroutine exec_gaussian(fname_in,flag_conv)
 
-  character(*), intent(IN) :: fname_in
-  logical, intent(OUT) :: flag_conv
-  character(140) :: cmd
-  integer :: exit_n, cmd_n
-  !character(8) :: exit_n_str
+  character(*), intent(IN)  :: fname_in
+  logical,      intent(OUT) :: flag_conv
 
-  flag_conv=.true.
+  character(140)            :: cmd
+  integer                   :: exit_n
+  integer                   :: cmd_n
+  !character(8)              :: exit_n_str
 
-  cmd=trim(pes_exec)//" "//fname_in(:len_trim(fname_in)-4)
+  flag_conv = .true.
+
+  cmd = trim(pes_exec)//" "//fname_in(:len_trim(fname_in)-4)
   call execute_command_line(trim(cmd),&
     &wait=.true.,exitstat=exit_n,cmdstat=cmd_n)
 
@@ -1460,7 +1506,7 @@ subroutine exec_gaussian(fname_in,flag_conv)
   
   ! if gaussian does not converge, it returns an exit status /= 0
   if (exit_n/=0) then
-    flag_conv=.false.
+    flag_conv = .false.
     !write(exit_n_str,'(I8)') exit_n
     !exit_n_str=adjustl(exit_n_str)
     !call error("exec_gaussian: "//trim(pes_exec)//&
@@ -1473,30 +1519,32 @@ end subroutine exec_gaussian
 
 subroutine get_gaussian_output(i,fnumb_out,fname_out,pesf,pesg)
 
-  integer, intent(IN) :: i, fnumb_out
-  character(*), intent(IN) :: fname_out
-  real(DBL), optional, intent(OUT) :: pesf
+  integer,                           intent(IN)  :: i
+  integer,                           intent(IN)  :: fnumb_out
+  character(*),                      intent(IN)  :: fname_out
+  real(DBL),               optional, intent(OUT) :: pesf
   real(DBL), dimension(:), optional, intent(OUT) :: pesg
-  character(*), parameter :: norm_term=" Normal termination of Gaussian"
-  integer :: j, k
-  character(200) :: str, field
-  integer, parameter :: opt_arg = 2
-  logical, dimension(opt_arg) :: arg_presence
-  integer :: err_n
-  character(120) :: err_msg
+
+  character(*), parameter                        :: norm_term = " Normal termination of Gaussian"
+  integer,      parameter                        :: opt_arg   = 2
+  integer                                        :: j, k
+  character(200)                                 :: str, field
+  logical, dimension(opt_arg)                    :: arg_presence
+  integer                                        :: err_n
+  character(120)                                 :: err_msg
 
   ! Checking optional argument ----------------------------
-  arg_presence=.false.
+  arg_presence = .false.
 
   if (present(pesf)) then
-    arg_presence(1)=.true.
+    arg_presence(1) = .true.
   end if
 
   if (present(pesg)) then
     if (size(pesg)/=geom_len) then
       call error("get_gaussian_output: wrong pesg argument size")
     end if
-    arg_presence(2)=.true.
+    arg_presence(2) = .true.
   end if
 
   if (.not.(alltrue(arg_presence).or.&
@@ -1610,8 +1658,9 @@ subroutine clean_gaussian_file(fnumb_in,fname_in,fnumb_out,fname_out)
   character(*), intent(IN) :: fname_in
   integer,      intent(IN) :: fnumb_out
   character(*), intent(IN) :: fname_out
-  character(120) :: err_msg
-  integer :: err_n
+
+  character(120)           :: err_msg
+  integer                  :: err_n
 
   ! Delete input ------------------------------------------
   open(unit=fnumb_in,file=fname_in,status='OLD',action='READ',&
@@ -1648,30 +1697,31 @@ subroutine set_siesta_dir(i,dirname,auxdirname)
   ! and copies in it the auxiliary files.
   !--------------------------------------------------------
 
-  integer, intent(IN) :: i
+  integer,      intent(IN)    :: i
   character(*), intent(INOUT) :: dirname
   character(*), intent(INOUT) :: auxdirname
-  character(8)   :: i_str
-  character(8)   :: exit_n_str
-  character(300) :: cmd
-  integer, save :: calling_count = 0
-  integer :: j
-  integer :: exit_n
-  integer :: cmd_n
+
+  integer, save               :: calling_count = 0
+  character(8)                :: i_str
+  character(8)                :: exit_n_str
+  character(300)              :: cmd
+  integer                     :: j
+  integer                     :: exit_n
+  integer                     :: cmd_n
 
   ! preliminary settings ----------------------------------
   if (calling_count<=image_n) then
-    calling_count=calling_count+1
+    calling_count = calling_count+1
   end if
 
   write(i_str,'(I8)') i
-  i_str=adjustl(i_str)
-  dirname=base_dirname//trim(i_str)
-  auxdirname=base_auxdirname//trim(i_str)
+  i_str      = adjustl(i_str)
+  dirname    = base_dirname//trim(i_str)
+  auxdirname = base_auxdirname//trim(i_str)
 
   ! make directories for storing auxiliary output files ---
   if ((flag_pesd_auxiliary_output_files).and.(calling_count<=image_n)) then
-    cmd="mkdir "//trim(auxdirname)
+    cmd = "mkdir "//trim(auxdirname)
     call execute_command_line(trim(cmd),&
       &wait=.true.,exitstat=exit_n,cmdstat=cmd_n)
 
@@ -1688,7 +1738,7 @@ subroutine set_siesta_dir(i,dirname,auxdirname)
   end if
 
   ! make the working directory ----------------------------
-  cmd="mkdir "//trim(dirname)
+  cmd = "mkdir "//trim(dirname)
   call execute_command_line(trim(cmd),&
     &wait=.true.,exitstat=exit_n,cmdstat=cmd_n)
 
@@ -1705,11 +1755,11 @@ subroutine set_siesta_dir(i,dirname,auxdirname)
 
   ! copy the auxiliary input files ------------------------
   if (flag_pesd_auxiliary_input_files) then
-    cmd="cp"
+    cmd = "cp"
     do j=1, pesd_auxiliary_input_files_n
-      cmd=trim(cmd)//" "//trim(pesd_auxiliary_input_files(j))
+      cmd = trim(cmd)//" "//trim(pesd_auxiliary_input_files(j))
     end do
-    cmd=trim(cmd)//" "//trim(dirname)//"/."
+    cmd = trim(cmd)//" "//trim(dirname)//"/."
 
     call execute_command_line(trim(cmd),&
       &wait=.true.,exitstat=exit_n,cmdstat=cmd_n)
@@ -1728,12 +1778,12 @@ subroutine set_siesta_dir(i,dirname,auxdirname)
 
   ! copy the auxiliary output files ------------------------
   if ((flag_pesd_auxiliary_output_files).and.(calling_count>image_n)) then
-    cmd="cp"
+    cmd = "cp"
     do j=1, pesd_auxiliary_output_files_n
-      cmd=trim(cmd)//" "//trim(auxdirname)//&
+      cmd = trim(cmd)//" "//trim(auxdirname)//&
         &"/"//trim(pesd_auxiliary_output_files(j))
     end do
-    cmd=trim(cmd)//" "//trim(dirname)//"/."
+    cmd = trim(cmd)//" "//trim(dirname)//"/."
 
     call execute_command_line(trim(cmd),&
       &wait=.true.,exitstat=exit_n,cmdstat=cmd_n)
@@ -1756,24 +1806,25 @@ end subroutine set_siesta_dir
 
 subroutine write_siesta_input(i,conv_threshold,dirname,fnumb_in,fname_in,fname_out,ig)
 
-  integer, intent(IN) :: i
-  real(DBL), intent(IN) :: conv_threshold
-  character(*), intent(IN) :: dirname
-  integer, intent(IN) :: fnumb_in
-  character(*), intent(OUT) :: fname_in
-  character(*), intent(OUT) :: fname_out
-  real(DBL), dimension(:), optional, intent(IN) :: ig
-  character(30) :: label
-  character(8) :: i_str
-  integer :: j
-  integer :: err_n
-  character(120) :: err_msg
+  integer,                           intent(IN)  :: i
+  real(DBL),                         intent(IN)  :: conv_threshold
+  character(*),                      intent(IN)  :: dirname
+  integer,                           intent(IN)  :: fnumb_in
+  character(*),                      intent(OUT) :: fname_in
+  character(*),                      intent(OUT) :: fname_out
+  real(DBL), dimension(:), optional, intent(IN)  :: ig
+
+  character(30)                                  :: label
+  character(8)                                   :: i_str
+  integer                                        :: j
+  integer                                        :: err_n
+  character(120)                                 :: err_msg
 
   write(i_str,'(I8)') i
-  i_str=adjustl(i_str)
-  fname_in =trim(dirname)//"/"//base_name//trim(i_str)//".fdf"
-  fname_out=base_name//trim(i_str)//".out"
-  label=base_label//base_name//trim(i_str)
+  i_str     = adjustl(i_str)
+  fname_in  = trim(dirname)//"/"//base_name//trim(i_str)//".fdf"
+  fname_out = base_name//trim(i_str)//".out"
+  label     = base_label//base_name//trim(i_str)
 
   ! open unit ---------------------------------------------
   open(unit=fnumb_in,file=fname_in,status='NEW',action='WRITE',&
@@ -1855,7 +1906,7 @@ subroutine write_siesta_input(i,conv_threshold,dirname,fnumb_in,fname_in,fname_o
     call error("write_siesta_input: "//trim(err_msg))
   end if
 
-  fname_in=base_name//trim(i_str)//".fdf"
+  fname_in = base_name//trim(i_str)//".fdf"
 
 end subroutine write_siesta_input
 
@@ -1866,20 +1917,22 @@ subroutine exec_siesta(dirname,fname_in,fname_out)
   character(*), intent(IN) :: dirname
   character(*), intent(IN) :: fname_in
   character(*), intent(IN) :: fname_out
-  character(140) :: cmd
-  integer :: exit_n, cmd_n
-  character(8) :: exit_n_str
-  character(8) :: i_str
+
+  character(140)           :: cmd
+  integer                  :: exit_n
+  integer                  :: cmd_n
+  character(8)             :: exit_n_str
+  character(8)             :: i_str
 
   ! Command section ---------------------------------------
   ! generate cmd string
   if (flag_pes_proc.and.(pes_proc>1)) then
     write(i_str,'(I8)') pes_proc
     i_str=adjustl(i_str)
-    cmd="cd "//trim(dirname)//" && "//"mpirun -n "//trim(i_str)//" "//&
+    cmd = "cd "//trim(dirname)//" && "//"mpirun -n "//trim(i_str)//" "//&
       &trim(pes_exec)//" < "//trim(fname_in)//" > "//trim(fname_out)
   else
-    cmd="cd "//trim(dirname)//" && "//&
+    cmd = "cd "//trim(dirname)//" && "//&
       &trim(pes_exec)//" < "//trim(fname_in)//" > "//trim(fname_out)
   end if
 
@@ -1910,17 +1963,18 @@ subroutine get_siesta_output(i,dirname,fnumb_out,fname_out,flag_conv)
   integer,      intent(IN)  :: fnumb_out
   character(*), intent(IN)  :: fname_out
   logical,      intent(OUT) :: flag_conv
-  integer :: j
-  integer :: k
-  integer :: k_start
-  integer :: default_scfcycle ! max scf cycles for the siesta computation
-  integer :: read_scfcycle    ! last scf cycle read from siesta output
-  logical :: correct_one
-  character(200) :: field
-  character(200) :: str
-  character(120) :: path
-  integer :: err_n
-  character(120) :: err_msg
+
+  integer                   :: j
+  integer                   :: k
+  integer                   :: k_start
+  integer                   :: default_scfcycle ! max scf cycles for the siesta computation
+  integer                   :: read_scfcycle    ! last scf cycle read from siesta output
+  logical                   :: correct_one
+  character(200)            :: field
+  character(200)            :: str
+  character(120)            :: path
+  integer                   :: err_n
+  character(120)            :: err_msg
 
   ! variables initialization ------------------------------
   flag_conv        = .true.
@@ -1967,9 +2021,9 @@ subroutine get_siesta_output(i,dirname,fnumb_out,fname_out,flag_conv)
       if (read_scfcycle==-1) then
         call error("get_siesta_output: scf iterations not found")
       else if (read_scfcycle>=default_scfcycle) then
-        flag_conv=.false.
+        flag_conv = .false.
       else
-        flag_conv=.true.
+        flag_conv = .true.
       end if
       
       exit
@@ -2085,7 +2139,7 @@ subroutine get_siesta_output(i,dirname,fnumb_out,fname_out,flag_conv)
   end if
 
   ! Convert forces from eV/Ang to Hartree/Ang -------------
-  pes_forces(i,:)=pes_forces(i,:)*(1.0_DBL/AU_ON_EV)
+  pes_forces(i,:) = pes_forces(i,:)*(1.0_DBL/AU_ON_EV)
 
   ! close unit --------------------------------------------
   close(unit=fnumb_out,iostat=err_n,iomsg=err_msg)
@@ -2101,19 +2155,20 @@ subroutine get_siesta_auxiliary_files(dirname,auxdirname)
 
   character(*), intent(IN) :: dirname
   character(*), intent(IN) :: auxdirname
-  integer :: j
-  character(300) :: cmd
-  character(8)   :: exit_n_str
-  integer :: exit_n
-  integer :: cmd_n
+
+  integer                  :: j
+  character(300)           :: cmd
+  character(8)             :: exit_n_str
+  integer                  :: exit_n
+  integer                  :: cmd_n
 
   if (flag_pesd_auxiliary_output_files) then
-    cmd="cp"
+    cmd = "cp"
     do j=1, pesd_auxiliary_output_files_n
-      cmd=trim(cmd)//" "//trim(dirname)//&
+      cmd = trim(cmd)//" "//trim(dirname)//&
         &"/"//trim(pesd_auxiliary_output_files(j))
     end do
-    cmd=trim(cmd)//" "//trim(auxdirname)//"/."
+    cmd = trim(cmd)//" "//trim(auxdirname)//"/."
 
     call execute_command_line(trim(cmd),&
       &wait=.true.,exitstat=exit_n,cmdstat=cmd_n)
@@ -2124,7 +2179,7 @@ subroutine get_siesta_auxiliary_files(dirname,auxdirname)
 
     if (exit_n/=0) then
       write(exit_n_str,'(I8)') exit_n
-      exit_n_str=adjustl(exit_n_str)
+      exit_n_str = adjustl(exit_n_str)
       call error("set_siesta_dir: """//trim(cmd)//&
         &""" terminated with exit code: "//trim(exit_n_str))
     end if
@@ -2137,11 +2192,13 @@ end subroutine get_siesta_auxiliary_files
 subroutine remove_siesta_dir(dirname)
 
   character(*), intent(IN) :: dirname
-  character(8) :: exit_n_str
-  character(140) :: cmd
-  integer :: exit_n, cmd_n
 
-  cmd="rm -r "//trim(dirname)
+  character(8)             :: exit_n_str
+  character(140)           :: cmd
+  integer                  :: exit_n
+  integer                  :: cmd_n
+
+  cmd = "rm -r "//trim(dirname)
   call execute_command_line(trim(cmd),&
     &wait=.true.,exitstat=exit_n,cmdstat=cmd_n)
 

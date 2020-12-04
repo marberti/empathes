@@ -17,99 +17,114 @@ module utility
   private
 
   ! public parameters -------------------------------------
-  public :: STDOUT, FILEOUT, SGL, DBL, QDR, LONG, AVOGADRO,&
-    &BOHR_ON_ANG, AU_ON_J, EV_ON_J, AU_ON_EV
-  public :: PES_MODE
-  public :: IDPP_MODE
+  public    :: STDOUT,                     &
+               FILEOUT,                    &
+               SGL,                        &
+               DBL,                        &
+               QDR,                        &
+               LONG,                       &
+               AVOGADRO,                   &
+               BOHR_ON_ANG,                &
+               AU_ON_J,                    &
+               EV_ON_J,                    &
+               AU_ON_EV,                   &
+               PES_MODE,                   &
+               IDPP_MODE
 #ifdef USE_MPI
-  public :: MMPI_MSG_END_MAIN_EXEC
-  public :: MMPI_MSG_INIT_IMAGES
-  public :: MMPI_MSG_INIT_PES_MODULE
-  public :: MMPI_MSG_COMPUTE_PES_FORCES
+  public    :: flag_mpi,                   &
+               MMPI_MSG_END_MAIN_EXEC,     &
+               MMPI_MSG_INIT_IMAGES,       &
+               MMPI_MSG_INIT_PES_MODULE,   &
+               MMPI_MSG_COMPUTE_PES_FORCES
 #endif
   ! protected variables -----------------------------------
-  public    :: main_program_name,&
-    &flag_openmp, neb_threads, flag_mpi,&
-    &flag_fileout, start_clock, clock_rate
-  protected :: main_program_name,&
-    &flag_openmp, neb_threads, flag_mpi,&
-    &flag_fileout, start_clock, clock_rate
+  public    :: main_program_name,          &
+               flag_openmp,                &
+               neb_threads,                &
+               flag_fileout,               &
+               start_clock,                &
+               clock_rate
+  protected :: main_program_name,          &
+               flag_openmp,                &
+               neb_threads,                &
+               flag_fileout,               &
+               start_clock,                &
+               clock_rate
 #ifdef USE_MPI
-  public    :: comm_sz, proc_id
-  protected :: comm_sz, proc_id
+  public    :: comm_sz,                    &
+               proc_id
+  protected :: comm_sz,                    &
+               proc_id
 #endif
   ! public procedures -------------------------------------
-  public ::                 &
-    &set_main_program_name, &
-    &set_openmp,            &
-    &set_neb_threads,       &
+  public    :: set_main_program_name,      &
+               set_openmp,                 &
+               set_neb_threads,            &
+               set_fileout,                &
+               close_fileout,              &
+               isdigit,                    &
+               isalpha,                    &
+               isinteger,                  &
+               isreal,                     &
+               tolower,                    &
+               norm,                       &
+               alltrue,                    &
+               allfalse,                   &
+               get_minima,                 &
+               get_maxima,                 &
+               get_field,                  &
+               get_lines,                  &
+               triang_numb,                &
+               write_date,                 &
+               set_start_clock,            &
+               human_time,                 &
+               end_main_exec,              &
+               error
 #ifdef USE_MPI
-    &update_comm_sz,        &
-    &update_proc_id,        &
+  public    :: update_comm_sz,             &
+               update_proc_id
 #endif
-    &set_fileout,           &
-    &close_fileout,         &
-    &isdigit,               &
-    &isalpha,               &
-    &isinteger,             &
-    &isreal,                &
-    &tolower,               &
-    &norm,                  &
-    &alltrue,               &
-    &allfalse,              &
-    &get_minima,            &
-    &get_maxima,            &
-    &get_field,             &
-    &get_lines,             &
-    &triang_numb,           &
-    &write_date,            &
-    &set_start_clock,       &
-    &human_time,            &
-    &end_main_exec,         &
-    &error
 
   !--------------------------------------------------------
-  integer, parameter   :: STDOUT      = OUTPUT_UNIT
-  integer, parameter   :: FILEOUT     = 110
-  integer, parameter   :: SGL         = REAL32
-  integer, parameter   :: DBL         = REAL64
-  integer, parameter   :: QDR         = REAL128
-  integer, parameter   :: LONG        = INT64
+  integer, parameter   :: STDOUT                      = OUTPUT_UNIT
+  integer, parameter   :: FILEOUT                     = 110
+  integer, parameter   :: SGL                         = REAL32
+  integer, parameter   :: DBL                         = REAL64
+  integer, parameter   :: QDR                         = REAL128
+  integer, parameter   :: LONG                        = INT64
   ! physical parameters taken from :
   ! https://physics.nist.gov/cuu/Constants/
-  real(DBL), parameter :: AVOGADRO    = 6.02214076E23_DBL 
-  real(DBL), parameter :: BOHR_ON_ANG = 0.529177210903_DBL
-  real(DBL), parameter :: AU_ON_J     = 4.3597447222071E-18_DBL
-  real(DBL), parameter :: EV_ON_J     = 1.602176634E-19_DBL
-  real(DBL), parameter :: AU_ON_EV    = AU_ON_J / EV_ON_J
+  real(DBL), parameter :: AVOGADRO                    = 6.02214076E23_DBL 
+  real(DBL), parameter :: BOHR_ON_ANG                 = 0.529177210903_DBL
+  real(DBL), parameter :: AU_ON_J                     = 4.3597447222071E-18_DBL
+  real(DBL), parameter :: EV_ON_J                     = 1.602176634E-19_DBL
+  real(DBL), parameter :: AU_ON_EV                    = AU_ON_J / EV_ON_J
 
   ! ENUM
-  integer, parameter :: PES_MODE  = 0
-  integer, parameter :: IDPP_MODE = 1
+  integer, parameter   :: PES_MODE                    = 0
+  integer, parameter   :: IDPP_MODE                   = 1
 
 #ifdef USE_MPI
+  logical, parameter   :: flag_mpi                    = .true.
   ! ENUM
-  integer, parameter :: MMPI_MSG_END_MAIN_EXEC      = 0
-  integer, parameter :: MMPI_MSG_INIT_IMAGES        = 1
-  integer, parameter :: MMPI_MSG_INIT_PES_MODULE    = 2
-  integer, parameter :: MMPI_MSG_COMPUTE_PES_FORCES = 3
-#endif
-
-  character(120) :: main_program_name
-  logical :: flag_openmp = .false.
-  integer :: neb_threads = 1
-#ifdef USE_MPI
-  logical :: flag_mpi = .true.
+  integer, parameter   :: MMPI_MSG_END_MAIN_EXEC      = 0
+  integer, parameter   :: MMPI_MSG_INIT_IMAGES        = 1
+  integer, parameter   :: MMPI_MSG_INIT_PES_MODULE    = 2
+  integer, parameter   :: MMPI_MSG_COMPUTE_PES_FORCES = 3
 #else
-  logical :: flag_mpi = .false.
+  logical, parameter   :: flag_mpi                    = .false.
 #endif
-  integer(LONG) :: start_clock, clock_rate
-  logical :: flag_start_clock = .false.
-  logical :: flag_fileout     = .false.
 
+  character(120)       :: main_program_name
+  logical              :: flag_openmp                 = .false.
+  integer              :: neb_threads                 = 1
+  integer(LONG)        :: start_clock
+  integer(LONG)        :: clock_rate
+  logical              :: flag_start_clock            = .false.
+  logical              :: flag_fileout                = .false.
 #ifdef USE_MPI
-  integer :: comm_sz
-  integer :: proc_id
+  integer              :: comm_sz
+  integer              :: proc_id
 #endif
 
 contains
@@ -131,7 +146,8 @@ end subroutine set_main_program_name
 subroutine set_openmp(flag)
 
   logical, intent(IN) :: flag
-  logical, save :: first_call = .true.
+
+  logical, save       :: first_call = .true.
 
   if (first_call.eqv..false.) then
     call error("set_openmp: subroutine called more than once")
@@ -148,7 +164,8 @@ end subroutine set_openmp
 subroutine set_neb_threads(str)
 
   character(*), intent(IN) :: str
-  logical, save :: first_call=.true.
+
+  logical, save            :: first_call = .true.
 
   ! preliminary checks ------------------------------------
   if (first_call.eqv..false.) then
@@ -183,7 +200,7 @@ subroutine set_neb_threads(str)
   end if
 
   ! finalize ----------------------------------------------
-  first_call=.false.
+  first_call = .false.
 
 end subroutine set_neb_threads
 
@@ -193,7 +210,8 @@ end subroutine set_neb_threads
 subroutine update_comm_sz(sz)
 
   integer, intent(IN) :: sz
-  logical, save :: first_call = .true.
+
+  logical, save       :: first_call = .true.
 
   if (first_call.eqv..false.) then
     call error("update_comm_sz: subroutine called more than once")
@@ -212,7 +230,8 @@ end subroutine update_comm_sz
 subroutine update_proc_id(id)
 
   integer, intent(IN) :: id
-  logical, save :: first_call = .true.
+
+  logical, save       :: first_call = .true.
 
   if (first_call.eqv..false.) then
     call error("update_proc_id: subroutine called more than once")
@@ -234,11 +253,12 @@ subroutine set_fileout(fname_in)
   ! for the output file, and opens a stream to that file.
   !--------------------------------------------------------
 
-  character(len=*), intent(IN)  :: fname_in
-  character(80) :: fname_out
-  integer :: flen
-  integer :: err_n
-  character(120) :: err_msg
+  character(*), intent(IN)  :: fname_in
+
+  character(80)             :: fname_out
+  integer                   :: flen
+  integer                   :: err_n
+  character(120)            :: err_msg
 
   ! preliminary checks ------------------------------------
   if (flag_fileout) then
@@ -246,14 +266,14 @@ subroutine set_fileout(fname_in)
   end if
 
   ! working section ---------------------------------------
-  flen=len_trim(fname_in)
+  flen = len_trim(fname_in)
 
   if ((flen-3>0).and.(fname_in(flen-3:flen)==".dat")) then
-    fname_out=fname_in(:flen-3)//"out"
+    fname_out = fname_in(:flen-3)//"out"
   else if ((flen-2>0).and.(fname_in(flen-2:flen)==".in")) then
-    fname_out=fname_in(:flen-2)//"out"
+    fname_out = fname_in(:flen-2)//"out"
   else
-    fname_out=trim(fname_in)//".out"
+    fname_out = trim(fname_in)//".out"
   end if
 
   open(unit=FILEOUT,file=fname_out,status='REPLACE',action='WRITE',&
@@ -270,7 +290,7 @@ end subroutine set_fileout
 
 subroutine close_fileout()
 
-  integer :: err_n
+  integer        :: err_n
   character(120) :: err_msg
 
   close(unit=FILEOUT,iostat=err_n,iomsg=err_msg)
@@ -287,9 +307,9 @@ logical function isdigit(c)
   character, intent(IN) :: c
 
   if ((c>='0').and.(c<='9')) then
-    isdigit=.true.
+    isdigit = .true.
   else
-    isdigit=.false.
+    isdigit = .false.
   end if
 
 end function isdigit
@@ -299,15 +319,16 @@ end function isdigit
 logical function isalpha(ch)
 
   character, intent(IN) :: ch
-  character :: c
 
-  c=ch
+  character             :: c
+
+  c = ch
   call tolower(c)
 
   if ((c>='a').and.(c<='z')) then
-    isalpha=.true.
+    isalpha = .true.
   else
-    isalpha=.false.
+    isalpha = .false.
   end if
 
 end function isalpha
@@ -316,38 +337,39 @@ end function isalpha
 
 logical function isinteger(str)
 
-  character(len=*), intent(IN) :: str
-  integer :: i
-  logical :: first_digit
+  character(*), intent(IN) :: str
+
+  integer                  :: i
+  logical                  :: first_digit
 
   if (len_trim(str)==0) then
-    isinteger=.false.
+    isinteger = .false.
     return
   end if
 
-  first_digit=.false.
-  isinteger=.true.
+  first_digit = .false.
+  isinteger   = .true.
 
   do i=1, len(str)
     if (i==1) then
       if (isdigit(str(i:i))) then
-        first_digit=.true.
+        first_digit = .true.
       else if (.not.((str(i:i)=="+").or.(str(i:i)=="-"))) then
-        isinteger=.false.
+        isinteger = .false.
         exit
       end if
     else
       if (isdigit(str(i:i))) then
-        first_digit=.true.
+        first_digit = .true.
       else
-        isinteger=.false.
+        isinteger = .false.
         exit
       end if
     end if
   end do
 
   if (first_digit.eqv..false.) then
-    isinteger=.false.
+    isinteger = .false.
   end if
 
 end function isinteger
@@ -356,85 +378,89 @@ end function isinteger
 
 logical function isreal(str)
 
-  character(len=*), intent(IN) :: str
-  integer :: i, exp_pos
-  logical :: first_exp, first_dot, first_digit
+  character(*), intent(IN) :: str
+
+  integer                  :: i
+  integer                  :: exp_pos
+  logical                  :: first_exp
+  logical                  :: first_dot
+  logical                  :: first_digit
 
   if (len_trim(str)==0) then
-    isreal=.false.
+    isreal = .false.
     return
   end if
 
-  first_exp=.false.
-  first_dot=.false.
-  first_digit=.false.
-  isreal=.true.
+  first_exp   = .false.
+  first_dot   = .false.
+  first_digit = .false.
+  isreal      = .true.
 
   do i=1, len(str)
     if (i==1) then
       if (isdigit(str(i:i))) then
-        first_digit=.true.
+        first_digit = .true.
       else if (str(i:i)==".") then
-        first_dot=.true.
+        first_dot = .true.
       else if(.not.((str(i:i)=="+").or.(str(i:i)=="-"))) then
-        isreal=.false.
+        isreal = .false.
         exit
       end if
     else if (i==len(str)) then
       if (isdigit(str(i:i))) then
-        first_digit=.true.      
+        first_digit = .true.      
       else if (str(i:i)==".") then
         if (first_dot) then
-          isreal=.false.
+          isreal = .false.
           exit
         else if (first_exp) then
-          isreal=.false.
+          isreal = .false.
           exit
         else
-          first_dot=.true.
+          first_dot = .true.
         end if
       else
-        isreal=.false.
+        isreal = .false.
         exit
       end if
     else
       if (isdigit(str(i:i))) then
-        first_digit=.true.
+        first_digit = .true.
       else if (str(i:i)==".") then
         if (first_dot) then
-          isreal=.false.
+          isreal = .false.
           exit
         else if (first_exp) then
-          isreal=.false.
+          isreal = .false.
           exit
         else
-          first_dot=.true.
+          first_dot = .true.
         end if
       else if ((str(i:i)=="e").or.(str(i:i)=="E")) then
         if (first_exp) then
-          isreal=.false.
+          isreal = .false.
           exit
         else
-          exp_pos=i
-          first_exp=.true.
+          exp_pos   = i
+          first_exp = .true.
         end if
       else if ((str(i:i)=="+").or.(str(i:i)=="-")) then
         if (first_exp.eqv..false.) then
-          isreal=.false.
+          isreal = .false.
           exit
         else if (i/=exp_pos+1) then
-          isreal=.false.
+          isreal = .false.
           exit
         end if
       else
-        isreal=.false.
+        isreal = .false.
         exit
       end if
     end if
   end do
 
   if (first_digit.eqv..false.) then
-    isreal=.false.
+    isreal = .false.
   end if
 
 end function isreal
@@ -447,8 +473,9 @@ subroutine tolower(str)
   ! Converts all uppercase letters in str in lowercase ones.
   !--------------------------------------------------------
 
-  character(len=*), intent(INOUT) :: str
-  integer :: i
+  character(*), intent(INOUT) :: str
+
+  integer                     :: i
 
   do i=1, len_trim(str)
     if ((str(i:i)>='A').and.(str(i:i)<='Z')) then
@@ -482,18 +509,20 @@ logical function alltrue(arr)
   !--------------------------------------------------------
 
   logical, dimension(:), intent(IN) :: arr
-  integer :: i, n
 
-  n=size(arr,1)
+  integer                           :: i
+  integer                           :: n
+
+  n = size(arr,1)
 
   do i=1, n
     if (arr(i).eqv..false.) then
-      alltrue=.false.
+      alltrue = .false.
       return
     end if
   end do
 
-  alltrue=.true.
+  alltrue = .true.
 
 end function alltrue
 
@@ -507,18 +536,20 @@ logical function allfalse(arr)
   !--------------------------------------------------------
 
   logical, dimension(:), intent(IN) :: arr
-  integer :: i, n
 
-  n=size(arr,1)
+  integer                           :: i
+  integer                           :: n
+
+  n = size(arr,1)
 
   do i=1, n
     if (arr(i).eqv..true.) then
-      allfalse=.false.
+      allfalse = .false.
       return
     end if
   end do
 
-  allfalse=.true.
+  allfalse = .true.
 
 end function allfalse
 
@@ -526,11 +557,14 @@ end function allfalse
 
 subroutine get_minima(vals,flags)
 
-  real(DBL), dimension(:), intent(IN) :: vals
-  logical, dimension(:), intent(OUT) :: flags
+  real(DBL), dimension(:), intent(IN)  :: vals
+  logical,   dimension(:), intent(OUT) :: flags
 
-  integer :: i, n
-  real(DBL) :: prev, curr, next
+  integer                              :: i
+  integer                              :: n
+  real(DBL)                            :: prev
+  real(DBL)                            :: curr
+  real(DBL)                            :: next
 
   n = size(vals,1)
 
@@ -540,15 +574,15 @@ subroutine get_minima(vals,flags)
   end if
 
   ! working section ---------------------------------------
-  flags=.false.
+  flags = .false.
 
   do i=2, n-1
-    prev=vals(i-1)
-    curr=vals(i)
-    next=vals(i+1)
+    prev = vals(i-1)
+    curr = vals(i)
+    next = vals(i+1)
 
     if ((curr<prev).and.(curr<next)) then
-      flags(i)=.true.
+      flags(i) = .true.
     end if
   end do
 
@@ -558,11 +592,14 @@ end subroutine get_minima
 
 subroutine get_maxima(vals,flags)
 
-  real(DBL), dimension(:), intent(IN) :: vals
-  logical, dimension(:), intent(OUT) :: flags
+  real(DBL), dimension(:), intent(IN)  :: vals
+  logical,   dimension(:), intent(OUT) :: flags
 
-  integer :: i, n
-  real(DBL) :: prev, curr, next
+  integer                              :: i
+  integer                              :: n
+  real(DBL)                            :: prev
+  real(DBL)                            :: curr
+  real(DBL)                            :: next
 
   n = size(vals,1)
 
@@ -572,15 +609,15 @@ subroutine get_maxima(vals,flags)
   end if
 
   ! working section ---------------------------------------
-  flags=.false.
+  flags = .false.
 
   do i=2, n-1
-    prev=vals(i-1)
-    curr=vals(i)
-    next=vals(i+1)
+    prev = vals(i-1)
+    curr = vals(i)
+    next = vals(i+1)
 
     if ((curr>prev).and.(curr>next)) then
-      flags(i)=.true.
+      flags(i) = .true.
     end if
   end do
 
@@ -596,71 +633,74 @@ subroutine get_field(str_in,str_out,n,err_n,err_msg)
   ! Gets the n field and store it in str_out.
   !--------------------------------------------------------
 
-  character(len=*), intent(IN)  :: str_in
-  character(len=*), intent(OUT) :: str_out
-  integer, intent(IN) :: n
-  integer, intent(OUT) :: err_n        ! 0 on success, 1 otherwise
-  character(*), intent(OUT) :: err_msg ! message set in case of failure
+  character(*), intent(IN)  :: str_in
+  character(*), intent(OUT) :: str_out
+  integer,      intent(IN)  :: n
+  integer,      intent(OUT) :: err_n         ! 0 on success, 1 otherwise
+  character(*), intent(OUT) :: err_msg       ! message set in case of failure
 
-  integer, parameter :: SUCCESS = 0
-  integer, parameter :: FAILURE = 1
-  integer :: i, current_field, start_field, end_field
-  character(1) :: ch
-  character(3) :: n_str
-  logical :: prev_space
+  integer, parameter        :: SUCCESS       = 0
+  integer, parameter        :: FAILURE       = 1
+  integer                   :: i
+  integer                   :: current_field
+  integer                   :: start_field
+  integer                   :: end_field
+  character(1)              :: ch
+  character(3)              :: n_str
+  logical                   :: prev_space
 
   if (n<1) then
-    err_n=FAILURE
-    err_msg="get_field: argument must be a non-zero positive integer"
+    err_n   = FAILURE
+    err_msg = "get_field: argument must be a non-zero positive integer"
     return
   end if
 
-  start_field=-1
-  end_field=-1
-  current_field=0
-  prev_space=.true.
+  start_field   = -1
+  end_field     = -1
+  current_field =  0
+  prev_space    = .true.
   do i=1, len_trim(str_in)
-    ch=str_in(i:i)
+    ch = str_in(i:i)
 
     if (ch==" ") then
       if ((prev_space.eqv..false.).and.(current_field==n)) then
-        end_field=i-1
+        end_field = i-1
         exit
       end if
-      prev_space=.true.
+      prev_space = .true.
     else
       if (prev_space.eqv..true.) then
-        current_field=current_field+1
+        current_field = current_field+1
         if (current_field==n) then
-          start_field=i
+          start_field = i
         end if
       end if
 
-      prev_space=.false.
+      prev_space = .false.
     end if
   end do
 
   if (start_field/=-1) then
     if (end_field==-1) then
-      end_field=len_trim(str_in)
+      end_field = len_trim(str_in)
     end if
   else
     write(n_str,'(I3)') n
-    n_str=adjustl(n_str)
-    err_n=FAILURE
-    err_msg="get_field: cannot get field "//trim(n_str)//&
+    n_str   = adjustl(n_str)
+    err_n   = FAILURE
+    err_msg = "get_field: cannot get field "//trim(n_str)//&
       &" from string """//trim(str_in)//""""
     return
   end if
 
   if ((end_field-start_field)>len(str_out)) then
-    err_n=FAILURE
-    err_msg="get_field: output string too small"
+    err_n   = FAILURE
+    err_msg = "get_field: output string too small"
     return
   end if
 
-  str_out=str_in(start_field:end_field)
-  err_n=SUCCESS
+  str_out = str_in(start_field:end_field)
+  err_n   = SUCCESS
 
 end subroutine get_field
 
@@ -674,19 +714,20 @@ integer function get_lines(fnumb,ending)
   ! On exit, the reading buffer points to the ending string.
   !--------------------------------------------------------
 
-  integer, intent(IN) :: fnumb
-  character(len=*), intent(IN) :: ending
-  logical :: is_open
-  character(120) :: str
-  integer :: err_n
-  character(120) :: err_msg
+  integer,      intent(IN) :: fnumb
+  character(*), intent(IN) :: ending
+
+  logical                  :: is_open
+  character(120)           :: str
+  integer                  :: err_n
+  character(120)           :: err_msg
 
   inquire(unit=fnumb,opened=is_open)
   if (.not.is_open) then
     call error("get_lines: input stream not opened")
   end if
 
-  get_lines=0
+  get_lines = 0
   do
     read(fnumb,'(A120)',iostat=err_n) str
     if (err_n/=0) then
@@ -701,7 +742,7 @@ integer function get_lines(fnumb,ending)
       exit
     end if
 
-    get_lines=get_lines+1
+    get_lines = get_lines+1
   end do
 
 end function get_lines
@@ -710,19 +751,20 @@ end function get_lines
 
 subroutine write_date(str)
 
-  character(*), intent(IN) :: str
+  character(*),               intent(IN) :: str
+
   character(3), dimension(12), parameter :: month = &
     &[ "Jan", "Feb", "Mar", "Apr", "May", "Jun",&
     &  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" ]
-  integer, dimension(8) :: v
-  integer :: fnumb
-  logical :: is_open
+  integer, dimension(8)                  :: v
+  integer                                :: fnumb
+  logical                                :: is_open
 
   inquire(unit=FILEOUT,opened=is_open)
   if (is_open) then
-    fnumb=FILEOUT
+    fnumb = FILEOUT
   else
-    fnumb=STDOUT
+    fnumb = STDOUT
   end if
 
   call date_and_time(values=v)
@@ -763,7 +805,7 @@ subroutine set_start_clock()
 
   call system_clock(start_clock,clock_rate)
 
-  flag_start_clock=.true.
+  flag_start_clock = .true.
 
 end subroutine set_start_clock
 
@@ -771,28 +813,35 @@ end subroutine set_start_clock
 
 subroutine human_time(str,scnt,ecnt,cnt_rate)
 
-  character(*), intent(IN) :: str
-  integer(LONG), intent(IN) :: scnt, ecnt, cnt_rate
-  integer(LONG) :: msecs, secs, mins, hours, days
-  integer :: fnumb
-  logical :: is_open
+  character(*),  intent(IN) :: str
+  integer(LONG), intent(IN) :: scnt
+  integer(LONG), intent(IN) :: ecnt
+  integer(LONG), intent(IN) :: cnt_rate
+
+  integer(LONG)             :: msecs
+  integer(LONG)             :: secs
+  integer(LONG)             :: mins
+  integer(LONG)             :: hours
+  integer(LONG)             :: days
+  integer                   :: fnumb
+  logical                   :: is_open
 
   inquire(unit=FILEOUT,opened=is_open)
   if (is_open) then
-    fnumb=FILEOUT
+    fnumb = FILEOUT
   else
-    fnumb=STDOUT
+    fnumb = STDOUT
   end if
 
-  msecs=(ecnt-scnt)/(cnt_rate/1000)
-  secs =msecs/1000
-  msecs=msecs-(1000*secs)
-  mins =secs/60
-  secs =secs-(60*mins)
-  hours=mins/60
-  mins =mins-(60*hours)
-  days =hours/24
-  hours=hours-(24*days)
+  msecs = (ecnt-scnt)/(cnt_rate/1000)
+  secs  = msecs/1000
+  msecs = msecs-(1000*secs)
+  mins  = secs/60
+  secs  = secs-(60*mins)
+  hours = mins/60
+  mins  = mins-(60*hours)
+  days  = hours/24
+  hours = hours-(24*days)
 
   write(fnumb,'(" CLK ",A,": ",I5,"d ",I2,"h ",I2,"m ",I2,".",I3.3,"s")')&
     &trim(str), days, hours, mins, secs, msecs
@@ -823,16 +872,17 @@ end subroutine end_main_exec
 
 subroutine error(err_msg)
 
-  character(len=*), intent(IN) :: err_msg
-  integer(LONG) :: end_clock
-  integer :: fnumb
-  logical :: is_open
+  character(*), intent(IN) :: err_msg
+
+  integer(LONG)            :: end_clock
+  integer                  :: fnumb
+  logical                  :: is_open
 
   inquire(unit=FILEOUT,opened=is_open)
   if (is_open) then
-    fnumb=FILEOUT
+    fnumb = FILEOUT
   else
-    fnumb=STDOUT
+    fnumb = STDOUT
   end if
 
   write(fnumb,*) "ERR ", trim(err_msg)

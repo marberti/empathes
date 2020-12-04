@@ -7,60 +7,76 @@ module pes_data
   private
 
   ! public parameters -------------------------------------
-  public :: PESD_AUX_INPUT_FILES, PESD_AUX_OUTPUT_FILES
+  public    :: PESD_AUX_INPUT_FILES,            &
+               PESD_AUX_OUTPUT_FILES
   ! protected flags ---------------------------------------
-  public    :: flag_pesd_scfcycle, flag_pesd_scfconv,&
-    &flag_pesd_scfvshift, flag_pesd_intgrid, flag_pesd_additional_cmd,&
-    &flag_pesd_auxiliary_input_files, flag_pesd_auxiliary_output_files
-  protected :: flag_pesd_scfcycle,&
-               flag_pesd_scfconv,&
-               flag_pesd_scfvshift,&
-               flag_pesd_intgrid,&
-               flag_pesd_additional_cmd,&
-               flag_pesd_auxiliary_input_files,&
+  public    :: flag_pesd_scfcycle,              &
+               flag_pesd_scfconv,               &
+               flag_pesd_scfvshift,             &
+               flag_pesd_intgrid,               &
+               flag_pesd_additional_cmd,        &
+               flag_pesd_auxiliary_input_files, &
+               flag_pesd_auxiliary_output_files
+  protected :: flag_pesd_scfcycle,              &
+               flag_pesd_scfconv,               &
+               flag_pesd_scfvshift,             &
+               flag_pesd_intgrid,               &
+               flag_pesd_additional_cmd,        &
+               flag_pesd_auxiliary_input_files, &
                flag_pesd_auxiliary_output_files
   ! protected variables -----------------------------------
-  public    :: pesd_scf_flag_count, pesd_scfcycle, pesd_scfconv,&
-    &pesd_scfvshift, pesd_intgrid, pesd_additional_cmd,&
-    &pesd_auxiliary_input_files, pesd_auxiliary_input_files_n,&
-    &pesd_auxiliary_output_files, pesd_auxiliary_output_files_n
-  protected :: pesd_scf_flag_count,&
-               pesd_scfcycle,&
-               pesd_scfconv,&
-               pesd_scfvshift,&
-               pesd_intgrid,&
-               pesd_additional_cmd,&
-               pesd_auxiliary_input_files,&
-               pesd_auxiliary_input_files_n,&
-               pesd_auxiliary_output_files,&
+  public    :: pesd_scf_flag_count,             &
+               pesd_scfcycle,                   &
+               pesd_scfconv,                    &
+               pesd_scfvshift,                  &
+               pesd_intgrid,                    &
+               pesd_additional_cmd,             &
+               pesd_auxiliary_input_files,      &
+               pesd_auxiliary_input_files_n,    &
+               pesd_auxiliary_output_files,     &
+               pesd_auxiliary_output_files_n
+  protected :: pesd_scf_flag_count,             &
+               pesd_scfcycle,                   &
+               pesd_scfconv,                    &
+               pesd_scfvshift,                  &
+               pesd_intgrid,                    &
+               pesd_additional_cmd,             &
+               pesd_auxiliary_input_files,      &
+               pesd_auxiliary_input_files_n,    &
+               pesd_auxiliary_output_files,     &
                pesd_auxiliary_output_files_n
   ! public procedures -------------------------------------
-  public :: set_pesd_scfcycle, set_pesd_scfconv, set_pesd_scfvshift,&
-    &set_pesd_intgrid, set_pesd_additional_cmd, set_pesd_auxiliary_files
+  public    :: set_pesd_scfcycle,               &
+               set_pesd_scfconv,                &
+               set_pesd_scfvshift,              &
+               set_pesd_intgrid,                &
+               set_pesd_additional_cmd,         &
+               set_pesd_auxiliary_files
 
   !--------------------------------------------------------
-  integer, parameter :: PESD_AUX_INPUT_FILES  = 0
-  integer, parameter :: PESD_AUX_OUTPUT_FILES = 1
+  ! ENUM
+  integer, parameter                        :: PESD_AUX_INPUT_FILES             = 0
+  integer, parameter                        :: PESD_AUX_OUTPUT_FILES            = 1
 
-  logical :: flag_pesd_scfcycle               = .false.
-  logical :: flag_pesd_scfconv                = .false.
-  logical :: flag_pesd_scfvshift              = .false.
-  logical :: flag_pesd_intgrid                = .false.
-  logical :: flag_pesd_additional_cmd         = .false.
-  logical :: flag_pesd_auxiliary_input_files  = .false.
-  logical :: flag_pesd_auxiliary_output_files = .false.
-  integer :: pesd_scf_flag_count=0 ! automatically incremented
-                                   ! by set_pesd_scf* subroutines
+  logical                                   :: flag_pesd_scfcycle               = .false.
+  logical                                   :: flag_pesd_scfconv                = .false.
+  logical                                   :: flag_pesd_scfvshift              = .false.
+  logical                                   :: flag_pesd_intgrid                = .false.
+  logical                                   :: flag_pesd_additional_cmd         = .false.
+  logical                                   :: flag_pesd_auxiliary_input_files  = .false.
+  logical                                   :: flag_pesd_auxiliary_output_files = .false.
+  integer                                   :: pesd_scf_flag_count              = 0
+                                             ! ^ automatically incremented by set_pesd_scf* subroutines
 
-  integer :: pesd_scfcycle
-  integer :: pesd_scfvshift
-  real(DBL) :: pesd_scfconv
-  character(120) :: pesd_intgrid
-  character(120) :: pesd_additional_cmd
+  integer                                   :: pesd_scfcycle
+  integer                                   :: pesd_scfvshift
+  real(DBL)                                 :: pesd_scfconv
+  character(120)                            :: pesd_intgrid
+  character(120)                            :: pesd_additional_cmd
   character(120), allocatable, dimension(:) :: pesd_auxiliary_input_files
   character(120), allocatable, dimension(:) :: pesd_auxiliary_output_files
-  integer :: pesd_auxiliary_input_files_n
-  integer :: pesd_auxiliary_output_files_n
+  integer                                   :: pesd_auxiliary_input_files_n
+  integer                                   :: pesd_auxiliary_output_files_n
 
 contains
 
@@ -201,15 +217,16 @@ subroutine set_pesd_auxiliary_files(mode,str)
   ! auxiliary output files are kept, for each image,
   ! at the end of the calculation and used for the next one.
 
-  integer, intent(IN) :: mode
-  character(*), intent(IN) :: str
-  character(120) :: field
-  character(8)   :: i_str
-  integer :: files_n
+  integer,                       intent(IN) :: mode
+  character(*),                  intent(IN) :: str
+
+  character(120)                            :: field
+  character(8)                              :: i_str
+  integer                                   :: files_n
   character(120), allocatable, dimension(:) :: files
-  integer :: i
-  integer :: err_n
-  character(120) :: err_msg
+  integer                                   :: i
+  integer                                   :: err_n
+  character(120)                            :: err_msg
 
   ! preliminary checks ------------------------------------
   select case (mode)

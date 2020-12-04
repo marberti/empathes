@@ -10,11 +10,19 @@ module output
   private
 
   ! public procedures -------------------------------------
-  public :: input_dumping, write_all_images, write_pes_energy,&
-    &write_compare_pes_energy, write_pes_forces,&
-    &write_parallelization_info, write_pes_info, write_total_forces,&
-    &write_parall_elastic_forces, write_perpen_pes_forces,&
-    &write_gnuplot_pes_energy, last_geom_bkp, write_transition_state
+  public :: input_dumping,               &
+            write_all_images,            &
+            write_pes_energy,            &
+            write_compare_pes_energy,    &
+            write_pes_forces,            &
+            write_parallelization_info,  &
+            write_pes_info,              &
+            write_total_forces,          &
+            write_parall_elastic_forces, &
+            write_perpen_pes_forces,     &
+            write_gnuplot_pes_energy,    &
+            last_geom_bkp,               &
+            write_transition_state
 
 contains
 
@@ -25,10 +33,11 @@ contains
 subroutine input_dumping(fname_in)
 
   character(*), intent(IN) :: fname_in
-  integer, parameter :: fnumb_in = 100
-  character(200) :: str
-  integer :: err_n
-  character(120) :: err_msg
+
+  integer, parameter       :: fnumb_in = 100
+  character(200)           :: str
+  integer                  :: err_n
+  character(120)           :: err_msg
 
   ! open input file ---------------------------------------
   open(unit=fnumb_in,file=fname_in,status='OLD',action='READ',&
@@ -63,8 +72,10 @@ end subroutine input_dumping
 subroutine write_all_images(fnumb)
 
   integer, optional, intent(IN) :: fnumb
-  integer :: i, p_fnumb
-  logical :: is_open
+
+  integer                       :: i
+  integer                       :: p_fnumb
+  logical                       :: is_open
 
   if (present(fnumb).and.(fnumb>0)) then
     inquire(unit=fnumb,opened=is_open)
@@ -116,7 +127,8 @@ end subroutine write_pes_energy
 subroutine write_compare_pes_energy(arr)
 
   real(DBL), dimension(:), intent(IN) :: arr
-  integer :: i
+
+  integer                             :: i
 
   if (.not.allocated(pes_energy)) then
     call error("write_compare_pes_energy: energy array not allocated")
@@ -138,7 +150,8 @@ end subroutine write_compare_pes_energy
 
 subroutine write_pes_forces()
 
-  integer :: i, j
+  integer :: i
+  integer :: j
 
   if (.not.(allocated(pes_forces))) then
     call error("write_pes_forces: forces array not allocated")
@@ -185,7 +198,8 @@ end subroutine write_pes_info
 
 subroutine write_total_forces()
 
-  integer :: i, j
+  integer :: i
+  integer :: j
 
   if (.not.(allocated(total_forces))) then
     call error("write_total_forces: forces array not allocated")
@@ -209,7 +223,8 @@ end subroutine write_total_forces
 
 subroutine write_parall_elastic_forces()
 
-  integer :: i, j
+  integer :: i
+  integer :: j
 
   if (.not.(allocated(parall_elastic_forces))) then
     call error("write_parall_elastic_forces: forces array not allocated")
@@ -233,7 +248,8 @@ end subroutine write_parall_elastic_forces
 
 subroutine write_perpen_pes_forces()
 
-  integer :: i, j
+  integer :: i
+  integer :: j
 
   if (.not.(allocated(perpen_pes_forces))) then
     call error("write_perpen_pes_forces: forces array not allocated")
@@ -257,14 +273,16 @@ end subroutine write_perpen_pes_forces
 
 subroutine write_gnuplot_pes_energy(n,fname)
 
-  integer, optional, intent(IN) :: n
-  character(len=*), optional, intent(IN) :: fname
-  character(len=8) :: n_str
-  integer :: i, err_n
-  character(len=120) :: err_msg
-  integer, parameter :: gp_fnumb=600
-  character(len=30) :: gp_fname
-  logical :: gp_file_exist
+  integer,      optional, intent(IN) :: n
+  character(*), optional, intent(IN) :: fname
+
+  integer, parameter                 :: gp_fnumb = 600
+  character(8)                       :: n_str
+  integer                            :: i
+  character(30)                      :: gp_fname
+  logical                            :: gp_file_exist
+  integer                            :: err_n
+  character(120)                     :: err_msg
 
   if (.not.(allocated(pes_energy))) then
     call error("write_gnuplot_pes_energy: energy array not allocated")
@@ -315,11 +333,12 @@ end subroutine write_gnuplot_pes_energy
 
 subroutine last_geom_bkp(fname)
 
-  character(len=*), optional, intent(IN) :: fname
-  integer :: err_n
-  character(len=120) :: err_msg
-  integer, parameter :: bkp_fnumb=610
-  character(len=30) :: bkp_fname
+  character(*), optional, intent(IN) :: fname
+
+  integer, parameter                 :: bkp_fnumb = 610
+  character(30)                      :: bkp_fname
+  integer                            :: err_n
+  character(120)                     :: err_msg
 
   if (present(fname).and.(len_trim(fname)>0)) then
     bkp_fname=fname
@@ -346,11 +365,15 @@ end subroutine last_geom_bkp
 
 subroutine write_transition_state()
 
-  integer :: i, n, tot_ts
+  integer                            :: i
+  integer                            :: n
+  integer                            :: tot_ts
   logical, allocatable, dimension(:) :: indx
-  real(DBL) :: curr, prev, next
-  integer :: err_n
-  character(120) :: err_msg
+  real(DBL)                          :: curr
+  real(DBL)                          :: prev
+  real(DBL)                          :: next
+  integer                            :: err_n
+  character(120)                     :: err_msg
 
   ! preliminary checks ------------------------------------
   if (flag_init_images.eqv..false.) then
@@ -414,7 +437,7 @@ end subroutine write_transition_state
 
 subroutine write_procs_info()
 
-  integer :: buff
+  integer      :: buff
   character(8) :: n
 
 #ifdef USE_MPI
@@ -461,9 +484,10 @@ subroutine write_image(n,fnumb)
 
   integer, intent(IN) :: n
   integer, intent(IN) :: fnumb
-  integer :: i
-  character(8) :: atoms
-  character(120) :: err_msg
+
+  integer             :: i
+  character(8)        :: atoms
+  character(120)      :: err_msg
 
   if (flag_init_images.eqv..false.) then
     call error("write_image: images not initialized")
@@ -505,9 +529,10 @@ end subroutine write_image
 
 subroutine write_delta_e(n)
 
-  integer, intent(IN) :: n
-  real(DBL) :: de_rea
-  real(DBL) :: de_prod
+  integer,     intent(IN) :: n
+
+  real(DBL)               :: de_rea
+  real(DBL)               :: de_prod
   real(DBL), dimension(2) :: de_au
   real(DBL), dimension(2) :: de_kjmol
   real(DBL), dimension(2) :: de_ev

@@ -7,6 +7,13 @@ module slave
   use geometry
   use pes
 
+  implicit none
+  save
+  private
+
+  ! public procedures -------------------------------------
+  public :: slave_on_idle
+
 contains
 
 !====================================================================

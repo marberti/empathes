@@ -18,13 +18,13 @@ module elastic
   private
 
   ! protected variables -----------------------------------
-  public    :: total_forces,          &
-               parall_elastic_forces, &
-               perpen_pes_forces,     &
+  public    :: total_forces,                &
+               parall_elastic_forces,       &
+               perpen_pes_forces,           &
                norm_tangent
-  protected :: total_forces,          &
-               parall_elastic_forces, &
-               perpen_pes_forces,     &
+  protected :: total_forces,                &
+               parall_elastic_forces,       &
+               perpen_pes_forces,           &
                norm_tangent
   ! pubic procedures --------------------------------------
   public    :: set_spring_k,                &
@@ -37,10 +37,10 @@ module elastic
 
   !--------------------------------------------------------
   ! ENUM
-  integer, parameter                     :: STATIC_SPRING  = 0
-  integer, parameter                     :: DYNAMIC_SPRING = 1
-  integer, parameter                     :: HYBRID_SPRING  = 2
-  integer                                :: spring_mode = DYNAMIC_SPRING
+  integer, parameter                     :: STATIC_SPRING            = 0
+  integer, parameter                     :: DYNAMIC_SPRING           = 1
+  integer, parameter                     :: HYBRID_SPRING            = 2
+  integer                                :: spring_mode              = DYNAMIC_SPRING
 
   logical                                :: flag_spring_k            = .false.
   logical                                :: flag_init_elastic_module = .false.
@@ -62,15 +62,15 @@ contains
 
 subroutine set_spring_k(k)
 
-  real(DBL) :: k
+  real(DBL), intent(IN) :: k
 
   if (flag_spring_k) then
     call error("set_spring_k: spring constant already setted")
   end if
 
-  spring_k=k
+  spring_k = k
 
-  flag_spring_k=.true.
+  flag_spring_k = .true.
 
 end subroutine set_spring_k
 
@@ -102,7 +102,7 @@ subroutine set_spring_mode(str)
       &trim(str)//"""")
   end select
 
-  first_call=.false.
+  first_call = .false.
 
 end subroutine set_spring_mode
 
@@ -175,11 +175,11 @@ subroutine init_elastic_module()
 
   ! variables setting -------------------------------------
   if (flag_spring_k.eqv..false.) then
-    spring_k = 1.0_DBL
-    flag_spring_k=.true.
+    spring_k      = 1.0_DBL
+    flag_spring_k = .true.
   end if
 
-  flag_init_elastic_module=.true.
+  flag_init_elastic_module = .true.
 
 end subroutine init_elastic_module
 
@@ -203,24 +203,24 @@ subroutine compute_total_forces(mode,fixed)
     call init_tangents(mode)
     call compute_parall_elastic_forces()
     call compute_perpen_pes_forces()
-    total_forces=parall_elastic_forces+perpen_pes_forces
+    total_forces = parall_elastic_forces+perpen_pes_forces
   case (IDPP_MODE)
     call compute_idpp_enfo()
     call init_tangents(mode)
     call compute_parall_elastic_forces()
     call compute_perpen_idpp_forces()
-    total_forces=parall_elastic_forces+perpen_idpp_forces
+    total_forces = parall_elastic_forces+perpen_idpp_forces
   case default
     write(istr,'(I8)') mode
-    istr=adjustl(istr)
+    istr = adjustl(istr)
     call error("compute_total_forces: mode """//trim(istr)//""" not valid")
   end select
 
   if (fixed) then
     atoms=geom_len/3
-    if (atoms>=1) total_forces(:,1:3)=0.0_DBL
-    if (atoms>=2) total_forces(:,5:6)=0.0_DBL
-    if (atoms>=3) total_forces(:,9:9)=0.0_DBL
+    if (atoms>=1) total_forces(:,1:3) = 0.0_DBL
+    if (atoms>=2) total_forces(:,5:6) = 0.0_DBL
+    if (atoms>=3) total_forces(:,9:9) = 0.0_DBL
   end if
 
 end subroutine compute_total_forces
@@ -229,10 +229,10 @@ end subroutine compute_total_forces
 
 subroutine arbitrary_geom_total_forces(i,ig,f,g)
 
-  integer,                 intent(IN)        :: i      ! image number
-  real(DBL), dimension(:), intent(IN)        :: ig     ! image geometry (Ang)
-  real(DBL),               intent(OUT)       :: f      ! pes energy in point ig (Hartree)
-  real(DBL), dimension(:), intent(OUT)       :: g      ! total forces in point ig (Hartree/Ang)
+  integer,                       intent(IN)  :: i      ! image number
+  real(DBL), dimension(:),       intent(IN)  :: ig     ! image geometry (Ang)
+  real(DBL),                     intent(OUT) :: f      ! pes energy in point ig (Hartree)
+  real(DBL), dimension(:),       intent(OUT) :: g      ! total forces in point ig (Hartree/Ang)
 
   real(DBL), save, allocatable, dimension(:) :: pesg   ! pes forces (Hartree/Ang)
   real(DBL), save, allocatable, dimension(:) :: taup   ! t+
@@ -321,7 +321,7 @@ subroutine arbitrary_geom_total_forces(i,ig,f,g)
   end if
 
   ! working section ---------------------------------------
-  conv_threshold=get_scfconv()
+  conv_threshold = get_scfconv()
   call get_pes_forces(i,0,conv_threshold,converged,ig,f,pesg)
 
   !WARNING Bad Programming Style --------------------------
@@ -337,45 +337,45 @@ subroutine arbitrary_geom_total_forces(i,ig,f,g)
   !--------------------------------------------------------
 
   ! compute half-tangents ---------------------------------
-  taup=image_geom(i+1,:)-ig
-  taum=ig-image_geom(i-1,:)
+  taup = image_geom(i+1,:)-ig
+  taum = ig-image_geom(i-1,:)
 
   ! compute tangent ---------------------------------------
-  prev=pes_energy(i-1)
-  curr=f
-  next=pes_energy(i+1)
+  prev = pes_energy(i-1)
+  curr = f
+  next = pes_energy(i+1)
 
   if (prev==next) then
-    tg=taup+taum
+    tg = taup+taum
   else if ((next>curr).and.(curr>prev)) then
-    tg=taup
+    tg = taup
   else if ((next<curr).and.(curr<prev)) then
-    tg=taum
+    tg = taum
   else
-    e_max=max(abs(next-curr),abs(prev-curr))
-    e_min=min(abs(next-curr),abs(prev-curr))
+    e_max = max(abs(next-curr),abs(prev-curr))
+    e_min = min(abs(next-curr),abs(prev-curr))
     if (next>prev) then
-      tg=(taup*e_max)+(taum*e_min)
+      tg = (taup*e_max)+(taum*e_min)
     else
-      tg=(taup*e_min)+(taum*e_max)
+      tg = (taup*e_min)+(taum*e_max)
     end if
   end if
 
   ! normalize tangent -------------------------------------
-  ntg=tg/norm(tg)
+  ntg = tg/norm(tg)
 
   ! compute parallel elastic forces -----------------------
-  c1=norm(taup)
-  c2=norm(taum)
-  coeff=c1-c2
-  paelfo=(spring_k*coeff)*ntg
+  c1     = norm(taup)
+  c2     = norm(taum)
+  coeff  = c1-c2
+  paelfo = (spring_k*coeff)*ntg
 
   ! compute perpendicular pes forces ----------------------
-  dp=dot_product(pesg,ntg)
-  pepefo=pesg-(dp*ntg)
+  dp     = dot_product(pesg,ntg)
+  pepefo = pesg-(dp*ntg)
 
   ! compute total forces ----------------------------------
-  g=paelfo+pepefo
+  g = paelfo+pepefo
 
 end subroutine arbitrary_geom_total_forces
 
@@ -417,7 +417,7 @@ subroutine set_total_forces_on_i(i,forces)
     call error("set_total_forces_on_i: wrong forces argument size")
   end if
 
-  total_forces(i,:)=forces
+  total_forces(i,:) = forces
 
 end subroutine set_total_forces_on_i
 
@@ -463,14 +463,14 @@ subroutine compute_dynamic_spring_k()
 
   ! working section ---------------------------------------
   do i=1, image_n+1
-    e(i)=max(pes_energy(i),pes_energy(i-1))
+    e(i) = max(pes_energy(i),pes_energy(i-1))
   end do
 
-  e_max=maxval(e,1)
-  e_ref=max(pes_energy(0),pes_energy(image_n+1))
+  e_max = maxval(e,1)
+  e_ref = max(pes_energy(0),pes_energy(image_n+1))
   ! this two are programmer defined parameter
-  k_max=spring_k
-  dk=k_max/2.0_DBL
+  k_max = spring_k
+  dk    = k_max/2.0_DBL
 
   do i=1, image_n+1
     if (e(i)>e_ref) then
@@ -494,18 +494,18 @@ subroutine compute_parall_elastic_forces()
   select case (spring_mode)
   case (STATIC_SPRING)
     do i=1, image_n
-      c1=norm(half_tangent(i,:))
-      c2=norm(half_tangent(i-1,:))
-      coeff=c1-c2
-      parall_elastic_forces(i,:)=(spring_k*coeff)*norm_tangent(i,:)
+      c1    = norm(half_tangent(i,:))
+      c2    = norm(half_tangent(i-1,:))
+      coeff = c1-c2
+      parall_elastic_forces(i,:) = (spring_k*coeff)*norm_tangent(i,:)
     end do
   case (DYNAMIC_SPRING,HYBRID_SPRING)
     call compute_dynamic_spring_k()
     do i=1, image_n
-      c1=norm(half_tangent(i,:))
-      c2=norm(half_tangent(i-1,:))
-      coeff=dynamic_spring_k(i+1)*c1 - dynamic_spring_k(i)*c2
-      parall_elastic_forces(i,:)=coeff*norm_tangent(i,:)
+      c1    = norm(half_tangent(i,:))
+      c2    = norm(half_tangent(i-1,:))
+      coeff = dynamic_spring_k(i+1)*c1 - dynamic_spring_k(i)*c2
+      parall_elastic_forces(i,:) = coeff*norm_tangent(i,:)
     end do
   case default
     call error("compute_parall_elastic_forces: unknown spring mode")
@@ -521,8 +521,8 @@ subroutine compute_perpen_pes_forces()
   real(DBL) :: dp
 
   do i=1, image_n
-    dp=dot_product(pes_forces(i,:),norm_tangent(i,:))
-    perpen_pes_forces(i,:)=pes_forces(i,:)-(dp*norm_tangent(i,:))
+    dp = dot_product(pes_forces(i,:),norm_tangent(i,:))
+    perpen_pes_forces(i,:) = pes_forces(i,:)-(dp*norm_tangent(i,:))
   end do
 
 end subroutine compute_perpen_pes_forces
@@ -535,8 +535,8 @@ subroutine compute_perpen_idpp_forces()
   real(DBL) :: dp
 
   do i=1, image_n
-    dp=dot_product(idpp_forces(i,:),norm_tangent(i,:))
-    perpen_idpp_forces(i,:)=idpp_forces(i,:)-(dp*norm_tangent(i,:))
+    dp = dot_product(idpp_forces(i,:),norm_tangent(i,:))
+    perpen_idpp_forces(i,:) = idpp_forces(i,:)-(dp*norm_tangent(i,:))
   end do
 
 end subroutine compute_perpen_idpp_forces
@@ -565,7 +565,7 @@ subroutine compute_tangent(mode)
   ! Do not call directly, use init_tangents instead
   !--------------------------------------------------------
 
-  integer, intent(IN)                  :: mode
+  integer,                  intent(IN) :: mode
 
   integer                              :: i
   real(DBL)                            :: prev
@@ -587,34 +587,34 @@ subroutine compute_tangent(mode)
   ! mode selection ----------------------------------------
   select case (mode)
   case (PES_MODE)
-    energy=pes_energy
+    energy = pes_energy
   case (IDPP_MODE)
-    energy=idpp_energy
+    energy = idpp_energy
   case default
     write(istr,'(I8)') mode
-    istr=adjustl(istr)
+    istr = adjustl(istr)
     call error("compute_tangent: mode """//trim(istr)//""" not valid")
   end select
 
   ! working section ---------------------------------------
   do i=1, image_n
-    prev=energy(i-1)
-    curr=energy(i)
-    next=energy(i+1)
+    prev = energy(i-1)
+    curr = energy(i)
+    next = energy(i+1)
 
     if (prev==next) then
-      tangent(i,:)=half_tangent(i,:)+half_tangent(i-1,:)
+      tangent(i,:) = half_tangent(i,:)+half_tangent(i-1,:)
     else if ((next>curr).and.(curr>prev)) then
-      tangent(i,:)=half_tangent(i,:)
+      tangent(i,:) = half_tangent(i,:)
     else if ((next<curr).and.(curr<prev)) then
-      tangent(i,:)=half_tangent(i-1,:)
+      tangent(i,:) = half_tangent(i-1,:)
     else
-      e_max=max(abs(next-curr),abs(prev-curr))
-      e_min=min(abs(next-curr),abs(prev-curr))
+      e_max = max(abs(next-curr),abs(prev-curr))
+      e_min = min(abs(next-curr),abs(prev-curr))
       if (next>prev) then
-        tangent(i,:)=(half_tangent(i,:)*e_max)+(half_tangent(i-1,:)*e_min)
+        tangent(i,:) = (half_tangent(i,:)*e_max)+(half_tangent(i-1,:)*e_min)
       else
-        tangent(i,:)=(half_tangent(i,:)*e_min)+(half_tangent(i-1,:)*e_max)
+        tangent(i,:) = (half_tangent(i,:)*e_min)+(half_tangent(i-1,:)*e_max)
       end if
     end if
   end do
@@ -638,7 +638,7 @@ subroutine normalize_tangent()
   integer :: i
 
   do i=1, image_n
-    norm_tangent(i,:)=tangent(i,:)/norm(tangent(i,:))
+    norm_tangent(i,:) = tangent(i,:)/norm(tangent(i,:))
   end do
 
 end subroutine normalize_tangent

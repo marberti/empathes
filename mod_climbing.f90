@@ -36,11 +36,11 @@ module climbing
                flag_descending_quick_start, &
                climbing_image_n
   ! public procedures -------------------------------------
-  public    :: set_climbing_image,         &
-               set_climbing_quick_start,   &
-               set_descending_image,       &
-               set_descending_quick_start, &
-               exec_climbing,              &
+  public    :: set_climbing_image,          &
+               set_climbing_quick_start,    &
+               set_descending_image,        &
+               set_descending_quick_start,  &
+               exec_climbing,               &
                exec_descending
 
   !--------------------------------------------------------
@@ -71,21 +71,21 @@ subroutine set_climbing_image(str)
     end if
 
     if (climbing_image_n==0) then
-      flag_climbing_image=.false.
+      flag_climbing_image = .false.
     else
-      flag_climbing_image=.true.
+      flag_climbing_image = .true.
     end if
   else
     select case (str)
     case ("y","yes","t","true","on")
-      flag_climbing_image=.true.
-      climbing_image_n=1    
+      flag_climbing_image = .true.
+      climbing_image_n    = 1    
     case ("n","no","f","false","off")
-      flag_climbing_image=.false.
-      climbing_image_n=0    
+      flag_climbing_image = .false.
+      climbing_image_n    = 0    
     case ("all")
-      flag_climbing_image=.true.
-      flag_all_maxima_climbing=.true.
+      flag_climbing_image      = .true.
+      flag_all_maxima_climbing = .true.
     case default
       call error("set_climbing_image: argument """//trim(str)//&
         &""" is not valid")
@@ -100,7 +100,7 @@ subroutine set_climbing_quick_start(flag)
 
   logical, intent(IN) :: flag
 
-  flag_climbing_quick_start=flag
+  flag_climbing_quick_start = flag
 
 end subroutine set_climbing_quick_start
 
@@ -110,7 +110,7 @@ subroutine set_descending_image(flag)
 
   logical, intent(IN) :: flag
 
-  flag_descending_image=flag
+  flag_descending_image = flag
 
 end subroutine set_descending_image
 
@@ -120,7 +120,7 @@ subroutine set_descending_quick_start(flag)
 
   logical, intent(IN) :: flag
 
-  flag_descending_quick_start=flag
+  flag_descending_quick_start = flag
 
 end subroutine set_descending_quick_start
 
@@ -128,8 +128,8 @@ end subroutine set_descending_quick_start
 
 subroutine exec_climbing(fixed,write_output)
 
-  logical, intent(IN)                  :: fixed
-  logical, intent(IN)                  :: write_output
+  logical,                  intent(IN) :: fixed
+  logical,                  intent(IN) :: write_output
 
   logical,   allocatable, dimension(:) :: mask
   real(DBL), allocatable, dimension(:) :: forces
@@ -161,40 +161,40 @@ subroutine exec_climbing(fixed,write_output)
 
   ! working section ---------------------------------------
   call get_maxima(pes_energy,mask)
-  tot_maxima=0
+  tot_maxima = 0
   do i=0, image_n+1
     if (mask(i)) then
-      tot_maxima=tot_maxima+1
+      tot_maxima = tot_maxima+1
     end if
   end do
 
   if (flag_all_maxima_climbing) then
-    up_lim=tot_maxima
+    up_lim = tot_maxima
   else
-    up_lim=min(climbing_image_n,tot_maxima)
+    up_lim = min(climbing_image_n,tot_maxima)
   end if
 
   do i=1, up_lim
-    indx=maxloc(pes_energy,1,mask)-1
-    dp=dot_product(pes_forces(indx,:),norm_tangent(indx,:))
-    forces=dp*norm_tangent(indx,:)
-    forces=pes_forces(indx,:)-2*forces
+    indx   = maxloc(pes_energy,1,mask)-1
+    dp     = dot_product(pes_forces(indx,:),norm_tangent(indx,:))
+    forces = dp*norm_tangent(indx,:)
+    forces = pes_forces(indx,:)-2*forces
 
     if (fixed) then
-      atoms=geom_len/3
-      if (atoms>=1) forces(1:3)=0.0_DBL
-      if (atoms>=2) forces(5:6)=0.0_DBL
-      if (atoms>=3) forces(9:9)=0.0_DBL
+      atoms = geom_len/3
+      if (atoms>=1) forces(1:3) = 0.0_DBL
+      if (atoms>=2) forces(5:6) = 0.0_DBL
+      if (atoms>=3) forces(9:9) = 0.0_DBL
     end if
     
     if (write_output) then
       write(istr,'(I8)') indx
-      istr=adjustl(istr)
+      istr = adjustl(istr)
       write(FILEOUT,'(5X,"Climbing on image: ",A)') trim(istr)
     end if
 
     call set_total_forces_on_i(indx,forces)
-    mask(indx)=.false.
+    mask(indx) = .false.
   end do
 
   ! deallocation section ------------------------------------
@@ -214,8 +214,8 @@ end subroutine exec_climbing
 
 subroutine exec_descending(fixed,write_output)
 
-  logical, intent(IN)                  :: fixed
-  logical, intent(IN)                  :: write_output
+  logical,                  intent(IN) :: fixed
+  logical,                  intent(IN) :: write_output
 
   logical,   allocatable, dimension(:) :: mask
   real(DBL), allocatable, dimension(:) :: forces
@@ -245,32 +245,32 @@ subroutine exec_descending(fixed,write_output)
 
   ! working section ---------------------------------------
   call get_minima(pes_energy,mask)
-  tot_minima=0
+  tot_minima = 0
   do i=0, image_n+1
     if (mask(i)) then
-      tot_minima=tot_minima+1
+      tot_minima = tot_minima+1
     end if
   end do
 
   do i=1, tot_minima
-    indx=minloc(pes_energy,1,mask)-1
-    forces=pes_forces(indx,:)
+    indx   = minloc(pes_energy,1,mask)-1
+    forces = pes_forces(indx,:)
 
     if (fixed) then
-      atoms=geom_len/3
-      if (atoms>=1) forces(1:3)=0.0_DBL
-      if (atoms>=2) forces(5:6)=0.0_DBL
-      if (atoms>=3) forces(9:9)=0.0_DBL
+      atoms = geom_len/3
+      if (atoms>=1) forces(1:3) = 0.0_DBL
+      if (atoms>=2) forces(5:6) = 0.0_DBL
+      if (atoms>=3) forces(9:9) = 0.0_DBL
     end if
     
     if (write_output) then
       write(istr,'(I8)') indx
-      istr=adjustl(istr)
+      istr = adjustl(istr)
       write(FILEOUT,'(5X,"Descending on image: ",A)') trim(istr)
     end if
 
     call set_total_forces_on_i(indx,forces)
-    mask(indx)=.false.
+    mask(indx) = .false.
   end do
 
   ! deallocation section ----------------------------------

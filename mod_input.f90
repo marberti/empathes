@@ -97,55 +97,55 @@ subroutine read_input(file_in)
 
       if (.not.got_pes_exec) then
         write(FILEOUT,*) "WAR read_input: #PESEXEC not specified"
-        got_error=.true.
+        got_error = .true.
       end if
 
       ! check mandatory keyword presence ------------------
       if (.not.got_geometries_file) then
         if (.not.got_start) then
           write(FILEOUT,*) "WAR read_input: #START not specified"
-          got_error=.true.
+          got_error = .true.
         end if
         if (.not.got_end) then
           write(FILEOUT,*) "WAR read_input: #END not specified"
-          got_error=.true.
+          got_error = .true.
         end if
         if (.not.got_images) then
           write(FILEOUT,*) "WAR read_input: #IMAGES not specified"
-          got_error=.true.
+          got_error = .true.
         end if
       end if
 
       if (.not.got_charge) then
         write(FILEOUT,*) "WAR read_input: #CHARGE not specified"
-        got_error=.true.
+        got_error = .true.
       end if
 
       if (.not.got_multip) then
         write(FILEOUT,*) "WAR read_input: #MULTIP not specified"
-        got_error=.true.
+        got_error = .true.
       end if
 
       if (.not.got_start_energy) then
         write(FILEOUT,*) "WAR read_input: #STARTENERGY not specified"
-        got_error=.true.
+        got_error = .true.
       end if
 
       if (.not.got_end_energy) then
         write(FILEOUT,*) "WAR read_input: #ENDENERGY not specified"
-        got_error=.true.
+        got_error = .true.
       end if
 
       ! check mandatory keywords for siesta
       if (pes_program=="siesta") then
         if (.not.got_elabel) then
           write(FILEOUT,*) "WAR read_input: #LABEL block not specified"
-          got_error=.true.
+          got_error = .true.
         end if
 
         if (.not.got_pes_input_template) then
           write(FILEOUT,*) "WAR read_input: #PESINPUTTEMPLATE block not specified"
-          got_error=.true.
+          got_error = .true.
         end if
       end if
 
@@ -208,7 +208,7 @@ subroutine read_input(file_in)
       end if
  
       call read_geometries_file(trim(arg))
-      got_geometries_file=.true.
+      got_geometries_file = .true.
 
     case ("#CHARGE")
       call get_field(cmd_str,arg,2,err_n,err_msg)
@@ -217,7 +217,7 @@ subroutine read_input(file_in)
       end if
  
       call set_geom_charge(trim(arg))
-      got_charge=.true.
+      got_charge = .true.
 
     case ("#MULTIP")
       call get_field(cmd_str,arg,2,err_n,err_msg)
@@ -226,7 +226,7 @@ subroutine read_input(file_in)
       end if
  
       call set_geom_multip(trim(arg))
-      got_multip=.true.
+      got_multip = .true.
 
     case ("#IMAGES")
       if (got_geometries_file) then
@@ -238,7 +238,7 @@ subroutine read_input(file_in)
       end if
  
       call set_image_n(trim(arg))
-      got_images=.true.
+      got_images = .true.
 
     case ("#STARTENERGY")
       call get_field(cmd_str,arg,2,err_n,err_msg)
@@ -247,7 +247,7 @@ subroutine read_input(file_in)
       end if
  
       call set_start_energy(trim(arg))
-      got_start_energy=.true.
+      got_start_energy = .true.
 
     case ("#ENDENERGY")
       call get_field(cmd_str,arg,2,err_n,err_msg)
@@ -256,15 +256,15 @@ subroutine read_input(file_in)
       end if
  
       call set_end_energy(trim(arg))
-      got_end_energy=.true.
+      got_end_energy = .true.
 
     case ("#IDPP")
       call set_idpp(.true.)
-      got_idpp=.true.
+      got_idpp = .true.
 
     case ("#LABEL")
       call read_elabel(file_n,"#ENDLABEL",ri_elabel)
-      got_elabel=.true.
+      got_elabel = .true.
 
     case ("#PESPROGRAM")
       call get_field(cmd_str,arg,2,err_n,err_msg)
@@ -273,7 +273,7 @@ subroutine read_input(file_in)
       end if
  
       call set_pes_program(arg)
-      got_pes_program=.true.
+      got_pes_program = .true.
 
     case ("#PESEXEC")
       call get_field(cmd_str,arg,2,err_n,err_msg)
@@ -282,11 +282,11 @@ subroutine read_input(file_in)
       end if
  
       call set_pes_exec(arg)
-      got_pes_exec=.true.
+      got_pes_exec = .true.
 
     case ("#PESINPUTTEMPLATE")
       call read_pes_input_template(file_n,"#ENDPESINPUTTEMPLATE")
-      got_pes_input_template=.true.
+      got_pes_input_template = .true.
 
     case ("#PESPROC")
       call get_field(cmd_str,arg,2,err_n,err_msg)
@@ -551,7 +551,7 @@ subroutine get_geometry(file_n,point,atoms,elem)
   if (point=="#START") then
     ! read coordinates ------------------------------------
     do i=1, g_len, +3
-      indx=i/3+1
+      indx = i/3+1
       read(file_n,*,iostat=err_n) elem(indx),x,y,z
       if (err_n/=0) then
         call error("get_geometry: error while reading start geometry")
@@ -563,7 +563,7 @@ subroutine get_geometry(file_n,point,atoms,elem)
   else if (point=="#END") then
     ! read coordinates ------------------------------------
     do i=1, g_len, +3
-      indx=i/3+1
+      indx = i/3+1
       read(file_n,*,iostat=err_n) elem(indx),x,y,z
       if (err_n/=0) then
         call error("get_geometry: error while reading end geometry")
@@ -596,7 +596,7 @@ subroutine consistency_check(got_geometries_file,ri_start_atoms,&
   logical                                             :: flag_alloc_e
   logical                                             :: flag_not_consistent
 
-  flag_not_consistent=.false.
+  flag_not_consistent = .false.
 
   ! those checks must be done only if ---------------------
   ! geometries file was not specified
@@ -605,55 +605,55 @@ subroutine consistency_check(got_geometries_file,ri_start_atoms,&
     if (ri_start_atoms<=0) then
       write(FILEOUT,*) "WAR consistency_check: "//&
         &"non-positive start atoms number"
-      flag_not_consistent=.true.
+      flag_not_consistent = .true.
     end if
 
     if (ri_start_atoms<=0) then
       write(FILEOUT,*) "WAR consistency_check: "//&
         &"non-positive end atoms number"
-      flag_not_consistent=.true.
+      flag_not_consistent = .true.
     end if
 
     if (ri_start_atoms/=ri_end_atoms) then
       write(FILEOUT,*) "WAR consistency_check: "//&
         &"start and end geometries contain a different number of atoms"
-      flag_not_consistent=.true.
+      flag_not_consistent = .true.
     end if
 
     ! check elements array and order ------------------------
-    flag_alloc_s=allocated(ri_start_elem)
-    flag_alloc_e=allocated(ri_end_elem)
+    flag_alloc_s = allocated(ri_start_elem)
+    flag_alloc_e = allocated(ri_end_elem)
 
     if ((flag_alloc_s).and.(.not.flag_alloc_e)) then
       write(FILEOUT,*) "WAR consistency_check: "//&
         &"only start elements array is present"
-      flag_not_consistent=.true.
+      flag_not_consistent = .true.
     else if ((.not.flag_alloc_s).and.(flag_alloc_e)) then
       write(FILEOUT,*) "WAR consistency_check: "//&
         &"only end elements array is present"
-      flag_not_consistent=.true.
+      flag_not_consistent = .true.
     end if
 
     if (flag_alloc_s.and.flag_alloc_e) then
       if (size(ri_start_elem,1)/=ri_start_atoms) then
         write(FILEOUT,*) "WAR consistency_check: "//&
           &"wrong start elements array size"
-        flag_not_consistent=.true.
+        flag_not_consistent = .true.
       end if
       if (size(ri_end_elem,1)/=ri_end_atoms) then
         write(FILEOUT,*) "WAR consistency_check: "//&
           &"wrong end elements array size"
-        flag_not_consistent=.true.
+        flag_not_consistent = .true.
       end if
 
       if (.not.flag_not_consistent) then
         do i=1, size(ri_start_elem,1)
           if (ri_start_elem(i)/=ri_end_elem(i)) then
             write(i_str,'(I8)') i
-            i_str=adjustl(i_str)
+            i_str = adjustl(i_str)
             write(FILEOUT,*) "WAR consistency_check: "//&
               &"elements in line "//trim(i_str)//" are different"
-            flag_not_consistent=.true.
+            flag_not_consistent = .true.
           end if
         end do
       end if
@@ -666,13 +666,13 @@ subroutine consistency_check(got_geometries_file,ri_start_atoms,&
       if (size(ri_elabel,1)/=size(element,1)) then
         write(FILEOUT,*) "WAR consistency_check: "//&
           &"wrong element label array size"
-        flag_not_consistent=.true.
+        flag_not_consistent = .true.
       end if
     else
       if (size(ri_elabel,1)/=ri_start_atoms) then
         write(FILEOUT,*) "WAR consistency_check: "//&
           &"wrong element label array size"
-        flag_not_consistent=.true.
+        flag_not_consistent = .true.
       end if
     end if
   end if
@@ -681,7 +681,7 @@ subroutine consistency_check(got_geometries_file,ri_start_atoms,&
   if (climbing_image_n>image_n) then
     write(FILEOUT,*) "WAR consistency_check: "//&
       &"specified more climbing images than normal ones"
-    flag_not_consistent=.true.
+    flag_not_consistent = .true.
   end if
 
   ! check climbing image quick start ----------------------
@@ -689,7 +689,7 @@ subroutine consistency_check(got_geometries_file,ri_start_atoms,&
     if (flag_climbing_image.eqv..false.) then
       write(FILEOUT,*) "WAR consistency_check: "//&
         &"#CLIMBINGQUICKSTART requires #CLIMBING"
-      flag_not_consistent=.true.
+      flag_not_consistent = .true.
     end if
   end if
 
@@ -718,7 +718,7 @@ subroutine read_elabel(fnumb,ending,ri_elabel)
   integer                                              :: err_n
   character(120)                                       :: err_msg
 
-  lines=get_lines(fnumb,ending)
+  lines = get_lines(fnumb,ending)
   if (lines==0) then
     call error("read_elabel: element labels not specified")
   end if
@@ -744,8 +744,8 @@ subroutine read_elabel(fnumb,ending,ri_elabel)
     if (err_n/=0) then
       call error("read_elabel: "//trim(err_msg))
     end if
-    lab=adjustl(lab)
-    ri_elabel(i)=lab(1:3)
+    lab          = adjustl(lab)
+    ri_elabel(i) = lab(1:3)
   end do
 
 end subroutine read_elabel
@@ -765,7 +765,7 @@ subroutine read_user_basis_set(fnumb,ending)
   integer                  :: err_n
   character(120)           :: err_msg
 
-  lines=get_lines(fnumb,ending)
+  lines = get_lines(fnumb,ending)
   if (lines==0) then
     call error("read_user_basis_set: basis set not specified")
   end if
@@ -791,7 +791,7 @@ subroutine read_user_basis_set(fnumb,ending)
     if (err_n/=0) then
       call error("read_user_basis_set: "//trim(err_msg))
     end if
-    user_basis_set(i)=str
+    user_basis_set(i) = str
   end do
   
   call set_user_basis_set(.true.)
@@ -813,7 +813,7 @@ subroutine read_user_pseudo_potential(fnumb,ending)
   integer                  :: err_n
   character(120)           :: err_msg
 
-  lines=get_lines(fnumb,ending)
+  lines = get_lines(fnumb,ending)
   if (lines==0) then
     call error("read_user_pseudo_potential: pseudo potential not specified")
   end if
@@ -839,7 +839,7 @@ subroutine read_user_pseudo_potential(fnumb,ending)
     if (err_n/=0) then
       call error("read_user_pseudo_potential: "//trim(err_msg))
     end if
-    user_pseudo_potential(i)=str
+    user_pseudo_potential(i) = str
   end do
 
   call set_user_pseudo_potential(.true.)
@@ -887,7 +887,7 @@ subroutine read_pes_input_template(fnumb,ending)
     if (err_n/=0) then
       call error("read_pes_input_template: "//trim(err_msg))
     end if
-    pes_input_template(i)=str
+    pes_input_template(i) = str
   end do
 
   call set_pes_input_template(.true.)
@@ -940,7 +940,7 @@ subroutine read_geometries_file(gf_fname)
   end if
 
   write(str,'(I8)') ngeom-2
-  str=adjustl(str)
+  str = adjustl(str)
   call set_geom_len(natom)
   call set_image_n(trim(str))
   call allocate_image_geom()
@@ -972,7 +972,7 @@ subroutine read_geometries_file(gf_fname)
     call read_xyz(gf_fnumb,elem_arr,geom_arr)
     
     if (i==0) then
-      elem_dfl=elem_arr
+      elem_dfl = elem_arr
       call update_element(elem_dfl)
     else
       do j=1, size(elem_arr,1)
@@ -1032,14 +1032,14 @@ subroutine get_geometries_info(fnumb,ngeom,natom)
   integer              :: tmp_atom
   integer              :: err_n
 
-  ngeom=0
+  ngeom = 0
   do
     read(fnumb,'(A120)',iostat=err_n) str
     if (err_n/=0) then
       exit
     end if
 
-    str=adjustl(str)
+    str = adjustl(str)
     if (.not.isinteger(trim(adjustl(str)))) then
       call error("get_geometries_info: bad format in geometries file")
     end if
@@ -1060,7 +1060,7 @@ subroutine get_geometries_info(fnumb,ngeom,natom)
       end if
     end do
 
-    ngeom=ngeom+1
+    ngeom = ngeom+1
   end do
 
 end subroutine get_geometries_info
@@ -1097,7 +1097,7 @@ subroutine read_xyz(fnumb,elem_arr,geom_arr)
   if (err_n/=0) then
     call error("read_xyz: bad format in geometries file")
   end if
-  str=adjustl(str)
+  str = adjustl(str)
 
   if (.not.isinteger(trim(adjustl(str)))) then
     call error("read_xyz: bad format in geometries file")
@@ -1116,7 +1116,7 @@ subroutine read_xyz(fnumb,elem_arr,geom_arr)
     if (err_n/=0) then
       call error("read_xyz: bad format in geometries file")
     end if
-    str=adjustl(str)
+    str = adjustl(str)
 
     if (i==0) then
       cycle
@@ -1127,7 +1127,7 @@ subroutine read_xyz(fnumb,elem_arr,geom_arr)
       call error("read_xyz: "//trim(err_msg))
     end if
 
-    elem_arr(i)=field
+    elem_arr(i) = field
 
     do j=2, 4
       call get_field(str,field,j,err_n,err_msg)

@@ -106,8 +106,8 @@ subroutine set_pesd_scfcycle(str)
     call error("set_pesd_scfcycle: argument must be a non-zero positive integer")
   end if
 
-  pesd_scf_flag_count=pesd_scf_flag_count+1
-  flag_pesd_scfcycle=.true.
+  pesd_scf_flag_count = pesd_scf_flag_count+1
+  flag_pesd_scfcycle  = .true.
 
 end subroutine set_pesd_scfcycle
 
@@ -131,8 +131,8 @@ subroutine set_pesd_scfconv(str)
 
   read(str,*) pesd_scfconv
 
-  pesd_scf_flag_count=pesd_scf_flag_count+1
-  flag_pesd_scfconv=.true.
+  pesd_scf_flag_count = pesd_scf_flag_count+1
+  flag_pesd_scfconv   = .true.
 
 end subroutine set_pesd_scfconv
 
@@ -160,8 +160,8 @@ subroutine set_pesd_scfvshift(str)
     call error("set_pesd_scfvshift: argument must be a non-zero positive integer")
   end if
 
-  pesd_scf_flag_count=pesd_scf_flag_count+1
-  flag_pesd_scfvshift=.true.
+  pesd_scf_flag_count = pesd_scf_flag_count+1
+  flag_pesd_scfvshift = .true.
 
 end subroutine set_pesd_scfvshift
 
@@ -179,9 +179,9 @@ subroutine set_pesd_intgrid(str)
     call error("set_pesd_intgrid: empty argument")
   end if
 
-  pesd_intgrid=trim(adjustl(str))
+  pesd_intgrid = trim(adjustl(str))
 
-  flag_pesd_intgrid=.true.
+  flag_pesd_intgrid = .true.
 
 end subroutine set_pesd_intgrid
 
@@ -199,9 +199,9 @@ subroutine set_pesd_additional_cmd(str)
     call error("set_pesd_additional_cmd: empty argument")
   end if
 
-  pesd_additional_cmd=trim(adjustl(str))
+  pesd_additional_cmd = trim(adjustl(str))
 
-  flag_pesd_additional_cmd=.true.
+  flag_pesd_additional_cmd = .true.
 
 end subroutine set_pesd_additional_cmd
 
@@ -277,7 +277,7 @@ subroutine set_pesd_auxiliary_files(mode,str)
   call get_field(str,field,files_n+3,err_n,err_msg)
   if (err_n==0) then ! yes, it's correct ==
     write(i_str,'(I8)') files_n
-    i_str=adjustl(i_str)
+    i_str = adjustl(i_str)
     call error("set_pesd_auxiliary_files: specified more than "&
       &//trim(i_str)//" auxiliary file(s)")
   end if

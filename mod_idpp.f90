@@ -18,11 +18,11 @@ module idpp
   private
 
   ! protected variables -----------------------------------
-  public    :: flag_idpp,   &
-               idpp_energy, &
+  public    :: flag_idpp,         &
+               idpp_energy,       &
                idpp_forces
-  protected :: flag_idpp,   &
-               idpp_energy, &
+  protected :: flag_idpp,         &
+               idpp_energy,       &
                idpp_forces
   ! public procedures -------------------------------------
   public    :: set_idpp,          &
@@ -94,8 +94,8 @@ subroutine init_idpp()
   end if
 
   ! allocate the arrays -----------------------------------
-  atoms=geom_len/3
-  d_idpp_len=triang_numb(atoms-1)
+  atoms      = geom_len/3
+  d_idpp_len = triang_numb(atoms-1)
 
   allocate(d_idpp(0:image_n+1,d_idpp_len),stat=err_n,errmsg=err_msg)
   if (err_n/=0) then
@@ -122,16 +122,16 @@ subroutine init_idpp()
   do k=0, image_n+1, +(image_n+1)
     do i=1, atoms
       do j=i+1, atoms
-        indx=get_d_idpp_index(i,j)
-        d_idpp(k,indx)=atomic_distance(k,i,j)
+        indx           = get_d_idpp_index(i,j)
+        d_idpp(k,indx) = atomic_distance(k,i,j)
       end do
     end do
   end do
 
   ! image geometries
-  delta=d_idpp(image_n+1,:)-d_idpp(0,:)
+  delta = d_idpp(image_n+1,:)-d_idpp(0,:)
   do k=1, image_n
-    d_idpp(k,:)=d_idpp(0,:)+((k/real(image_n+1,DBL))*delta)
+    d_idpp(k,:) = d_idpp(0,:)+((k/real(image_n+1,DBL))*delta)
   end do
 
   ! init idpp_energy for start and end points -------------
@@ -196,24 +196,24 @@ subroutine get_idpp_energy(k)
   ! preliminary checks ------------------------------------
   if ((k<0).or.(k>image_n+1)) then
     write(i_str,'(I8)') k
-    i_str=adjustl(i_str)
+    i_str = adjustl(i_str)
     call error("get_idpp_energy: image "//trim(i_str)//" out of range")
   end if
 
   ! working section ---------------------------------------
-  atoms=geom_len/3
+  atoms = geom_len/3
 
-  res=0.0_DBL
+  res = 0.0_DBL
   do i = 1, atoms
     do j = i+1, atoms
-      indx=get_d_idpp_index(i,j)
-      d=atomic_distance(k,i,j)
-      w=1.0_DBL/(d**4)
-      res = res + (w*((d_idpp(k,indx) - d)**2))
+      indx = get_d_idpp_index(i,j)
+      d    = atomic_distance(k,i,j)
+      w    = 1.0_DBL/(d**4)
+      res  = res + (w*((d_idpp(k,indx) - d)**2))
     end do
   end do
 
-  idpp_energy(k)=res
+  idpp_energy(k) = res
 
 end subroutine get_idpp_energy
 
@@ -243,27 +243,27 @@ subroutine get_idpp_forces(k)
   ! preliminary checks ------------------------------------
   if ((k<1).or.(k>image_n)) then
     write(i_str,'(I8)') k
-    i_str=adjustl(i_str)
+    i_str = adjustl(i_str)
     call error("get_idpp_forces: image "//trim(i_str)//" out of range")
   end if
 
   ! working section ---------------------------------------
-  atoms=geom_len/3
+  atoms            = geom_len/3
   idpp_forces(k,:) = 0.0_DBL
 
   do i=1, atoms
     do j=i+1, atoms
       d = atomic_distance(k,i,j)
-      t=(d_idpp(k,get_d_idpp_index(i,j))-d)
+      t = (d_idpp(k,get_d_idpp_index(i,j))-d)
       
       do c=1, 3
-        ci=3*(i-1)+c
-        cj=3*(j-1)+c
-        dc=image_geom(k,ci)-image_geom(k,cj)
-        s=((-4.0_DBL*dc*(t**2))/(d**6))+((-2.0_DBL*dc*t)/(d**5))
+        ci = 3*(i-1)+c
+        cj = 3*(j-1)+c
+        dc = image_geom(k,ci)-image_geom(k,cj)
+        s  = ((-4.0_DBL*dc*(t**2))/(d**6))+((-2.0_DBL*dc*t)/(d**5))
 
-        idpp_forces(k,ci)=idpp_forces(k,ci)+s
-        idpp_forces(k,cj)=idpp_forces(k,cj)-s
+        idpp_forces(k,ci) = idpp_forces(k,ci)+s
+        idpp_forces(k,cj) = idpp_forces(k,cj)-s
       end do
     end do
   end do
@@ -288,7 +288,7 @@ integer function get_d_idpp_index(r,c)
   integer             :: atoms
   integer             :: a
 
-  atoms=geom_len/3
+  atoms = geom_len/3
 
   ! preliminary checks ------------------------------------
   if (r>=c) then
@@ -333,35 +333,35 @@ real(DBL) function atomic_distance(k,i,j)
   real(DBL)           :: tot
   character(8)        :: str
 
-  atoms=geom_len/3
+  atoms = geom_len/3
 
   ! preliminary checks ------------------------------------
   if ((k<0).or.(k>image_n+1)) then
     write(str,'(I8)') k
-    str=adjustl(str)
+    str = adjustl(str)
     call error("atomic_distance: image "//trim(str)//" out of range")
   else if ((i<1).or.(i>atoms)) then
     write(str,'(I8)') i
-    str=adjustl(str)
+    str = adjustl(str)
     call error("atomic_distance: atom "//trim(str)//" out of range")
   else if ((j<1).or.(j>atoms)) then
     write(str,'(I8)') j
-    str=adjustl(str)
+    str = adjustl(str)
     call error("atomic_distance: atom "//trim(str)//" out of range")
   end if
 
   ! compute the distance ----------------------------------
   if (i==j) then
-    atomic_distance=0.0_DBL
+    atomic_distance = 0.0_DBL
     return
   end if
 
-  tot=0.0_DBL
+  tot = 0.0_DBL
   do coor=1, 3
     tot = tot + (image_geom(k,3*(i-1)+coor)-image_geom(k,3*(j-1)+coor))**2
   end do
 
-  atomic_distance=sqrt(tot)
+  atomic_distance = sqrt(tot)
 
 end function atomic_distance
 
@@ -387,7 +387,7 @@ subroutine driver_idpp()
   end if
 
   write(FILEOUT,*) "DRV driver_idpp: start"
-  atoms=geom_len/3
+  atoms = geom_len/3
 
   ! print d_idpp matrix -----------------------------------
   write(FILEOUT,*) "DRV d_idpp matrix"
@@ -395,7 +395,7 @@ subroutine driver_idpp()
     write(FILEOUT,*) "DRV Image ", k
     do i=1, atoms
       do j=i+1, atoms
-        indx=get_d_idpp_index(i,j)
+        indx = get_d_idpp_index(i,j)
         write(FILEOUT,'(5X,I4,2X,F15.6)') indx, d_idpp(k,indx)
       end do
     end do
@@ -414,10 +414,10 @@ subroutine driver_idpp()
     end if
 
     do i=1, geom_len
-      j=((i-1)/3)+1
+      j = ((i-1)/3)+1
       write(FILEOUT,'(5X,"force ",I4)',advance="no") j
       
-      j=mod(i,3)
+      j = mod(i,3)
       select case (j)
       case (0)
         write(FILEOUT,'("z: ")',advance="no")

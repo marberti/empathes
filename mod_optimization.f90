@@ -88,10 +88,10 @@ subroutine set_optmz_nsteps(str)
   end if
 
   if (optmz_nsteps<0) then
-    optmz_nsteps=-1
+    optmz_nsteps = -1
   end if
 
-  flag_optmz_nsteps=.true.
+  flag_optmz_nsteps = .true.
 
 end subroutine set_optmz_nsteps
 
@@ -111,7 +111,7 @@ subroutine set_optmz_tol(str)
     call error("set_optmz_tol: argument must be a real")
   end if
 
-  flag_optmz_tol=.true.
+  flag_optmz_tol = .true.
 
 end subroutine set_optmz_tol
 
@@ -133,7 +133,7 @@ subroutine set_idpp_tol(str)
     call error("set_idpp_tol: argument must be a real")
   end if
 
-  first_call=.false.
+  first_call = .false.
 
 end subroutine set_idpp_tol
 
@@ -155,7 +155,7 @@ subroutine optmz_pes(flag_out)
     call optmz_fire(PES_MODE,flag_out)
   case default
     write(istr,'(I8)') optmz_algo
-    istr=adjustl(istr)
+    istr = adjustl(istr)
     call error("optmz_pes: wrong optimization algorithm """//trim(istr)//"""")
   end select
 
@@ -219,58 +219,58 @@ subroutine optmz_steepest_descent(mode,flag_out,nsteps,stepsize,tol,&
   ! checking arguments ------------------------------------
   if (present(nsteps)) then
     if (nsteps>=0) then
-      p_nsteps=nsteps
+      p_nsteps = nsteps
     else
-      p_nsteps=-1
+      p_nsteps = -1
     end if
   else if (flag_optmz_nsteps) then
-    p_nsteps=optmz_nsteps
+    p_nsteps = optmz_nsteps
   else
-    p_nsteps=500
+    p_nsteps = 500
   end if
 
   if (present(stepsize).and.(stepsize>0)) then
-    p_stepsize=stepsize
+    p_stepsize = stepsize
   else
-    p_stepsize=1.0E-2_DBL
+    p_stepsize = 1.0E-2_DBL
   end if
 
   if (present(tol).and.((tol>0.0_DBL).and.(tol<=1.0_DBL))) then
-    p_tol=tol
+    p_tol = tol
   else if (flag_optmz_tol) then
-    p_tol=optmz_tol
+    p_tol = optmz_tol
   else
-    p_tol=3.5E-4_DBL
+    p_tol = 3.5E-4_DBL
   end if
 
   if (present(writegp).and.(writegp>0)) then
-    p_writegp=writegp
+    p_writegp = writegp
   else
-    p_writegp=-1
+    p_writegp = -1
   end if
 
   if (present(writegeom).and.(writegeom>0)) then
-    p_writegeom=writegeom
+    p_writegeom = writegeom
   else
-    p_writegeom=-1
+    p_writegeom = -1
   end if
 
   if (present(fixed)) then
-    p_fixed=fixed
+    p_fixed = fixed
   else
-    p_fixed=.true.
+    p_fixed = .true.
   end if
 
   if (present(savelastgeom)) then
-    p_savelastgeom=savelastgeom
+    p_savelastgeom = savelastgeom
   else
-    p_savelastgeom=.true.
+    p_savelastgeom = .true.
   end if
 
   if (present(verbose)) then
-    p_verbose=verbose
+    p_verbose = verbose
   else
-    p_verbose=.false.
+    p_verbose = .false.
   end if
 
   ! preliminary checks ------------------------------------
@@ -331,10 +331,11 @@ subroutine optmz_steepest_descent(mode,flag_out,nsteps,stepsize,tol,&
   end if
 
   ! working section ---------------------------------------
-  flag_converged=.false.
-  new_geom=image_geom(1:image_n,:)
-  old_geom=image_geom(1:image_n,:)
-  i=1
+  flag_converged = .false.
+  new_geom       = image_geom(1:image_n,:)
+  old_geom       = image_geom(1:image_n,:)
+
+  i = 1
   do
     ! check loop index ------------------------------------
     if ((p_nsteps/=-1).and.(i>p_nsteps)) then
@@ -346,51 +347,51 @@ subroutine optmz_steepest_descent(mode,flag_out,nsteps,stepsize,tol,&
     ! do the job ------------------------------------------
     call compute_total_forces(mode,p_fixed)
     call total_forces_modifiers(mode,p_nsteps,i,p_fixed)
-    new_geom=new_geom+(p_stepsize*total_forces)
+    new_geom = new_geom+(p_stepsize*total_forces)
     call update_images(new_geom)
 
     ! write the results -----------------------------------
-    delta_geom=old_geom-new_geom
-    max_disp=maxval(abs(delta_geom))
+    delta_geom = old_geom-new_geom
+    max_disp   = maxval(abs(delta_geom))
     write(FILEOUT,'(5X,"Max Displacement = ",ES16.9)') max_disp
 
-    max_force_norm=-1.0_DBL
+    max_force_norm = -1.0_DBL
     do j=1,image_n
-      tmp_real=norm(total_forces(j,:))
+      tmp_real = norm(total_forces(j,:))
       if (tmp_real>max_force_norm) then
-        max_force_norm=tmp_real
+        max_force_norm = tmp_real
       end if
     end do
     write(FILEOUT,'(5X,"Max Force Norm   = ",ES16.9)') max_force_norm
 
-    perpen_conv=.false.
+    perpen_conv = .false.
     write(FILEOUT,'(5X,"Image    Perp Force Norm   Conv (tol = ",ES8.1,")")') p_tol
     do j=1, image_n
-      tmp_real=norm(perpen_pes_forces(j,:))
+      tmp_real = norm(perpen_pes_forces(j,:))
       if (tmp_real<p_tol) then
-        perpen_conv(j)=.true.
+        perpen_conv(j) = .true.
       end if
       write(FILEOUT,'(7X,I3,3X,ES16.9,4X,L1)') j, tmp_real, perpen_conv(j)
     end do
 
-    total_conv=.false.
+    total_conv = .false.
     write(FILEOUT,'(5X,"Image     Tot Force Norm   Conv (tol = ",ES8.1,")")') p_tol
     do j=1, image_n
-      tmp_real=norm(total_forces(j,:))
+      tmp_real = norm(total_forces(j,:))
       if (tmp_real<p_tol) then
-        total_conv(j)=.true.
+        total_conv(j) = .true.
       end if
       write(FILEOUT,'(7X,I3,3X,ES16.9,4X,L1)') j, tmp_real, total_conv(j)
     end do
 
-    delta_total_conv=.false.
+    delta_total_conv = .false.
     if (i>1) then
       write(FILEOUT,'(5X,"Image   Delta Tot F Norm   Conv (tol = ",ES8.1,")")') p_tol
-      delta_forces=old_forces-total_forces
+      delta_forces = old_forces-total_forces
       do j=1, image_n
-        tmp_real=norm(delta_forces(j,:))
+        tmp_real = norm(delta_forces(j,:))
         if (tmp_real<p_tol) then
-          delta_total_conv(j)=.true.
+          delta_total_conv(j) = .true.
         end if
         write(FILEOUT,'(7X,I3,3X,ES16.9,4X,L1)') j, tmp_real, delta_total_conv(j)
       end do
@@ -417,11 +418,11 @@ subroutine optmz_steepest_descent(mode,flag_out,nsteps,stepsize,tol,&
 
     ! check exit condition --------------------------------
     if (alltrue(total_conv)) then
-      flag_converged=.true.
+      flag_converged = .true.
     end if
     
     if (alltrue(perpen_conv)) then
-      flag_converged=.true.
+      flag_converged = .true.
     end if
 
     if (flag_converged) then
@@ -429,9 +430,9 @@ subroutine optmz_steepest_descent(mode,flag_out,nsteps,stepsize,tol,&
     end if
 
     ! update variables and loop index ---------------------
-    old_geom=new_geom
-    old_forces=total_forces
-    i=i+1
+    old_geom   = new_geom
+    old_forces = total_forces
+    i          = i+1
   end do
 
   ! deallocation section ----------------------------------
@@ -478,10 +479,10 @@ subroutine optmz_steepest_descent(mode,flag_out,nsteps,stepsize,tol,&
   ! write optimization result, set output flag ------------
   if (flag_converged) then
     write(FILEOUT,*) "**  Optimization Steepest Descent -> Convergence Achieved"
-    flag_out=.true.
+    flag_out = .true.
   else
     write(FILEOUT,*) "**  Optimization Steepest Descent -> Convergence NOT Achieved"
-    flag_out=.false.
+    flag_out = .false.
   end if
 
 end subroutine optmz_steepest_descent
@@ -527,52 +528,52 @@ subroutine optmz_lbfgs(mode,flag_out,nsteps,memsize,prec,tol,verblvl,&
   ! checking arguments ------------------------------------
   if (present(nsteps)) then
     if (nsteps>=0) then
-      p_nsteps=nsteps
+      p_nsteps = nsteps
     else
-      p_nsteps=-1
+      p_nsteps = -1
     end if
   else if (flag_optmz_nsteps) then
-    p_nsteps=optmz_nsteps
+    p_nsteps = optmz_nsteps
   else
-    p_nsteps=50
+    p_nsteps = 50
   end if
 
   if (present(memsize).and.((memsize>=3).and.(memsize<=20))) then
-    m=memsize
+    m = memsize
   else
-    m=15
+    m = 15
   end if
 
   if (present(prec).and.(prec>=1.0_DBL)) then
-    factr=prec
+    factr = prec
   else
-    factr=1.0E+7_DBL
+    factr = 1.0E+7_DBL
   end if
 
   if (present(tol).and.((tol>0.0_DBL).and.(tol<=1.0_DBL))) then
-    pgtol=tol
+    pgtol = tol
   else if (flag_optmz_tol) then
-    pgtol=optmz_tol
+    pgtol = optmz_tol
   else
-    pgtol=3.5E-4_DBL
+    pgtol = 3.5E-4_DBL
   end if
 
   if (present(verblvl).and.(verblvl>=0)) then
-    iprint=verblvl
+    iprint = verblvl
   else
-    iprint=-1
+    iprint = -1
   end if
 
   if (present(fixed)) then
-    p_fixed=fixed
+    p_fixed = fixed
   else
-    p_fixed=.true.
+    p_fixed = .true.
   end if
 
   if (present(savelastgeom)) then
-    p_savelastgeom=savelastgeom
+    p_savelastgeom = savelastgeom
   else
-    p_savelastgeom=.true.
+    p_savelastgeom = .true.
   end if
 
   ! preliminary checks ------------------------------------
@@ -617,12 +618,12 @@ subroutine optmz_lbfgs(mode,flag_out,nsteps,memsize,prec,tol,verblvl,&
   call compute_total_forces(mode,p_fixed) ! needed because tangents estimation
     ! done by arbitrary_geom_total_forces requires energy values.
 
-  n=geom_len
-  x=image_geom(1:image_n,:)
-  flag_converged=.false.
+  n              = geom_len
+  x              = image_geom(1:image_n,:)
+  flag_converged = .false.
 
   ! optimization loop -------------------------------------
-  i=1
+  i = 1
   external_lbfgs: do
     ! check loop index ------------------------------------
     if ((p_nsteps/=-1).and.(i>p_nsteps)) then
@@ -632,13 +633,14 @@ subroutine optmz_lbfgs(mode,flag_out,nsteps,memsize,prec,tol,verblvl,&
     write(FILEOUT,'(1X,A,I8,A)') "**  Optimization l-BFGS -- Iteration ",i,":"
     
     ! optimize every image with l-BFGS --------------------
-    image_conv=.false.
-    flag_first_bfgs=.true.
-    j=1
+    image_conv      = .false.
+    flag_first_bfgs = .true.
+
+    j = 1
     internal_lbfgs: do while (j<=image_n)
       if (flag_first_bfgs) then
-        task="START"
-        flag_first_bfgs=.false.
+        task            = "START"
+        flag_first_bfgs = .false.
       end if
 
       ! call lbfgs subroutine -----------------------------
@@ -649,13 +651,13 @@ subroutine optmz_lbfgs(mode,flag_out,nsteps,memsize,prec,tol,verblvl,&
       ! check lbfgs result --------------------------------
       if ((task(1:5)=="NEW_X").or.(task(1:4)=="CONV")) then
         if (task(1:4)=="CONV") then
-          image_conv(j)=.true.
+          image_conv(j) = .true.
         end if
-        j=j+1
-        flag_first_bfgs=.true.
+        j               = j+1
+        flag_first_bfgs = .true.
       else if (task(1:2)=="FG") then
         call arbitrary_geom_total_forces(j,x(j,:),f(j),g(j,:))
-        g(j,:)=-g(j,:) ! g is the gradient,
+        g(j,:) = -g(j,:) ! g is the gradient,
           ! but arbitrary_geom_total_forces returns the forces
       else if ((task(1:4)=="ABNO").or.(task(1:5)=="ERROR")) then
         call error("optmz_lbfgs: "//trim(task))
@@ -689,7 +691,7 @@ subroutine optmz_lbfgs(mode,flag_out,nsteps,memsize,prec,tol,verblvl,&
     end if
     
     ! update loop index -----------------------------------
-    i=i+1
+    i = i+1
   end do external_lbfgs
 
   ! deallocation section ----------------------------------
@@ -716,10 +718,10 @@ subroutine optmz_lbfgs(mode,flag_out,nsteps,memsize,prec,tol,verblvl,&
   ! write optimization result, set output flag ------------
   if (flag_converged) then
     write(FILEOUT,*) "**  Optimization l-BFGS -> Convergence Achieved"
-    flag_out=.true.
+    flag_out = .true.
   else
     write(FILEOUT,*) "**  Optimization l-BFGS -> Convergence NOT Achieved"
-    flag_out=.false.
+    flag_out = .false.
   end if
 
 end subroutine optmz_lbfgs
@@ -729,13 +731,13 @@ end subroutine optmz_lbfgs
 subroutine optmz_fire(mode,flag_out,nsteps,maxstepsize,tol,&
     &fixed,savelastgeom)
 
-  integer,             intent(IN)        :: mode
-  logical,             intent(OUT)       :: flag_out       ! true if convergent, false otherwise
-  integer,   optional, intent(IN)        :: nsteps
-  real(DBL), optional, intent(IN)        :: maxstepsize
-  real(DBL), optional, intent(IN)        :: tol
-  logical,   optional, intent(IN)        :: fixed
-  logical,   optional, intent(IN)        :: savelastgeom
+  integer,                   intent(IN)  :: mode
+  logical,                   intent(OUT) :: flag_out       ! true if convergent, false otherwise
+  integer,   optional,       intent(IN)  :: nsteps
+  real(DBL), optional,       intent(IN)  :: maxstepsize
+  real(DBL), optional,       intent(IN)  :: tol
+  logical,   optional,       intent(IN)  :: fixed
+  logical,   optional,       intent(IN)  :: savelastgeom
 
   integer                                :: p_nsteps
   real(DBL)                              :: p_tol
@@ -767,40 +769,40 @@ subroutine optmz_fire(mode,flag_out,nsteps,maxstepsize,tol,&
   ! checking arguments ------------------------------------
   if (present(nsteps)) then
     if (nsteps>=0) then
-      p_nsteps=nsteps
+      p_nsteps = nsteps
     else
-      p_nsteps=-1
+      p_nsteps = -1
     end if
   else if (flag_optmz_nsteps) then
-    p_nsteps=optmz_nsteps
+    p_nsteps = optmz_nsteps
   else
-    p_nsteps=500
+    p_nsteps = 500
   end if
 
   if (present(maxstepsize).and.(maxstepsize>0)) then
-    dtmax=min(maxstepsize,0.3_DBL)
+    dtmax = min(maxstepsize,0.3_DBL)
   else
-    dtmax=0.3_DBL
+    dtmax = 0.3_DBL
   end if
 
   if (present(tol).and.((tol>0.0_DBL).and.(tol<=1.0_DBL))) then
-    p_tol=tol
+    p_tol = tol
   else if (flag_optmz_tol) then
-    p_tol=optmz_tol
+    p_tol = optmz_tol
   else
-    p_tol=3.5E-4_DBL
+    p_tol = 3.5E-4_DBL
   end if
 
   if (present(fixed)) then
-    p_fixed=fixed
+    p_fixed = fixed
   else
-    p_fixed=.true.
+    p_fixed = .true.
   end if
 
   if (present(savelastgeom)) then
-    p_savelastgeom=savelastgeom
+    p_savelastgeom = savelastgeom
   else
-    p_savelastgeom=.true.
+    p_savelastgeom = .true.
   end if
 
   ! preliminary checks ------------------------------------
@@ -850,15 +852,15 @@ subroutine optmz_fire(mode,flag_out,nsteps,maxstepsize,tol,&
   write(FILEOUT,'(5X,"Convergence threshold      : ",ES8.1)') p_tol
 
   ! init section ------------------------------------------
-  flag_converged=.false.
-  dt=dtmax/10.0
-  alpha=alpha_start
-  stepi=0
-  velocity=0.0_DBL
-  x=image_geom(1:image_n,:)
+  flag_converged = .false.
+  dt             = dtmax/10.0
+  alpha          = alpha_start
+  stepi          = 0
+  velocity       = 0.0_DBL
+  x              = image_geom(1:image_n,:)
 
   ! working section ---------------------------------------
-  i=1
+  i = 1
   do
     ! check loop index ------------------------------------
     if ((p_nsteps/=-1).and.(i>p_nsteps)) then
@@ -872,38 +874,38 @@ subroutine optmz_fire(mode,flag_out,nsteps,maxstepsize,tol,&
 
     ! FIRE algorithm --------------------------------------
     if (sqrt(sum(velocity*velocity))/=0.0_DBL) then
-      power=sum(total_forces*velocity)
+      power = sum(total_forces*velocity)
       if (power>0.0_DBL) then
-        velocity=(1.0_DBL-alpha)*velocity+&                                                          
+        velocity = (1.0_DBL-alpha)*velocity+&                                                          
           &alpha*total_forces/sqrt(sum(total_forces*total_forces))*&
           &sqrt(sum(velocity*velocity))
 
         if (stepi>=stepi_min) then
-          dt=min(dt*dtinc,dtmax)
-          alpha=alpha*alpha_dec
+          dt    = min(dt*dtinc,dtmax)
+          alpha = alpha*alpha_dec
         end if
 
-        stepi=stepi+1
+        stepi = stepi+1
       else
-        velocity=0.0_DBL
-        alpha=alpha_start
-        dt=dt*dtdec
-        stepi=0
+        velocity = 0.0_DBL
+        alpha    = alpha_start
+        dt       = dt*dtdec
+        stepi    = 0
       end if
     end if
 
-    velocity=velocity+(dt*total_forces)
-    dx=dt*velocity
-    x=x+dx
+    velocity = velocity+(dt*total_forces)
+    dx       = dt*velocity
+    x        = x+dx
     call update_images(x)
  
     ! write the results -----------------------------------
-    total_conv=.false.
+    total_conv = .false.
     write(FILEOUT,'(5X,"Image",12X,"Energy",9X,"Tot Force",4X,"Conv (",ES8.1,")")') p_tol
     do j=1, image_n
-      rtmp=norm(total_forces(j,:))
+      rtmp = norm(total_forces(j,:))
       if (rtmp<p_tol) then
-        total_conv(j)=.true.
+        total_conv(j) = .true.
       end if
 
       select case (mode)
@@ -922,7 +924,7 @@ subroutine optmz_fire(mode,flag_out,nsteps,maxstepsize,tol,&
 
     ! check exit condition --------------------------------
     if (alltrue(total_conv)) then
-      flag_converged=.true.
+      flag_converged = .true.
     end if
 
     if (flag_converged) then
@@ -930,7 +932,7 @@ subroutine optmz_fire(mode,flag_out,nsteps,maxstepsize,tol,&
     end if
     
     ! update loop index -----------------------------------
-    i=i+1
+    i = i+1
   end do
 
   ! deallocation section ----------------------------------
@@ -957,10 +959,10 @@ subroutine optmz_fire(mode,flag_out,nsteps,maxstepsize,tol,&
   ! write optimization result, set output flag ------------
   if (flag_converged) then
     write(FILEOUT,*) "**  Optimization FIRE -> Convergence Achieved"
-    flag_out=.true.
+    flag_out = .true.
   else
     write(FILEOUT,*) "**  Optimization FIRE -> Convergence NOT Achieved"
-    flag_out=.false.
+    flag_out = .false.
   end if
 
 end subroutine optmz_fire
@@ -995,19 +997,19 @@ subroutine total_forces_modifiers(mode,p_nsteps,i,p_fixed)
   ! checks if got climbing prerequisites ------------------
   if (flag_climbing_image) then
     if (flag_climbing_quick_start) then
-      flag_climbing_iteration=.true.
+      flag_climbing_iteration = .true.
     else
       if (p_nsteps==-1) then
         if (i>cam) then
-          flag_climbing_iteration=.true.
+          flag_climbing_iteration = .true.
         else
-          flag_climbing_iteration=.false.
+          flag_climbing_iteration = .false.
         end if
       else
         if (i>min(floor(p_nsteps*cap),cam)) then
-          flag_climbing_iteration=.true.
+          flag_climbing_iteration = .true.
         else
-          flag_climbing_iteration=.false.
+          flag_climbing_iteration = .false.
         end if
       end if
     end if
@@ -1023,19 +1025,19 @@ subroutine total_forces_modifiers(mode,p_nsteps,i,p_fixed)
   ! checks if got descending prerequisites ----------------
   if (flag_descending_image) then
     if (flag_descending_quick_start) then
-      flag_descending_iteration=.true.
+      flag_descending_iteration = .true.
     else
       if (p_nsteps==-1) then
         if (i>cam) then
-          flag_descending_iteration=.true.
+          flag_descending_iteration = .true.
         else
-          flag_descending_iteration=.false.
+          flag_descending_iteration = .false.
         end if
       else
         if (i>min(floor(p_nsteps*cap),cam)) then
-          flag_descending_iteration=.true.
+          flag_descending_iteration = .true.
         else
-          flag_descending_iteration=.false.
+          flag_descending_iteration = .false.
         end if
       end if
     end if

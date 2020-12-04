@@ -486,7 +486,7 @@ subroutine compute_pes_forces()
     !$ tid=omp_get_thread_num()
     !$omp do
     do i=1, image_n
-      conv_threshold=get_scfconv()
+      conv_threshold = get_scfconv()
 
       do
         call get_pes_forces(i,tid,conv_threshold,converged)
@@ -494,7 +494,7 @@ subroutine compute_pes_forces()
         if (converged) then
           exit
         else
-          conv_threshold=conv_threshold*10.0_DBL
+          conv_threshold = conv_threshold*10.0_DBL
           write(FILEOUT,'(5X,"compute_pes_forces: Thread ",I3,&
             &": convergence threshold on image ",I3,&
             &" reduced to ",ES8.1)') tid,i,conv_threshold
@@ -860,7 +860,7 @@ subroutine mmpi_init_pes_module()
     if (flag_init_pes_module) then
       write(istr,'(I8)') proc_id
       istr = adjustl(istr)
-      err_msg="mmpi_init_pes_module: process "//trim(istr)//&
+      err_msg = "mmpi_init_pes_module: process "//trim(istr)//&
         &": module pes already initialized"
       call error(err_msg)
     end if
@@ -868,7 +868,7 @@ subroutine mmpi_init_pes_module()
     if (flag_init_images.eqv..false.) then
       write(istr,'(I8)') proc_id
       istr = adjustl(istr)
-      err_msg="mmpi_init_pes_module: process "//trim(istr)//&
+      err_msg = "mmpi_init_pes_module: process "//trim(istr)//&
         &": module geometry not initialized"
       call error(err_msg)
     end if
@@ -913,7 +913,7 @@ subroutine mmpi_init_pes_module()
       allocate (user_basis_set(sz),stat=err_n,errmsg=err_msg)
       if (err_n/=0) then
         write(istr,'(I8)') proc_id
-        istr=adjustl(istr)
+        istr = adjustl(istr)
         call error("mmpi_init_pes_module: process "//&
           &trim(istr)//": "//trim(err_msg))
       end if
@@ -931,7 +931,7 @@ subroutine mmpi_init_pes_module()
       allocate (user_pseudo_potential(sz),stat=err_n,errmsg=err_msg)
       if (err_n/=0) then
         write(istr,'(I8)') proc_id
-        istr=adjustl(istr)
+        istr = adjustl(istr)
         call error("mmpi_init_pes_module: process "//&
           &trim(istr)//": "//trim(err_msg))
       end if
@@ -949,7 +949,7 @@ subroutine mmpi_init_pes_module()
       allocate (pes_input_template(sz),stat=err_n,errmsg=err_msg)
       if (err_n/=0) then
         write(istr,'(I8)') proc_id
-        istr=adjustl(istr)
+        istr = adjustl(istr)
         call error("mmpi_init_pes_module: process "//&
           &trim(istr)//": "//trim(err_msg))
       end if
@@ -999,7 +999,7 @@ subroutine mmpi_init_pes_module()
     allocate(pes_energy(0:image_n+1),stat=err_n,errmsg=err_msg)
     if (err_n/=0) then
       write(istr,'(I8)') proc_id
-      istr=adjustl(istr)
+      istr = adjustl(istr)
       call error("mmpi_init_pes_module: process "//&
         &trim(istr)//": "//trim(err_msg))
     end if
@@ -1007,7 +1007,7 @@ subroutine mmpi_init_pes_module()
     allocate(pes_forces(image_n,geom_len),stat=err_n,errmsg=err_msg)
     if (err_n/=0) then
       write(istr,'(I8)') proc_id
-      istr=adjustl(istr)
+      istr = adjustl(istr)
       call error("mmpi_init_pes_module: process "//&
         &trim(istr)//": "//trim(err_msg))
     end if
@@ -1637,9 +1637,9 @@ subroutine get_gaussian_output(i,fnumb_out,fname_out,pesf,pesg)
 
   ! Convert forces from Hartree/Bohr to Hartree/Ang -------
   if (arg_presence(1).eqv..true.) then
-    pesg=pesg*(1.0_DBL/BOHR_ON_ANG)
+    pesg = pesg*(1.0_DBL/BOHR_ON_ANG)
   else
-    pes_forces(i,:)=pes_forces(i,:)*(1.0_DBL/BOHR_ON_ANG)
+    pes_forces(i,:) = pes_forces(i,:)*(1.0_DBL/BOHR_ON_ANG)
   end if
  
   ! Close output file -------------------------------------
@@ -1731,7 +1731,7 @@ subroutine set_siesta_dir(i,dirname,auxdirname)
 
     if (exit_n/=0) then
       write(exit_n_str,'(I8)') exit_n
-      exit_n_str=adjustl(exit_n_str)
+      exit_n_str = adjustl(exit_n_str)
       call error("set_siesta_dir: """//trim(cmd)//&
         &""" terminated with exit code: "//trim(exit_n_str))
     end if
@@ -1748,7 +1748,7 @@ subroutine set_siesta_dir(i,dirname,auxdirname)
 
   if (exit_n/=0) then
     write(exit_n_str,'(I8)') exit_n
-    exit_n_str=adjustl(exit_n_str)
+    exit_n_str = adjustl(exit_n_str)
     call error("set_siesta_dir: """//trim(cmd)//&
       &""" terminated with exit code: "//trim(exit_n_str))
   end if
@@ -1770,7 +1770,7 @@ subroutine set_siesta_dir(i,dirname,auxdirname)
 
     if (exit_n/=0) then
       write(exit_n_str,'(I8)') exit_n
-      exit_n_str=adjustl(exit_n_str)
+      exit_n_str = adjustl(exit_n_str)
       call error("set_siesta_dir: """//trim(cmd)//&
         &""" terminated with exit code: "//trim(exit_n_str))
     end if
@@ -1794,7 +1794,7 @@ subroutine set_siesta_dir(i,dirname,auxdirname)
 
     if (exit_n/=0) then
       write(exit_n_str,'(I8)') exit_n
-      exit_n_str=adjustl(exit_n_str)
+      exit_n_str = adjustl(exit_n_str)
       call error("set_siesta_dir: """//trim(cmd)//&
         &""" terminated with exit code: "//trim(exit_n_str))
     end if
@@ -1928,7 +1928,7 @@ subroutine exec_siesta(dirname,fname_in,fname_out)
   ! generate cmd string
   if (flag_pes_proc.and.(pes_proc>1)) then
     write(i_str,'(I8)') pes_proc
-    i_str=adjustl(i_str)
+    i_str = adjustl(i_str)
     cmd = "cd "//trim(dirname)//" && "//"mpirun -n "//trim(i_str)//" "//&
       &trim(pes_exec)//" < "//trim(fname_in)//" > "//trim(fname_out)
   else
@@ -1947,7 +1947,7 @@ subroutine exec_siesta(dirname,fname_in,fname_out)
   ! on error, siesta returns an exit status /= 0
   if (exit_n/=0) then
     write(exit_n_str,'(I8)') exit_n
-    exit_n_str=adjustl(exit_n_str)
+    exit_n_str = adjustl(exit_n_str)
     call error("exec_siesta: "//trim(pes_exec)//&
       &" terminated with exit code: "//trim(exit_n_str))
   end if
@@ -2092,10 +2092,10 @@ subroutine get_siesta_output(i,dirname,fnumb_out,fname_out,flag_conv)
         end if
 
         if (field=="siesta:") then
-          k_start = 3
+          k_start     = 3
           correct_one = .true.
         else if (isinteger(trim(adjustl(field)))) then
-          k_start = 2
+          k_start     = 2
           correct_one = .true.
         end if
 
@@ -2208,7 +2208,7 @@ subroutine remove_siesta_dir(dirname)
 
   if (exit_n/=0) then
     write(exit_n_str,'(I8)') exit_n
-    exit_n_str=adjustl(exit_n_str)
+    exit_n_str = adjustl(exit_n_str)
     call error("remove_siesta_dir: """//trim(cmd)//&
       &""" terminated with exit code: "//trim(exit_n_str))
   end if

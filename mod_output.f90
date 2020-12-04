@@ -80,12 +80,12 @@ subroutine write_all_images(fnumb)
   if (present(fnumb).and.(fnumb>0)) then
     inquire(unit=fnumb,opened=is_open)
     if (is_open) then
-      p_fnumb=fnumb
+      p_fnumb = fnumb
     else
       call error("write_all_image: output stream not opened")
     end if
   else
-    p_fnumb=FILEOUT
+    p_fnumb = FILEOUT
   end if
 
   if (p_fnumb==FILEOUT) then
@@ -289,9 +289,9 @@ subroutine write_gnuplot_pes_energy(n,fname)
   end if
 
   if ((present(fname)).and.(len_trim(fname)/=0)) then
-    gp_fname=fname
+    gp_fname = fname
   else
-    gp_fname="gnuplot.out"
+    gp_fname = "gnuplot.out"
   end if
 
   inquire(file=gp_fname,exist=gp_file_exist)
@@ -341,9 +341,9 @@ subroutine last_geom_bkp(fname)
   character(120)                     :: err_msg
 
   if (present(fname).and.(len_trim(fname)>0)) then
-    bkp_fname=fname
+    bkp_fname = fname
   else
-    bkp_fname="lastgeom.bkp"
+    bkp_fname = "lastgeom.bkp"
   end if
 
   open(unit=bkp_fnumb,file=bkp_fname,status='REPLACE',action='WRITE',&
@@ -391,15 +391,15 @@ subroutine write_transition_state()
   end if
 
   ! init variables ----------------------------------------
-  indx=.false.
-  tot_ts=0
+  indx   = .false.
+  tot_ts = 0
   do i=1, image_n
-    prev=pes_energy(i-1)
-    curr=pes_energy(i)
-    next=pes_energy(i+1)
+    prev = pes_energy(i-1)
+    curr = pes_energy(i)
+    next = pes_energy(i+1)
     if ((curr>prev).and.(curr>next)) then
-      indx(i)=.true.
-      tot_ts=tot_ts+1
+      indx(i) = .true.
+      tot_ts  = tot_ts+1
     end if
   end do
 
@@ -413,10 +413,10 @@ subroutine write_transition_state()
     write(FILEOUT,'(5X,"Founded ",I3," Transition States")') tot_ts
   end if
 
-  n=0
+  n = 0
   do i=1, image_n
     if (indx(i)) then
-      n=n+1
+      n = n+1
       write(FILEOUT,'(5X,"TS ",I3)') n
       call write_image(i,FILEOUT)
       call write_delta_e(i)
@@ -441,13 +441,13 @@ subroutine write_procs_info()
   character(8) :: n
 
 #ifdef USE_MPI
-  buff=comm_sz
+  buff = comm_sz
 #else
-  buff=1
+  buff = 1
 #endif
 
   write(n,'(I8)') buff
-  n=adjustl(n)
+  n = adjustl(n)
 
   write(FILEOUT,*) "**  Procs Info:"
   write(FILEOUT,'(5X,"Executed with: ",A)',advance="NO") trim(n)
@@ -466,7 +466,7 @@ subroutine write_threads_info()
   character(8) :: n
 
   write(n,'(I8)') neb_threads
-  n=adjustl(n)
+  n = adjustl(n)
 
   write(FILEOUT,*) "**  Threads Info:"
   write(FILEOUT,'(5X,"Executed with: ",A)',advance="NO") trim(n)

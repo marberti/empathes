@@ -145,8 +145,8 @@ subroutine rotate_geometry(geom_in,geom_out)
 
   ! put at2 on X axis
   do i=2, atoms
-    xpr = geom_rot(i,1)
-    ypr = geom_rot(i,2)
+    xpr           = geom_rot(i,1)
+    ypr           = geom_rot(i,2)
     geom_rot(i,1) = cos(theta)*xpr - sin(theta)*ypr
     geom_rot(i,2) = sin(theta)*xpr + cos(theta)*ypr
   end do

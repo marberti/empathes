@@ -29,10 +29,10 @@ module utility
                EV_ON_J,                    &
                AU_ON_EV,                   &
                PES_MODE,                   &
-               IDPP_MODE
+               IDPP_MODE,                  &
+               flag_mpi
 #ifdef USE_MPI
-  public    :: flag_mpi,                   &
-               MMPI_MSG_END_MAIN_EXEC,     &
+  public    :: MMPI_MSG_END_MAIN_EXEC,     &
                MMPI_MSG_INIT_IMAGES,       &
                MMPI_MSG_INIT_PES_MODULE,   &
                MMPI_MSG_COMPUTE_PES_FORCES

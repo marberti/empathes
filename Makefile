@@ -1,34 +1,34 @@
-# to remove
-#
-#PWD = $(shell pwd)
-#DIR = $(notdir $(PWD))
-#BACKUPDIR = backup/
-#TIMESTAMP = $(shell date +%Y%m%d)
+CC       = gcc
+FC       = gfortran
+MPICC    = mpicc.openmpi
+MPIFC    = mpif90.openmpi
+CFLAGS   = -g -cpp -O2 -Wall -Wunused -Wpedantic -Wno-maybe-uninitialized
+FFLAGS   = -std=f2008
+LPATH    = -L./lib
+LIBS     = -llbfgsb
 
-FC = gfortran
-MPIFC = mpif90.openmpi
-CFLAGS  = -std=f2008 -g -cpp -O2 -Wall -Wunused -Wpedantic -Wno-maybe-uninitialized
-LPATH = -L./lib
-LIBS = -llbfgsb
+CSOURCES = c_utility.c
 
-SOURCES = mod_utility.f90          \
-	  mod_bfgs_wrapper.f90     \
-	  mod_rotation.f90         \
-	  mod_geometry.f90         \
-	  mod_idpp.f90             \
-	  mod_pes_data.f90         \
-	  mod_pes.f90              \
-	  mod_elastic.f90          \
-	  mod_climbing.f90         \
-	  mod_output.f90           \
-	  mod_optimization.f90     \
-	  mod_slave.f90            \
-	  mod_computation_info.f90 \
-	  mod_input.f90            \
-	  main.f90
+FSOURCES = mod_utility.f90           \
+	   mod_c_utility_wrapper.f90 \
+	   mod_bfgs_wrapper.f90      \
+	   mod_rotation.f90          \
+	   mod_geometry.f90          \
+	   mod_idpp.f90              \
+	   mod_pes_data.f90          \
+	   mod_pes.f90               \
+	   mod_elastic.f90           \
+	   mod_climbing.f90          \
+	   mod_output.f90            \
+	   mod_optimization.f90      \
+	   mod_slave.f90             \
+	   mod_computation_info.f90  \
+	   mod_input.f90             \
+	   main.f90
 
-OBJECTS = $(SOURCES:.f90=.o)
-OUT = neb.x
+COBJECTS = $(CSOURCES:.c=.o)
+FOBJECTS = $(FSOURCES:.f90=.o)
+OUT      = neb.x
 
 # main compilation options --------------------------------
 .PHONY: default
@@ -46,6 +46,7 @@ parallel: CFLAGS += -fopenmp
 parallel: serial
 
 .PHONY: fullparallel
+fullparallel: CC = $(MPICC)
 fullparallel: FC = $(MPIFC)
 fullparallel: CFLAGS += -DUSE_MPI
 fullparallel: parallel
@@ -69,18 +70,16 @@ clean:
 screenclear:
 	clear
 
-# to remove
-#
-#.PHONY: backup
-#backup: clean
-#	@rm -f $(OUT)
-#	@cd .. ; tar -cf $(BACKUPDIR)$(DIR).$(TIMESTAMP).tar $(DIR)
-#	@echo "Backup Done"
-
 # core ----------------------------------------------------
-$(OUT): $(OBJECTS)
-	$(FC) $(LPATH) $(CFLAGS) $(OBJECTS) $(LIBS) -o $(OUT)
+$(OUT): allobjects
+	$(FC) $(LPATH) $(CFLAGS) $(FFLAGS) $(COBJECTS) $(FOBJECTS) $(LIBS) -o $(OUT)
 
-$(OBJECTS): %.o: %.f90
-	$(FC) $(CFLAGS) -c $<
+.PHONY: allobjects
+allobjects: $(COBJECTS) $(FOBJECTS)
+
+$(FOBJECTS): %.o: %.f90
+	$(FC) $(CFLAGS) $(FFLAGS) -c $<
+
+$(COBJECTS): %.o: %.c
+	$(CC) $(CFLAGS) -c $<
 

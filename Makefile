@@ -61,8 +61,9 @@ help:
 
 .PHONY: clean
 clean:
+	@printf "Cleaning..."
 	@rm -f *.o *.mod
-	@echo "Cleaned Up"
+	@printf " DONE\n"
 
 .PHONY: screenclear
 screenclear:

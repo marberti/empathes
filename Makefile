@@ -2,7 +2,8 @@ CC       = gcc
 FC       = gfortran
 MPICC    = mpicc.openmpi
 MPIFC    = mpif90.openmpi
-CFLAGS   = -g -cpp -O2 -Wall -Wunused -Wpedantic -Wno-maybe-uninitialized
+FLAGS    = -g -cpp -O2 -Wall -Wunused -Wpedantic -Wno-maybe-uninitialized
+CFLAGS   = -std=c99
 FFLAGS   = -std=f2008
 LPATH    = -L./lib
 LIBS     = -llbfgsb
@@ -35,20 +36,20 @@ OUT      = neb.x
 default: help
 
 .PHONY: debug0
-debug0: CFLAGS += -DDBG0
+debug0: FLAGS += -DDBG0
 debug0: serial
 
 .PHONY: serial
 serial: clean $(OUT)
 
 .PHONY: parallel
-parallel: CFLAGS += -fopenmp
+parallel: FLAGS += -fopenmp
 parallel: serial
 
 .PHONY: fullparallel
 fullparallel: CC = $(MPICC)
 fullparallel: FC = $(MPIFC)
-fullparallel: CFLAGS += -DUSE_MPI
+fullparallel: FLAGS += -DUSE_MPI
 fullparallel: parallel
 
 # utility -------------------------------------------------
@@ -72,14 +73,14 @@ screenclear:
 
 # core ----------------------------------------------------
 $(OUT): allobjects
-	$(FC) $(LPATH) $(CFLAGS) $(FFLAGS) $(COBJECTS) $(FOBJECTS) $(LIBS) -o $(OUT)
+	$(FC) $(LPATH) $(FLAGS) $(FFLAGS) $(COBJECTS) $(FOBJECTS) $(LIBS) -o $(OUT)
 
 .PHONY: allobjects
 allobjects: $(COBJECTS) $(FOBJECTS)
 
 $(FOBJECTS): %.o: %.f90
-	$(FC) $(CFLAGS) $(FFLAGS) -c $<
+	$(FC) $(FLAGS) $(FFLAGS) -c $<
 
 $(COBJECTS): %.o: %.c
-	$(CC) $(CFLAGS) -c $<
+	$(CC) $(FLAGS) $(CFLAGS) -c $<
 

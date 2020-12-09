@@ -88,73 +88,12 @@ subroutine read_input(file_in)
     
     ! Check end of file -----------------------------------
     if (err_n/=0) then
-      ! check if got pes_program.
-      ! pes_program value defines what kind of keywords are mandatory,
-      ! and what checks must be performed.
-      if (.not.got_pes_program) then
-        call error("read_input: #PESPROGRAM not specified")
-      end if
-
-      if (.not.got_pes_exec) then
-        write(FILEOUT,*) "WAR read_input: #PESEXEC not specified"
-        got_error = .true.
-      end if
-
-      ! check mandatory keyword presence ------------------
-      if (.not.got_geometries_file) then
-        if (.not.got_start) then
-          write(FILEOUT,*) "WAR read_input: #START not specified"
-          got_error = .true.
-        end if
-        if (.not.got_end) then
-          write(FILEOUT,*) "WAR read_input: #END not specified"
-          got_error = .true.
-        end if
-        if (.not.got_images) then
-          write(FILEOUT,*) "WAR read_input: #IMAGES not specified"
-          got_error = .true.
-        end if
-      end if
-
-      if (.not.got_charge) then
-        write(FILEOUT,*) "WAR read_input: #CHARGE not specified"
-        got_error = .true.
-      end if
-
-      if (.not.got_multip) then
-        write(FILEOUT,*) "WAR read_input: #MULTIP not specified"
-        got_error = .true.
-      end if
-
-      if (.not.got_start_energy) then
-        write(FILEOUT,*) "WAR read_input: #STARTENERGY not specified"
-        got_error = .true.
-      end if
-
-      if (.not.got_end_energy) then
-        write(FILEOUT,*) "WAR read_input: #ENDENERGY not specified"
-        got_error = .true.
-      end if
-
-      ! check mandatory keywords for siesta
-      if (pes_program=="siesta") then
-        if (.not.got_elabel) then
-          write(FILEOUT,*) "WAR read_input: #LABEL block not specified"
-          got_error = .true.
-        end if
-
-        if (.not.got_pes_input_template) then
-          write(FILEOUT,*) "WAR read_input: #PESINPUTTEMPLATE block not specified"
-          got_error = .true.
-        end if
-      end if
-
-      ! if got all mandatory keyword, exit the reading loop
-      if (got_error) then
-        call error("read_input: some necessary keywords were not specified")
-      else
-        exit
-      end if
+      call check_neb_mandatory_kw(got_pes_program,got_pes_exec,&
+        &got_geometries_file,got_start,got_start_energy,got_end,&
+        &got_end_energy,got_images)
+      call check_gaussian_mandatory_kw(got_charge,got_multip)
+      call check_siesta_mandatory_kw(got_elabel,got_pes_input_template)
+      exit
     end if
 
     ! Parse command ---------------------------------------
@@ -579,6 +518,135 @@ subroutine get_geometry(file_n,point,atoms,elem)
 end subroutine get_geometry
 
 !====================================================================
+! Subroutines that check
+!====================================================================
+
+subroutine check_neb_mandatory_kw(got_pes_program,got_pes_exec,&
+    &got_geometries_file,got_start,got_start_energy,got_end,&
+    &got_end_energy,got_images)
+
+  logical,     intent(IN) :: got_pes_program
+  logical,     intent(IN) :: got_pes_exec
+  logical,     intent(IN) :: got_geometries_file
+  logical,     intent(IN) :: got_start
+  logical,     intent(IN) :: got_start_energy
+  logical,     intent(IN) :: got_end
+  logical,     intent(IN) :: got_end_energy
+  logical,     intent(IN) :: got_images
+
+  character(*), parameter :: my_name   = "check_neb_mandatory_kw"
+  logical                 :: got_error
+
+  got_error = .false.
+
+  if (.not.got_pes_program) then
+    write(FILEOUT,* )"WAR "//my_name//": #PESPROGRAM not specified"
+    got_error = .true.
+  end if
+
+  if (.not.got_pes_exec) then
+    write(FILEOUT,*) "WAR "//my_name//": #PESEXEC not specified"
+    got_error = .true.
+  end if
+
+  if (.not.got_geometries_file) then
+    if (.not.got_start) then
+      write(FILEOUT,*) "WAR "//my_name//": #START not specified"
+      got_error = .true.
+    end if
+
+    if (.not.got_end) then
+      write(FILEOUT,*) "WAR "//my_name//": #END not specified"
+      got_error = .true.
+    end if
+
+    if (.not.got_images) then
+      write(FILEOUT,*) "WAR "//my_name//": #IMAGES not specified"
+      got_error = .true.
+    end if
+  end if
+
+  if (.not.got_start_energy) then
+    write(FILEOUT,*) "WAR "//my_name//": #STARTENERGY not specified"
+    got_error = .true.
+  end if
+
+  if (.not.got_end_energy) then
+    write(FILEOUT,*) "WAR "//my_name//": #ENDENERGY not specified"
+    got_error = .true.
+  end if
+
+  if (got_error) then
+    call error(my_name//": some necessary keywords were not specified")
+  end if
+
+end subroutine check_neb_mandatory_kw
+
+!====================================================================
+
+subroutine check_gaussian_mandatory_kw(got_charge,got_multip)
+
+  logical,     intent(IN) :: got_charge
+  logical,     intent(IN) :: got_multip
+
+  character(*), parameter :: my_name   = "check_gaussian_mandatory_kw"
+  logical                 :: got_error
+
+  got_error = .false.
+
+  if (pes_program/="gaussian") then
+    return
+  end if
+
+  if (.not.got_charge) then
+    write(FILEOUT,*) "WAR "//my_name//": #CHARGE not specified"
+    got_error = .true.
+  end if
+
+  if (.not.got_multip) then
+    write(FILEOUT,*) "WAR "//my_name//": #MULTIP not specified"
+    got_error = .true.
+  end if
+
+  if (got_error) then
+    call error(my_name//": some necessary keywords were not specified")
+  end if
+
+end subroutine check_gaussian_mandatory_kw
+
+!====================================================================
+
+subroutine check_siesta_mandatory_kw(got_elabel,got_pes_input_template)
+
+  logical,     intent(IN) :: got_elabel
+  logical,     intent(IN) :: got_pes_input_template
+
+  character(*), parameter :: my_name   = "check_siesta_mandatory_kw"
+  logical                 :: got_error
+
+  got_error = .false.
+
+  if (pes_program/="siesta") then
+    return
+  end if
+
+  if (.not.got_elabel) then
+    write(FILEOUT,*) "WAR "//my_name//": #LABEL block not specified"
+    got_error = .true.
+  end if
+
+  if (.not.got_pes_input_template) then
+    write(FILEOUT,*) "WAR "//my_name//": #PESINPUTTEMPLATE block not specified"
+    got_error = .true.
+  end if
+
+  if (got_error) then
+    call error(my_name//": some necessary keywords were not specified")
+  end if
+
+end subroutine check_siesta_mandatory_kw
+
+!====================================================================
 
 subroutine consistency_check(got_geometries_file,ri_start_atoms,&
     &ri_end_atoms,ri_start_elem,ri_end_elem,ri_elabel)
@@ -895,7 +963,7 @@ subroutine read_pes_input_template(fnumb,ending)
 end subroutine read_pes_input_template
 
 !====================================================================
-! END Subroutines that read blocks
+! Subroutines that read geometries file
 !====================================================================
 
 subroutine read_geometries_file(gf_fname)

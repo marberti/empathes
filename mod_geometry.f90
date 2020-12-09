@@ -11,47 +11,53 @@ module geometry
   private
 
   ! public variables --------------------------------------
-  public    :: start_geom,             &
+  public    :: start_geom,              &
                end_geom
   ! protected variables -----------------------------------
-  public    :: element,                &
-               elabel,                 &
-               geom_len,               &
-               geom_charge,            &
-               geom_multip,            &
-               image_n,                &
-               image_geom,             &
-               flag_init_images,       &
-               flag_only_interpolation
-  protected :: element,                &
-               elabel,                 &
-               geom_len,               &
-               geom_charge,            &
-               geom_multip,            &
-               image_n,                &
-               image_geom,             &
-               flag_init_images,       &
-               flag_only_interpolation
+  public    :: element,                 &
+               elabel,                  &
+               geom_len,                &
+               geom_charge,             &
+               geom_multip,             &
+               image_n,                 &
+               image_geom,              &
+               flag_init_images,        &
+               flag_only_interpolation, &
+               flag_geom_charge,        &
+               flag_geom_multip
+  protected :: element,                 &
+               elabel,                  &
+               geom_len,                &
+               geom_charge,             &
+               geom_multip,             &
+               image_n,                 &
+               image_geom,              &
+               flag_init_images,        &
+               flag_only_interpolation, &
+               flag_geom_charge,        &
+               flag_geom_multip
   ! public procedures -------------------------------------
-  public    :: allocate_geom,          &
-               allocate_image_geom,    &
-               set_geom_len,           &
-               set_image_n,            &
-               init_images,            &
-               update_images,          &
-               update_image_geom,      &
-               init_element,           &
-               update_element,         &
-               init_elabel,            &
-               update_elabel,          &
-               set_geom_charge,        &
-               set_geom_multip,        &
-               set_only_interpolation, &
+  public    :: allocate_geom,           &
+               allocate_image_geom,     &
+               set_geom_len,            &
+               set_image_n,             &
+               init_images,             &
+               update_images,           &
+               update_image_geom,       &
+               init_element,            &
+               update_element,          &
+               init_elabel,             &
+               update_elabel,           &
+               set_geom_charge,         &
+               set_geom_multip,         &
+               set_only_interpolation,  &
                set_geometries_file
 
   !--------------------------------------------------------
   logical                                   :: flag_init_images        = .false.
   logical                                   :: flag_only_interpolation = .false.
+  logical                                   :: flag_geom_charge        = .false.
+  logical                                   :: flag_geom_multip        = .false.
   logical                                   :: flag_init_element       = .false.
   logical                                   :: flag_init_elabel        = .false.
   logical                                   :: flag_set_image_n        = .false.
@@ -447,6 +453,8 @@ subroutine set_geom_charge(str)
     call error("set_geom_charge: argument """//str//""" is not valid")
   end if
 
+  flag_geom_charge = .true.
+
   first_call = .false.
 
 end subroutine set_geom_charge
@@ -474,6 +482,8 @@ subroutine set_geom_multip(str)
   if (geom_multip<=0) then
     call error("set_geom_multip: argument must be a non-zero positive integer")
   end if
+
+  flag_geom_multip = .true.
 
   first_call = .false.
 
@@ -537,16 +547,6 @@ subroutine mmpi_init_images()
     i = geom_len/3
     call mpi_bcast(i,1,MPI_INTEGER,0,MPI_COMM_WORLD,err_n)
 
-    ! bcast geom_charge
-    write(str30,*) geom_charge
-    str30 = adjustl(str30)
-    call mpi_bcast(str30,len(str30),MPI_CHARACTER,0,MPI_COMM_WORLD,err_n)
-
-    ! bcast geom_multip
-    write(str30,*) geom_multip
-    str30 = adjustl(str30)
-    call mpi_bcast(str30,len(str30),MPI_CHARACTER,0,MPI_COMM_WORLD,err_n)
-
     ! bcast element
     sz = geom_len/3
     allocate(e_buff(sz),stat=err_n,errmsg=err_msg)
@@ -563,6 +563,24 @@ subroutine mmpi_init_images()
       &MPI_CHARACTER,0,MPI_COMM_WORLD,err_n)
 
     ! optional variables ----------------------------------
+    ! bcast geom_charge
+    flag = flag_geom_charge
+    call mpi_bcast(flag,1,MPI_LOGICAL,0,MPI_COMM_WORLD,err_n)
+    if (flag) then
+      write(str30,*) geom_charge
+      str30 = adjustl(str30)
+      call mpi_bcast(str30,len(str30),MPI_CHARACTER,0,MPI_COMM_WORLD,err_n)
+    end if
+
+    ! bcast geom_multip
+    flag = flag_geom_multip
+    call mpi_bcast(flag,1,MPI_LOGICAL,0,MPI_COMM_WORLD,err_n)
+    if (flag) then
+      write(str30,*) geom_multip
+      str30 = adjustl(str30)
+      call mpi_bcast(str30,len(str30),MPI_CHARACTER,0,MPI_COMM_WORLD,err_n)
+    end if
+
     ! bcast elabel
     flag = flag_init_elabel
     call mpi_bcast(flag,1,MPI_LOGICAL,0,MPI_COMM_WORLD,err_n)
@@ -604,14 +622,6 @@ subroutine mmpi_init_images()
     call mpi_bcast(i,1,MPI_INTEGER,0,MPI_COMM_WORLD,err_n)
     call set_geom_len(i)
 
-    ! bcast geom_charge
-    call mpi_bcast(str30,len(str30),MPI_CHARACTER,0,MPI_COMM_WORLD,err_n)
-    call set_geom_charge(str30)
-
-    ! bcast geom_multip
-    call mpi_bcast(str30,len(str30),MPI_CHARACTER,0,MPI_COMM_WORLD,err_n)
-    call set_geom_multip(str30)
-
     ! bcast element
     sz = geom_len/3
     allocate(e_buff(sz),stat=err_n,errmsg=err_msg)
@@ -629,6 +639,20 @@ subroutine mmpi_init_images()
     call update_element(e_buff)
 
     ! optional variables ----------------------------------
+    ! bcast geom_charge
+    call mpi_bcast(flag,1,MPI_LOGICAL,0,MPI_COMM_WORLD,err_n)
+    if (flag) then
+      call mpi_bcast(str30,len(str30),MPI_CHARACTER,0,MPI_COMM_WORLD,err_n)
+      call set_geom_charge(str30)
+    end if
+
+    ! bcast geom_multip
+    call mpi_bcast(flag,1,MPI_LOGICAL,0,MPI_COMM_WORLD,err_n)
+    if (flag) then
+      call mpi_bcast(str30,len(str30),MPI_CHARACTER,0,MPI_COMM_WORLD,err_n)
+      call set_geom_multip(str30)
+    end if
+
     ! bcast elabel
     call mpi_bcast(flag,1,MPI_LOGICAL,0,MPI_COMM_WORLD,err_n)
     if (flag) then

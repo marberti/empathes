@@ -11,6 +11,7 @@ module pes
   use mpi
 #endif
   use utility
+  use c_utility_wrapper
   use geometry
   use pes_data
 
@@ -526,11 +527,12 @@ subroutine get_pes_forces(i,tid,conv_threshold,flag_conv,ig,pesf,pesg)
   real(DBL),               optional, intent(OUT)   :: pesf
   real(DBL), dimension(:), optional, intent(OUT)   :: pesg
 
+  ! @end_user: add a new "max_programname_threshold" parameter
   real(DBL), parameter                             :: max_gaussian_threshold = 1.0E-5
   real(DBL), parameter                             :: max_siesta_threshold   = 1.0E-1
-  integer,   parameter                             :: tid_lim                =  999
   integer,   parameter                             :: fnumb_in               = 1000
   integer,   parameter                             :: fnumb_out              = 2000
+  integer,   parameter                             :: tid_lim                = fnumb_out-fnumb_in-1
   integer,   parameter                             :: opt_arg                = 3
   character(8)                                     :: tid_lim_str
   character(8)                                     :: real_str
@@ -570,23 +572,40 @@ subroutine get_pes_forces(i,tid,conv_threshold,flag_conv,ig,pesf,pesg)
     call error("get_pes_forces: max threads allowed: "//trim(tid_lim_str))
   end if
 
-  ! Selecting external program to execute -----------------
+  ! SCF Convergence threshold check -----------------------
+  ! @end_user: add "case ("programname")" with the proper check
   select case (pes_program)
   case ("gaussian")
     if (nint(log10(conv_threshold))>nint(log10(max_gaussian_threshold))) then
       write(real_str,'(ES8.1)') max_gaussian_threshold
       real_str=adjustl(real_str)
-      call error("get_pes_forces: convergence threshold above "//trim(real_str))
+      call error("get_pes_forces: convergence threshold above"//&
+        &" the default value of "//trim(real_str))
     end if
+  case ("siesta")
+    if (conv_threshold>max_siesta_threshold) then
+      write(real_str,'(ES8.1)') max_siesta_threshold
+      real_str = adjustl(real_str)
+      call error("get_pes_forces: convergence threshold above"//&
+        &" the default value of "//trim(real_str))
+    end if
+  case default
+    call error("get_pes_forces: unknown program """//trim(pes_program)//"""")
+  end select
 
+  ! Preparing and executing the external program ----------
+  call set_dir(i,dirname,auxdirname)
+  call f_chdir(dirname)
+
+  ! @end_user: add "case ("programname")" with the 3 new subroutines
+  select case (pes_program)
+  case ("gaussian")
     if (arg_presence(1)) then
       call write_gaussian_input(i,conv_threshold,fnumb_in+tid,fname_in,fname_out,ig)
     else
       call write_gaussian_input(i,conv_threshold,fnumb_in+tid,fname_in,fname_out)
     end if
-    
     call exec_gaussian(fname_in,flag_conv)
-
     if (flag_conv) then
       if (arg_presence(1)) then
         call get_gaussian_output(i,fnumb_out+tid,fname_out,pesf,pesg)
@@ -594,24 +613,18 @@ subroutine get_pes_forces(i,tid,conv_threshold,flag_conv,ig,pesf,pesg)
         call get_gaussian_output(i,fnumb_out+tid,fname_out)
       end if
     end if
-    
-    call clean_gaussian_file(fnumb_in+tid,fname_in,fnumb_out+tid,fname_out)
+!    call clean_gaussian_file(fnumb_in+tid,fname_in,fnumb_out+tid,fname_out)
   case ("siesta")
-    if (conv_threshold>max_siesta_threshold) then
-      write(real_str,'(ES8.1)') max_siesta_threshold
-      real_str = adjustl(real_str)
-      call error("get_pes_forces: convergence threshold above "//trim(real_str))
-    end if
-
-    call set_siesta_dir(i,dirname,auxdirname)
-    call write_siesta_input(i,conv_threshold,dirname,fnumb_in+tid,fname_in,fname_out)
-    call exec_siesta(dirname,fname_in,fname_out)
-    call get_siesta_output(i,dirname,fnumb_out+tid,fname_out,flag_conv)
-    call get_siesta_auxiliary_files(dirname,auxdirname)
-    call remove_siesta_dir(dirname)
+    call write_siesta_input(i,conv_threshold,fnumb_in+tid,fname_in,fname_out)
+    call exec_siesta(fname_in,fname_out)
+    call get_siesta_output(i,fnumb_out+tid,fname_out,flag_conv)
   case default
     call error("get_pes_forces: unknown program """//trim(pes_program)//"""")
   end select
+
+  call f_chdir("..")
+  call get_auxiliary_files(dirname,auxdirname)
+  call remove_dir(dirname)
 
 end subroutine get_pes_forces
 
@@ -1342,6 +1355,188 @@ subroutine write_pes_input_template(fnumb)
 end subroutine write_pes_input_template
 
 !====================================================================
+! Generic subroutines for get_pes_forces
+!====================================================================
+
+subroutine set_dir(i,dirname,auxdirname)
+
+  !--------------------------------------------------------
+  ! Makes the working directory
+  ! and copies in it the auxiliary files.
+  !--------------------------------------------------------
+
+  integer,      intent(IN)    :: i
+  character(*), intent(INOUT) :: dirname
+  character(*), intent(INOUT) :: auxdirname
+
+  integer, save               :: calling_count = 0
+  character(8)                :: i_str
+  character(8)                :: exit_n_str
+  character(300)              :: cmd
+  integer                     :: j
+  integer                     :: exit_n
+  integer                     :: cmd_n
+
+  ! preliminary settings ----------------------------------
+  if (calling_count<=image_n) then
+    calling_count = calling_count+1
+  end if
+
+  write(i_str,'(I8)') i
+  i_str      = adjustl(i_str)
+  dirname    = base_dirname//trim(i_str)
+  auxdirname = base_auxdirname//trim(i_str)
+
+  ! make directories for storing auxiliary output files ---
+  if ((flag_pesd_auxiliary_output_files).and.(calling_count<=image_n)) then
+    cmd = "mkdir "//trim(auxdirname)
+    call execute_command_line(trim(cmd),&
+      &wait=.true.,exitstat=exit_n,cmdstat=cmd_n)
+
+    if (cmd_n/=0) then
+      call error("set_dir: cannot execute command """//trim(cmd)//"""")
+    end if
+
+    if (exit_n/=0) then
+      write(exit_n_str,'(I8)') exit_n
+      exit_n_str = adjustl(exit_n_str)
+      call error("set_dir: """//trim(cmd)//&
+        &""" terminated with exit code: "//trim(exit_n_str))
+    end if
+  end if
+
+  ! make the working directory ----------------------------
+  cmd = "mkdir "//trim(dirname)
+  call execute_command_line(trim(cmd),&
+    &wait=.true.,exitstat=exit_n,cmdstat=cmd_n)
+
+  if (cmd_n/=0) then
+    call error("set_dir: cannot execute command """//trim(cmd)//"""")
+  end if
+
+  if (exit_n/=0) then
+    write(exit_n_str,'(I8)') exit_n
+    exit_n_str = adjustl(exit_n_str)
+    call error("set_dir: """//trim(cmd)//&
+      &""" terminated with exit code: "//trim(exit_n_str))
+  end if
+
+  ! copy the auxiliary input files ------------------------
+  if (flag_pesd_auxiliary_input_files) then
+    cmd = "cp"
+    do j=1, pesd_auxiliary_input_files_n
+      cmd = trim(cmd)//" "//trim(pesd_auxiliary_input_files(j))
+    end do
+    cmd = trim(cmd)//" "//trim(dirname)//"/."
+
+    call execute_command_line(trim(cmd),&
+      &wait=.true.,exitstat=exit_n,cmdstat=cmd_n)
+
+    if (cmd_n/=0) then
+      call error("set_dir: cannot execute command """//trim(cmd)//"""")
+    end if
+
+    if (exit_n/=0) then
+      write(exit_n_str,'(I8)') exit_n
+      exit_n_str = adjustl(exit_n_str)
+      call error("set_dir: """//trim(cmd)//&
+        &""" terminated with exit code: "//trim(exit_n_str))
+    end if
+  end if
+
+  ! copy the auxiliary output files ------------------------
+  if ((flag_pesd_auxiliary_output_files).and.(calling_count>image_n)) then
+    cmd = "cp"
+    do j=1, pesd_auxiliary_output_files_n
+      cmd = trim(cmd)//" "//trim(auxdirname)//&
+        &"/"//trim(pesd_auxiliary_output_files(j))
+    end do
+    cmd = trim(cmd)//" "//trim(dirname)//"/."
+
+    call execute_command_line(trim(cmd),&
+      &wait=.true.,exitstat=exit_n,cmdstat=cmd_n)
+
+    if (cmd_n/=0) then
+      call error("set_dir: cannot execute command """//trim(cmd)//"""")
+    end if
+
+    if (exit_n/=0) then
+      write(exit_n_str,'(I8)') exit_n
+      exit_n_str = adjustl(exit_n_str)
+      call error("set_dir: """//trim(cmd)//&
+        &""" terminated with exit code: "//trim(exit_n_str))
+    end if
+  end if
+
+end subroutine set_dir
+
+!====================================================================
+
+subroutine get_auxiliary_files(dirname,auxdirname)
+
+  character(*), intent(IN) :: dirname
+  character(*), intent(IN) :: auxdirname
+
+  integer                  :: j
+  character(300)           :: cmd
+  character(8)             :: exit_n_str
+  integer                  :: exit_n
+  integer                  :: cmd_n
+
+  if (flag_pesd_auxiliary_output_files) then
+    cmd = "cp"
+    do j=1, pesd_auxiliary_output_files_n
+      cmd = trim(cmd)//" "//trim(dirname)//&
+        &"/"//trim(pesd_auxiliary_output_files(j))
+    end do
+    cmd = trim(cmd)//" "//trim(auxdirname)//"/."
+
+    call execute_command_line(trim(cmd),&
+      &wait=.true.,exitstat=exit_n,cmdstat=cmd_n)
+
+    if (cmd_n/=0) then
+      call error("get_auxiliary_files: cannot execute command """//trim(cmd)//"""")
+    end if
+
+    if (exit_n/=0) then
+      write(exit_n_str,'(I8)') exit_n
+      exit_n_str = adjustl(exit_n_str)
+      call error("get_auxiliary_files: """//trim(cmd)//&
+        &""" terminated with exit code: "//trim(exit_n_str))
+    end if
+  end if
+
+end subroutine get_auxiliary_files
+
+!====================================================================
+
+subroutine remove_dir(dirname)
+
+  character(*), intent(IN) :: dirname
+
+  character(8)             :: exit_n_str
+  character(140)           :: cmd
+  integer                  :: exit_n
+  integer                  :: cmd_n
+
+  cmd = "rm -r "//trim(dirname)
+  call execute_command_line(trim(cmd),&
+    &wait=.true.,exitstat=exit_n,cmdstat=cmd_n)
+
+  if (cmd_n/=0) then
+    call error("remove_dir: cannot execute command """//trim(cmd)//"""")
+  end if
+
+  if (exit_n/=0) then
+    write(exit_n_str,'(I8)') exit_n
+    exit_n_str = adjustl(exit_n_str)
+    call error("remove_dir: """//trim(cmd)//&
+      &""" terminated with exit code: "//trim(exit_n_str))
+  end if
+
+end subroutine remove_dir
+
+!====================================================================
 ! Gaussian Section
 !====================================================================
 
@@ -1652,163 +1847,48 @@ end subroutine get_gaussian_output
 
 !====================================================================
 
-subroutine clean_gaussian_file(fnumb_in,fname_in,fnumb_out,fname_out)
-
-  integer,      intent(IN) :: fnumb_in
-  character(*), intent(IN) :: fname_in
-  integer,      intent(IN) :: fnumb_out
-  character(*), intent(IN) :: fname_out
-
-  character(120)           :: err_msg
-  integer                  :: err_n
-
-  ! Delete input ------------------------------------------
-  open(unit=fnumb_in,file=fname_in,status='OLD',action='READ',&
-    &iostat=err_n,iomsg=err_msg,position='REWIND')
-  if (err_n/=0) then
-    call error("clean_gaussian_file: "//trim(err_msg))
-  end if
-  close(unit=fnumb_in,status='DELETE',iostat=err_n,iomsg=err_msg)
-  if (err_n/=0) then
-    call error("clean_gaussian_file: "//trim(err_msg))
-  end if
-
-  ! Delete output -----------------------------------------
-  open(unit=fnumb_out,file=fname_out,status='OLD',action='READ',&
-    &iostat=err_n,iomsg=err_msg,position='REWIND')
-  if (err_n/=0) then
-    call error("clean_gaussian_file: "//trim(err_msg))
-  end if
-  close(unit=fnumb_out,status='DELETE',iostat=err_n,iomsg=err_msg)
-  if (err_n/=0) then
-    call error("clean_gaussian_file: "//trim(err_msg))
-  end if
-
-end subroutine clean_gaussian_file
+!subroutine clean_gaussian_file(fnumb_in,fname_in,fnumb_out,fname_out)
+!
+!  integer,      intent(IN) :: fnumb_in
+!  character(*), intent(IN) :: fname_in
+!  integer,      intent(IN) :: fnumb_out
+!  character(*), intent(IN) :: fname_out
+!
+!  character(120)           :: err_msg
+!  integer                  :: err_n
+!
+!  ! Delete input ------------------------------------------
+!  open(unit=fnumb_in,file=fname_in,status='OLD',action='READ',&
+!    &iostat=err_n,iomsg=err_msg,position='REWIND')
+!  if (err_n/=0) then
+!    call error("clean_gaussian_file: "//trim(err_msg))
+!  end if
+!  close(unit=fnumb_in,status='DELETE',iostat=err_n,iomsg=err_msg)
+!  if (err_n/=0) then
+!    call error("clean_gaussian_file: "//trim(err_msg))
+!  end if
+!
+!  ! Delete output -----------------------------------------
+!  open(unit=fnumb_out,file=fname_out,status='OLD',action='READ',&
+!    &iostat=err_n,iomsg=err_msg,position='REWIND')
+!  if (err_n/=0) then
+!    call error("clean_gaussian_file: "//trim(err_msg))
+!  end if
+!  close(unit=fnumb_out,status='DELETE',iostat=err_n,iomsg=err_msg)
+!  if (err_n/=0) then
+!    call error("clean_gaussian_file: "//trim(err_msg))
+!  end if
+!
+!end subroutine clean_gaussian_file
 
 !====================================================================
 ! Siesta Section
 !====================================================================
 
-subroutine set_siesta_dir(i,dirname,auxdirname)
-
-  !--------------------------------------------------------
-  ! Makes the working directory
-  ! and copies in it the auxiliary files.
-  !--------------------------------------------------------
-
-  integer,      intent(IN)    :: i
-  character(*), intent(INOUT) :: dirname
-  character(*), intent(INOUT) :: auxdirname
-
-  integer, save               :: calling_count = 0
-  character(8)                :: i_str
-  character(8)                :: exit_n_str
-  character(300)              :: cmd
-  integer                     :: j
-  integer                     :: exit_n
-  integer                     :: cmd_n
-
-  ! preliminary settings ----------------------------------
-  if (calling_count<=image_n) then
-    calling_count = calling_count+1
-  end if
-
-  write(i_str,'(I8)') i
-  i_str      = adjustl(i_str)
-  dirname    = base_dirname//trim(i_str)
-  auxdirname = base_auxdirname//trim(i_str)
-
-  ! make directories for storing auxiliary output files ---
-  if ((flag_pesd_auxiliary_output_files).and.(calling_count<=image_n)) then
-    cmd = "mkdir "//trim(auxdirname)
-    call execute_command_line(trim(cmd),&
-      &wait=.true.,exitstat=exit_n,cmdstat=cmd_n)
-
-    if (cmd_n/=0) then
-      call error("set_siesta_dir: cannot execute command """//trim(cmd)//"""")
-    end if
-
-    if (exit_n/=0) then
-      write(exit_n_str,'(I8)') exit_n
-      exit_n_str = adjustl(exit_n_str)
-      call error("set_siesta_dir: """//trim(cmd)//&
-        &""" terminated with exit code: "//trim(exit_n_str))
-    end if
-  end if
-
-  ! make the working directory ----------------------------
-  cmd = "mkdir "//trim(dirname)
-  call execute_command_line(trim(cmd),&
-    &wait=.true.,exitstat=exit_n,cmdstat=cmd_n)
-
-  if (cmd_n/=0) then
-    call error("set_siesta_dir: cannot execute command """//trim(cmd)//"""")
-  end if
-
-  if (exit_n/=0) then
-    write(exit_n_str,'(I8)') exit_n
-    exit_n_str = adjustl(exit_n_str)
-    call error("set_siesta_dir: """//trim(cmd)//&
-      &""" terminated with exit code: "//trim(exit_n_str))
-  end if
-
-  ! copy the auxiliary input files ------------------------
-  if (flag_pesd_auxiliary_input_files) then
-    cmd = "cp"
-    do j=1, pesd_auxiliary_input_files_n
-      cmd = trim(cmd)//" "//trim(pesd_auxiliary_input_files(j))
-    end do
-    cmd = trim(cmd)//" "//trim(dirname)//"/."
-
-    call execute_command_line(trim(cmd),&
-      &wait=.true.,exitstat=exit_n,cmdstat=cmd_n)
-
-    if (cmd_n/=0) then
-      call error("set_siesta_dir: cannot execute command """//trim(cmd)//"""")
-    end if
-
-    if (exit_n/=0) then
-      write(exit_n_str,'(I8)') exit_n
-      exit_n_str = adjustl(exit_n_str)
-      call error("set_siesta_dir: """//trim(cmd)//&
-        &""" terminated with exit code: "//trim(exit_n_str))
-    end if
-  end if
-
-  ! copy the auxiliary output files ------------------------
-  if ((flag_pesd_auxiliary_output_files).and.(calling_count>image_n)) then
-    cmd = "cp"
-    do j=1, pesd_auxiliary_output_files_n
-      cmd = trim(cmd)//" "//trim(auxdirname)//&
-        &"/"//trim(pesd_auxiliary_output_files(j))
-    end do
-    cmd = trim(cmd)//" "//trim(dirname)//"/."
-
-    call execute_command_line(trim(cmd),&
-      &wait=.true.,exitstat=exit_n,cmdstat=cmd_n)
-
-    if (cmd_n/=0) then
-      call error("set_siesta_dir: cannot execute command """//trim(cmd)//"""")
-    end if
-
-    if (exit_n/=0) then
-      write(exit_n_str,'(I8)') exit_n
-      exit_n_str = adjustl(exit_n_str)
-      call error("set_siesta_dir: """//trim(cmd)//&
-        &""" terminated with exit code: "//trim(exit_n_str))
-    end if
-  end if
-
-end subroutine set_siesta_dir
-
-!====================================================================
-
-subroutine write_siesta_input(i,conv_threshold,dirname,fnumb_in,fname_in,fname_out,ig)
+subroutine write_siesta_input(i,conv_threshold,fnumb_in,fname_in,fname_out,ig)
 
   integer,                           intent(IN)  :: i
   real(DBL),                         intent(IN)  :: conv_threshold
-  character(*),                      intent(IN)  :: dirname
   integer,                           intent(IN)  :: fnumb_in
   character(*),                      intent(OUT) :: fname_in
   character(*),                      intent(OUT) :: fname_out
@@ -1822,7 +1902,7 @@ subroutine write_siesta_input(i,conv_threshold,dirname,fnumb_in,fname_in,fname_o
 
   write(i_str,'(I8)') i
   i_str     = adjustl(i_str)
-  fname_in  = trim(dirname)//"/"//base_name//trim(i_str)//".fdf"
+  fname_in  = base_name//trim(i_str)//".fdf"
   fname_out = base_name//trim(i_str)//".out"
   label     = base_label//base_name//trim(i_str)
 
@@ -1906,15 +1986,12 @@ subroutine write_siesta_input(i,conv_threshold,dirname,fnumb_in,fname_in,fname_o
     call error("write_siesta_input: "//trim(err_msg))
   end if
 
-  fname_in = base_name//trim(i_str)//".fdf"
-
 end subroutine write_siesta_input
 
 !====================================================================
 
-subroutine exec_siesta(dirname,fname_in,fname_out)
+subroutine exec_siesta(fname_in,fname_out)
 
-  character(*), intent(IN) :: dirname
   character(*), intent(IN) :: fname_in
   character(*), intent(IN) :: fname_out
 
@@ -1929,11 +2006,10 @@ subroutine exec_siesta(dirname,fname_in,fname_out)
   if (flag_pes_proc.and.(pes_proc>1)) then
     write(i_str,'(I8)') pes_proc
     i_str = adjustl(i_str)
-    cmd = "cd "//trim(dirname)//" && "//"mpirun -n "//trim(i_str)//" "//&
-      &trim(pes_exec)//" < "//trim(fname_in)//" > "//trim(fname_out)
+    cmd = "mpirun -n "//trim(i_str)//" "//trim(pes_exec)//&
+      &" < "//trim(fname_in)//" > "//trim(fname_out)
   else
-    cmd = "cd "//trim(dirname)//" && "//&
-      &trim(pes_exec)//" < "//trim(fname_in)//" > "//trim(fname_out)
+    cmd = trim(pes_exec)//" < "//trim(fname_in)//" > "//trim(fname_out)
   end if
 
   ! execute cmd
@@ -1956,10 +2032,9 @@ end subroutine exec_siesta
 
 !====================================================================
 
-subroutine get_siesta_output(i,dirname,fnumb_out,fname_out,flag_conv)
+subroutine get_siesta_output(i,fnumb_out,fname_out,flag_conv)
 
   integer,      intent(IN)  :: i
-  character(*), intent(IN)  :: dirname
   integer,      intent(IN)  :: fnumb_out
   character(*), intent(IN)  :: fname_out
   logical,      intent(OUT) :: flag_conv
@@ -1972,14 +2047,12 @@ subroutine get_siesta_output(i,dirname,fnumb_out,fname_out,flag_conv)
   logical                   :: correct_one
   character(200)            :: field
   character(200)            :: str
-  character(120)            :: path
   integer                   :: err_n
   character(120)            :: err_msg
 
   ! variables initialization ------------------------------
   flag_conv        = .true.
   correct_one      = .false.
-  path             = trim(dirname)//"/"//trim(fname_out)
   read_scfcycle    = -1
   default_scfcycle = get_scfcycle()
   default_scfcycle = default_scfcycle - 1 ! If we tell siesta
@@ -1987,7 +2060,7 @@ subroutine get_siesta_output(i,dirname,fnumb_out,fname_out,flag_conv)
     ! in the output file
 
   ! open unit ---------------------------------------------
-  open(unit=fnumb_out,file=path,status='OLD',action='READ',&
+  open(unit=fnumb_out,file=fname_out,status='OLD',action='READ',&
     &iostat=err_n,iomsg=err_msg,position='REWIND')
   if (err_n/=0) then
     call error("get_siesta_output: "//trim(err_msg))
@@ -2148,72 +2221,6 @@ subroutine get_siesta_output(i,dirname,fnumb_out,fname_out,flag_conv)
   end if
  
 end subroutine get_siesta_output
-
-!====================================================================
-
-subroutine get_siesta_auxiliary_files(dirname,auxdirname)
-
-  character(*), intent(IN) :: dirname
-  character(*), intent(IN) :: auxdirname
-
-  integer                  :: j
-  character(300)           :: cmd
-  character(8)             :: exit_n_str
-  integer                  :: exit_n
-  integer                  :: cmd_n
-
-  if (flag_pesd_auxiliary_output_files) then
-    cmd = "cp"
-    do j=1, pesd_auxiliary_output_files_n
-      cmd = trim(cmd)//" "//trim(dirname)//&
-        &"/"//trim(pesd_auxiliary_output_files(j))
-    end do
-    cmd = trim(cmd)//" "//trim(auxdirname)//"/."
-
-    call execute_command_line(trim(cmd),&
-      &wait=.true.,exitstat=exit_n,cmdstat=cmd_n)
-
-    if (cmd_n/=0) then
-      call error("set_siesta_dir: cannot execute command """//trim(cmd)//"""")
-    end if
-
-    if (exit_n/=0) then
-      write(exit_n_str,'(I8)') exit_n
-      exit_n_str = adjustl(exit_n_str)
-      call error("set_siesta_dir: """//trim(cmd)//&
-        &""" terminated with exit code: "//trim(exit_n_str))
-    end if
-  end if
-
-end subroutine get_siesta_auxiliary_files
-
-!====================================================================
-
-subroutine remove_siesta_dir(dirname)
-
-  character(*), intent(IN) :: dirname
-
-  character(8)             :: exit_n_str
-  character(140)           :: cmd
-  integer                  :: exit_n
-  integer                  :: cmd_n
-
-  cmd = "rm -r "//trim(dirname)
-  call execute_command_line(trim(cmd),&
-    &wait=.true.,exitstat=exit_n,cmdstat=cmd_n)
-
-  if (cmd_n/=0) then
-    call error("remove_siesta_dir: cannot execute command """//trim(cmd)//"""")
-  end if
-
-  if (exit_n/=0) then
-    write(exit_n_str,'(I8)') exit_n
-    exit_n_str = adjustl(exit_n_str)
-    call error("remove_siesta_dir: """//trim(cmd)//&
-      &""" terminated with exit code: "//trim(exit_n_str))
-  end if
-
-end subroutine remove_siesta_dir
 
 !====================================================================
 

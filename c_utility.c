@@ -15,7 +15,7 @@ void c_chdir(char *dir) {
   const int err_msg_len = 300;
   char err_msg[err_msg_len];
 
-  printf(" c_chdir: Changing directory to \"%s\"\n",dir);
+  //printf(" c_chdir: Changing directory to \"%s\"\n",dir);
 
   if (chdir(dir) != 0) {
     strcpy(err_msg,"c_chdir: cannot change to \"");

@@ -49,7 +49,7 @@ subroutine f_chdir(dir)
   end do
 
   ! call c function ---------------------------------------
-  write(*,*) "f_chdir: changing directory to """,trim(dir),""""
+  !write(*,*) "f_chdir: changing directory to """,trim(dir),""""
   call c_chdir(cdir)
 
 end subroutine f_chdir

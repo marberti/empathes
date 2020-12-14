@@ -333,15 +333,8 @@ subroutine read_input(file_in)
       if (err_n/=0) then
         call error("read_input: cannot read additional command")
       end if
-      call set_pesd_additional_cmd(trim(cmd_str))
 
-    case ("#THREADS")
-      call get_field(cmd_str,arg,2,err_n,err_msg)
-      if (err_n/=0) then
-        call error("read_input: "//trim(err_msg))
-      end if
- 
-      call set_neb_threads(arg)
+      call set_pesd_additional_cmd(trim(cmd_str))
 
     case ("#OPTALGORITHM")
       call get_field(cmd_str,arg,2,err_n,err_msg)

@@ -458,8 +458,6 @@ subroutine compute_pes_forces()
   !          before init_tangents
   !--------------------------------------------------------
 
-  use omp_lib
-
   integer   :: i
   integer   :: tid
   real(DBL) :: conv_threshold
@@ -480,30 +478,22 @@ subroutine compute_pes_forces()
 
   ! working section ---------------------------------------
   tid = 0
+  do i=1, image_n
+    conv_threshold = get_scfconv()
 
-  !$omp  parallel num_threads(neb_threads) default(none) &
-  !$omp& shared(image_n)                                 &
-  !$omp& private(tid,conv_threshold,converged)
-    !$ tid=omp_get_thread_num()
-    !$omp do
-    do i=1, image_n
-      conv_threshold = get_scfconv()
+    do
+      call get_pes_forces(i,tid,conv_threshold,converged)
 
-      do
-        call get_pes_forces(i,tid,conv_threshold,converged)
-
-        if (converged) then
-          exit
-        else
-          conv_threshold = conv_threshold*10.0_DBL
-          write(FILEOUT,'(5X,"compute_pes_forces: Thread ",I3,&
-            &": convergence threshold on image ",I3,&
-            &" reduced to ",ES8.1)') tid,i,conv_threshold
-        end if
-      end do
+      if (converged) then
+        exit
+      else
+        conv_threshold = conv_threshold*10.0_DBL
+        write(FILEOUT,'(5X,"compute_pes_forces: process ",I3,&
+          &": convergence threshold on image ",I3,&
+          &" reduced to ",ES8.1)') tid,i,conv_threshold
+      end if
     end do
-    !$omp end do
-  !$omp end parallel
+  end do
 
 end subroutine compute_pes_forces
 
@@ -569,7 +559,7 @@ subroutine get_pes_forces(i,tid,conv_threshold,flag_conv,ig,pesf,pesg)
   if (tid>tid_lim) then
     write(tid_lim_str,'(I8)') tid_lim
     tid_lim_str=adjustl(tid_lim_str)
-    call error("get_pes_forces: max threads allowed: "//trim(tid_lim_str))
+    call error("get_pes_forces: max processes allowed: "//trim(tid_lim_str))
   end if
 
   ! SCF Convergence threshold check -----------------------
@@ -1164,7 +1154,7 @@ subroutine mmpi_compute_pes_forces()
           exit
         else
           conv_threshold = conv_threshold*10.0_DBL
-          write(FILEOUT,'(5X,"compute_pes_forces: Process ",I3,&
+          write(FILEOUT,'(5X,"compute_pes_forces: process ",I3,&
             &": convergence threshold on image ",I3,&
             &" reduced to ",ES8.1)') proc_id,i,conv_threshold
         end if

@@ -43,23 +43,18 @@ debug0: serial
 serial: clean $(OUT)
 
 .PHONY: parallel
-parallel: FLAGS += -fopenmp
+parallel: CC = $(MPICC)
+parallel: FC = $(MPIFC)
+parallel: FLAGS += -DUSE_MPI
 parallel: serial
-
-.PHONY: fullparallel
-fullparallel: CC = $(MPICC)
-fullparallel: FC = $(MPIFC)
-fullparallel: FLAGS += -DUSE_MPI
-fullparallel: parallel
 
 # utility -------------------------------------------------
 .PHONY: help
 help:
 	@echo "Usage:"
 	@echo
-	@echo "  make serial          Serial compilation of neb.x"
-	@echo "  make parallel        Parallel compilation (OpenMP)"
-	@echo "  make fullparallel    Parallel compilation (OpenMP + MPI)"
+	@echo "  make serial          Serial compilation"
+	@echo "  make parallel        Parallel compilation (MPI)"
 
 .PHONY: clean
 clean:
@@ -69,7 +64,7 @@ clean:
 
 .PHONY: screenclear
 screenclear:
-	clear
+	@clear
 
 # core ----------------------------------------------------
 $(OUT): allobjects

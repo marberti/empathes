@@ -4,7 +4,6 @@ program neb
   use mpi
   use slave
 #endif
-  use omp_lib
   use utility
   use geometry
   use idpp
@@ -41,9 +40,6 @@ program neb
   call update_comm_sz(priv_comm_sz)
   call update_proc_id(priv_proc_id)
 #endif
-
-  ! if compiled with openmp option ------------------------
-  !$ call set_openmp(.true.)
 
   !==================================================================
   ! Master/Slaves branching
@@ -299,11 +295,8 @@ subroutine write_build_version()
     ostream=STDOUT
   end if
 
-  if (flag_mpi.or.flag_openmp) then
+  if (flag_mpi) then
     write(ostream,'(5X,"Parallel Version")')
-    if (flag_openmp) then
-      write(ostream,'(7X,"Shared Memory via OpenMP")')
-    end if
 #ifdef USE_MPI
     call mpi_get_version(version,subversion,err_n)
     write(ostream,'(7X,"Distributed Memory via MPI (version ",&

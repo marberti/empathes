@@ -39,14 +39,10 @@ module utility
 #endif
   ! protected variables -----------------------------------
   public    :: main_program_name,          &
-               flag_openmp,                &
-               neb_threads,                &
                flag_fileout,               &
                start_clock,                &
                clock_rate
   protected :: main_program_name,          &
-               flag_openmp,                &
-               neb_threads,                &
                flag_fileout,               &
                start_clock,                &
                clock_rate
@@ -58,8 +54,6 @@ module utility
 #endif
   ! public procedures -------------------------------------
   public    :: set_main_program_name,      &
-               set_openmp,                 &
-               set_neb_threads,            &
                set_fileout,                &
                close_fileout,              &
                isdigit,                    &
@@ -116,8 +110,6 @@ module utility
 #endif
 
   character(120)       :: main_program_name
-  logical              :: flag_openmp                 = .false.
-  integer              :: neb_threads                 = 1
   integer(LONG)        :: start_clock
   integer(LONG)        :: clock_rate
   logical              :: flag_start_clock            = .false.
@@ -140,69 +132,6 @@ subroutine set_main_program_name(str)
   main_program_name = str
 
 end subroutine set_main_program_name
-
-!====================================================================
-
-subroutine set_openmp(flag)
-
-  logical, intent(IN) :: flag
-
-  logical, save       :: first_call = .true.
-
-  if (first_call.eqv..false.) then
-    call error("set_openmp: subroutine called more than once")
-  end if
-
-  flag_openmp = flag
-
-  first_call = .false.
-
-end subroutine set_openmp
-
-!====================================================================
-
-subroutine set_neb_threads(str)
-
-  character(*), intent(IN) :: str
-
-  logical, save            :: first_call = .true.
-
-  ! preliminary checks ------------------------------------
-  if (first_call.eqv..false.) then
-    call error("set_neb_threads: neb threads already setted")
-  end if
-
-  if (flag_openmp.eqv..false.) then
-    call error("set_neb_threads: specified #THREADS keyword, "//&
-      &"but the program was compiled without OpenMP support")
-  end if
-
-#ifdef USE_MPI
-  if (comm_sz>1) then
-    call error("set_neb_threads: #THREADS keyword "//&
-      &"cannot be used with multiple processes")
-  end if
-#endif
-
-  if (len_trim(str)==0) then
-    call error("set_neb_threads: neb threads not specified")
-  end if
-
-  ! read value --------------------------------------------
-  if (isinteger(trim(adjustl(str)))) then
-    read(str,*) neb_threads
-  else
-    call error("set_neb_threads: wrong argument """//trim(str)//"""")
-  end if
-
-  if (neb_threads<=0) then
-    call error("set_neb_threads: argument must be a non-zero positive integer")
-  end if
-
-  ! finalize ----------------------------------------------
-  first_call = .false.
-
-end subroutine set_neb_threads
 
 !====================================================================
 

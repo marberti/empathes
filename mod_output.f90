@@ -176,7 +176,6 @@ end subroutine write_pes_forces
 subroutine write_parallelization_info()
 
   call write_procs_info()
-  call write_threads_info()
 
 end subroutine write_parallelization_info
 
@@ -458,25 +457,6 @@ subroutine write_procs_info()
   end if
 
 end subroutine write_procs_info
-
-!====================================================================
-
-subroutine write_threads_info()
-
-  character(8) :: n
-
-  write(n,'(I8)') neb_threads
-  n = adjustl(n)
-
-  write(FILEOUT,*) "**  Threads Info:"
-  write(FILEOUT,'(5X,"Executed with: ",A)',advance="NO") trim(n)
-  if (neb_threads==1) then
-    write(FILEOUT,'(" Thread (per process)")')
-  else
-    write(FILEOUT,'(" Threads (per process)")')
-  end if
-
-end subroutine write_threads_info
 
 !====================================================================
 

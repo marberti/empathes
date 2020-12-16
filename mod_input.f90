@@ -98,15 +98,19 @@ subroutine read_input(file_in)
 
     ! Parse command ---------------------------------------
     ! Mutual exclusivity is checked line-by-line
+
+    ! Skip empty strings
     if (len_trim(cmd_str)==0) then
       cycle
     end if
 
+    ! Get the keyword
     call get_field(cmd_str,keyword,1,err_n,err_msg)
     if (err_n/=0) then
       call error("read_input: "//trim(err_msg))
     end if
     
+    ! Skip comment strings
     if (keyword(1:1)=="!") then
       cycle
     else if (keyword(1:1)/="#") then
@@ -114,6 +118,7 @@ subroutine read_input(file_in)
         &//trim(cmd_str)//""" is not a valid keyword")
     end if
 
+    ! Parse the keyword
     select case (keyword)
     case ("#START")
       if (got_geometries_file) then

@@ -19,13 +19,16 @@ module idpp
 
   ! protected variables -----------------------------------
   public    :: flag_idpp,         &
+               idpp_tol,          &
                idpp_energy,       &
                idpp_forces
   protected :: flag_idpp,         &
+               idpp_tol,          &
                idpp_energy,       &
                idpp_forces
   ! public procedures -------------------------------------
   public    :: set_idpp,          &
+               set_idpp_tol,      &
                init_idpp,         &
                compute_idpp_enfo, &
                driver_idpp
@@ -34,6 +37,8 @@ module idpp
   logical                                :: flag_idpp      = .false.
   logical                                :: flag_init_idpp = .false.
   integer                                :: d_idpp_len
+  real(DBL)                              :: idpp_tol       = 1.0E-3_DBL
+    ! default idpp convergence threshold ---^
   real(DBL), allocatable, dimension(:)   :: idpp_energy
   real(DBL), allocatable, dimension(:,:) :: idpp_forces
   real(DBL), allocatable, dimension(:,:) :: d_idpp ! contains
@@ -60,6 +65,28 @@ subroutine set_idpp(flag)
   first_call = .false.
 
 end subroutine set_idpp
+
+!====================================================================
+
+subroutine set_idpp_tol(str)
+
+  character(*), intent(IN) :: str
+
+  logical, save            :: first_call = .true.
+
+  if (first_call.eqv..false.) then
+    call error("set_idpp_tol: subroutine called more than once")
+  end if
+
+  if (isreal(trim(adjustl(str)))) then
+    read(str,*) idpp_tol
+  else
+    call error("set_idpp_tol: argument must be a real")
+  end if
+
+  first_call = .false.
+
+end subroutine set_idpp_tol
 
 !====================================================================
 

@@ -17,7 +17,6 @@ module optimization
   public :: set_optmz_algo,   &
             set_optmz_nsteps, &
             set_optmz_tol,    &
-            set_idpp_tol,     &
             optmz_pes,        &
             optmz_idpp
 
@@ -32,7 +31,6 @@ module optimization
   logical            :: flag_optmz_tol    = .false.
   integer            :: optmz_nsteps
   real(DBL)          :: optmz_tol
-  real(DBL)          :: idpp_tol          = 1.0E-3_DBL ! default idpp convergence threshold
 
 contains
 
@@ -114,28 +112,6 @@ subroutine set_optmz_tol(str)
   flag_optmz_tol = .true.
 
 end subroutine set_optmz_tol
-
-!====================================================================
-
-subroutine set_idpp_tol(str)
-  
-  character(*), intent(IN) :: str
-
-  logical, save            :: first_call = .true.
-
-  if (first_call.eqv..false.) then
-    call error("set_idpp_tol: subroutine called more than once")
-  end if
-
-  if (isreal(trim(adjustl(str)))) then
-    read(str,*) idpp_tol
-  else
-    call error("set_idpp_tol: argument must be a real")
-  end if
-
-  first_call = .false.
-
-end subroutine set_idpp_tol
 
 !====================================================================
 

@@ -10,21 +10,22 @@ LIBS     = -llbfgsb
 
 CSOURCES = c_utility.c
 
-FSOURCES = mod_utility.f90           \
-	   mod_c_utility_wrapper.f90 \
-	   mod_bfgs_wrapper.f90      \
-	   mod_rotation.f90          \
-	   mod_geometry.f90          \
-	   mod_idpp.f90              \
-	   mod_pes_data.f90          \
-	   mod_pes.f90               \
-	   mod_elastic.f90           \
-	   mod_climbing.f90          \
-	   mod_output.f90            \
-	   mod_optimization.f90      \
-	   mod_slave.f90             \
-	   mod_computation_info.f90  \
-	   mod_input.f90             \
+FSOURCES = mod_utility.f90            \
+	   mod_c_utility_wrapper.f90  \
+	   mod_bfgs_wrapper.f90       \
+	   mod_rotation.f90           \
+	   mod_geometry.f90           \
+	   mod_idpp.f90               \
+	   mod_pes_input_template.f90 \
+	   mod_pes_data.f90           \
+	   mod_pes.f90                \
+	   mod_elastic.f90            \
+	   mod_climbing.f90           \
+	   mod_output.f90             \
+	   mod_optimization.f90       \
+	   mod_slave.f90              \
+	   mod_computation_info.f90   \
+	   mod_input.f90              \
 	   main.f90
 
 COBJECTS = $(CSOURCES:.c=.o)

@@ -57,7 +57,6 @@ subroutine read_input(file_in)
   logical                                 :: got_pes_exec
   logical                                 :: got_geometries_file
   logical                                 :: got_elabel
-!  logical                                 :: got_pes_input_template
   logical                                 :: got_idpp
 
   open(unit=file_n,file=file_in,status='OLD',action='READ',&
@@ -76,7 +75,6 @@ subroutine read_input(file_in)
   got_end_energy         = .false.
   got_pes_program        = .false.
   got_pes_exec           = .false.
-!  got_pes_input_template = .false.
   got_geometries_file    = .false.
   got_elabel             = .false.
   got_idpp               = .false.
@@ -236,7 +234,6 @@ subroutine read_input(file_in)
       end if
 
       call read_pes_it(arg,file_n,"#ENDPESINPUTTEMPLATE")
-!      got_pes_input_template = .true.
 
     case ("#PESPROC")
       call get_field(cmd_str,arg,2,err_n,err_msg)
@@ -924,54 +921,6 @@ subroutine read_user_pseudo_potential(fnumb,ending)
   call set_user_pseudo_potential(.true.)
 
 end subroutine read_user_pseudo_potential
-
-!====================================================================
-
-!subroutine read_pes_input_template(fnumb,ending)
-!
-!  ! Reads the #PESINPUTTEMPLATE block
-!
-!  integer,      intent(IN) :: fnumb
-!  character(*), intent(IN) :: ending
-!
-!  integer                  :: i
-!  integer                  :: lines
-!  character(120)           :: str
-!  integer                  :: err_n
-!  character(120)           :: err_msg
-!
-!  lines=get_lines(fnumb,ending)
-!  if (lines==0) then
-!    call error("read_pes_input_template: input template not specified")
-!  end if
-!  
-!  if (.not.allocated(pes_input_template)) then
-!    allocate(pes_input_template(lines),stat=err_n,errmsg=err_msg)
-!    if (err_n/=0) then
-!      call error("read_pes_input_template: "//trim(err_msg))
-!    end if
-!  else
-!    call error("read_pes_input_template: pes input template already specified")
-!  end if
-!
-!  do i=1, lines
-!    backspace(unit=fnumb,iostat=err_n,iomsg=err_msg)
-!    if (err_n/=0) then
-!      call error("read_pes_input_template: "//trim(err_msg))
-!    end if
-!  end do
-!
-!  do i=1, lines
-!    read(fnumb,'(A120)',iostat=err_n) str
-!    if (err_n/=0) then
-!      call error("read_pes_input_template: "//trim(err_msg))
-!    end if
-!    pes_input_template(i) = str
-!  end do
-!
-!  call set_pes_input_template(.true.)
-!
-!end subroutine read_pes_input_template
 
 !====================================================================
 ! Subroutines that read geometries file

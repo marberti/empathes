@@ -6,23 +6,21 @@ module pes_input_template
   save
   private
 
-  ! public parameters -------------------------------------
-  public :: IT_S_LEN
   ! public procedures -------------------------------------
   public :: read_pes_it, &
             write_pes_it
 
   !--------------------------------------------------------
-  integer, parameter                               :: IT_S_LEN = 200
+  integer, parameter                                 :: IT_STR_LEN = 200
 
-  type                                             :: pes_it_t
-    integer                                        :: n
-    integer                                        :: lines
-    character(IT_S_LEN), allocatable, dimension(:) :: s
+  type                                               :: pes_it_t
+    integer                                          :: n
+    integer                                          :: lines
+    character(IT_STR_LEN), allocatable, dimension(:) :: s
   end type pes_it_t
 
-  type (pes_it_t), allocatable, dimension(:)       :: pes_it
-  integer                                          :: pes_it_len = 0
+  type (pes_it_t), allocatable, dimension(:)         :: pes_it
+  integer                                            :: pes_it_len = 0
 
 contains
 
@@ -42,7 +40,7 @@ subroutine read_pes_it(n_str,fnumb,ending)
   integer                  :: n
   integer                  :: i
   integer                  :: lines
-  character(IT_S_LEN)      :: str
+  character(IT_STR_LEN)    :: str
   integer                  :: err_n
   character(120)           :: err_msg
 

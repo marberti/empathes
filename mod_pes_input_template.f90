@@ -7,8 +7,9 @@ module pes_input_template
   private
 
   ! public procedures -------------------------------------
-  public :: read_pes_it, &
-            write_pes_it
+  public :: read_pes_it,  &
+            write_pes_it, &
+            get_pes_it_n
 
   !--------------------------------------------------------
   integer, parameter                                 :: IT_STR_LEN = 200
@@ -49,6 +50,10 @@ subroutine read_pes_it(n_str,fnumb,ending)
     read(n_str,*) n
   else
     call error(my_name//"expected integer after #PESINPUTTEMPLATE, got """//trim(n_str)//"""")
+  end if
+
+  if (n<=0) then
+    call error(my_name//"argument must be a non-zero positive integer")
   end if
 
   ! get number of lines in the block ----------------------
@@ -106,6 +111,27 @@ subroutine write_pes_it(n)
 end subroutine write_pes_it
 
 !====================================================================
+
+integer function get_pes_it_n(n)
+
+  ! return 0 if n is not found, a positive integer otherwise
+
+  integer, intent(IN) :: n
+
+  integer             :: i
+
+  get_pes_it_n = 0
+
+  do i=1, pes_it_len
+    if (pes_it(i)%n==n) then
+      get_pes_it_n = i
+      return
+    end if
+  end do
+
+end function get_pes_it_n
+
+!====================================================================
 ! Private
 !====================================================================
 
@@ -155,27 +181,6 @@ subroutine add_pes_it(n,lines)
   end if
 
 end subroutine add_pes_it
-
-!====================================================================
-
-integer function get_pes_it_n(n)
-
-  ! return 0 if n is not found, a positive integer otherwise
-
-  integer, intent(IN) :: n
-
-  integer             :: i
-
-  get_pes_it_n = 0
-
-  do i=1, pes_it_len
-    if (pes_it(i)%n==n) then
-      get_pes_it_n = i
-      return
-    end if
-  end do
-
-end function get_pes_it_n
 
 !====================================================================
 

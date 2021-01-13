@@ -90,8 +90,8 @@ subroutine read_input(file_in)
       call check_neb_mandatory_kw(got_pes_program,got_pes_exec,&
         &got_geometries_file,got_start,got_start_energy,got_end,&
         &got_end_energy,got_images)
-!      call check_gaussian_mandatory_kw(got_charge,got_multip)
-!      call check_siesta_mandatory_kw(got_elabel,got_pes_input_template)
+!      call check_gaussian_mandatory_kw()
+!      call check_siesta_mandatory_kw(got_elabel)
       exit
     end if
 
@@ -592,13 +592,13 @@ end subroutine check_neb_mandatory_kw
 
 !====================================================================
 
-subroutine check_gaussian_mandatory_kw(got_charge,got_multip)
-
-  logical,     intent(IN) :: got_charge
-  logical,     intent(IN) :: got_multip
+subroutine check_gaussian_mandatory_kw()
 
   character(*), parameter :: my_name   = "check_gaussian_mandatory_kw"
   logical                 :: got_error
+  integer                 :: indx
+  integer                 :: i
+  character(8)            :: i_str
 
   got_error = .false.
 
@@ -606,15 +606,17 @@ subroutine check_gaussian_mandatory_kw(got_charge,got_multip)
     return
   end if
 
-  if (.not.got_charge) then
-    write(FILEOUT,*) "WAR "//my_name//": #CHARGE not specified"
-    got_error = .true.
-  end if
+  ! check that both #PESINPUTTEMPLATE 1 and 2 blocks were specified
+  do i=1, 2
+    indx = get_pes_it_n(i)
 
-  if (.not.got_multip) then
-    write(FILEOUT,*) "WAR "//my_name//": #MULTIP not specified"
-    got_error = .true.
-  end if
+    if (indx/=i) then
+      write(i_str,'(I8)') i
+      i_str=adjustl(i_str)
+      write(FILEOUT,*) "WAR "//my_name//": ""#PESINPUTTEMPLATE "//trim(i_str)//""" block not specified"
+      got_error = .true.
+    end if
+  end do
 
   if (got_error) then
     call error(my_name//": some necessary keywords were not specified")
@@ -624,13 +626,15 @@ end subroutine check_gaussian_mandatory_kw
 
 !====================================================================
 
-subroutine check_siesta_mandatory_kw(got_elabel,got_pes_input_template)
+subroutine check_siesta_mandatory_kw(got_elabel)
 
   logical,     intent(IN) :: got_elabel
-  logical,     intent(IN) :: got_pes_input_template
 
   character(*), parameter :: my_name   = "check_siesta_mandatory_kw"
   logical                 :: got_error
+  integer                 :: indx
+  integer                 :: i
+  character(8)            :: i_str
 
   got_error = .false.
 
@@ -638,13 +642,21 @@ subroutine check_siesta_mandatory_kw(got_elabel,got_pes_input_template)
     return
   end if
 
+  ! check that both #PESINPUTTEMPLATE 1 and 2 blocks were specified
+  do i=1, 2
+    indx = get_pes_it_n(i)
+
+    if (indx/=i) then
+      write(i_str,'(I8)') i
+      i_str=adjustl(i_str)
+      write(FILEOUT,*) "WAR "//my_name//": ""#PESINPUTTEMPLATE "//trim(i_str)//""" block not specified"
+      got_error = .true.
+    end if
+  end do
+
+  ! check that #LABEL block was specified
   if (.not.got_elabel) then
     write(FILEOUT,*) "WAR "//my_name//": #LABEL block not specified"
-    got_error = .true.
-  end if
-
-  if (.not.got_pes_input_template) then
-    write(FILEOUT,*) "WAR "//my_name//": #PESINPUTTEMPLATE block not specified"
     got_error = .true.
   end if
 

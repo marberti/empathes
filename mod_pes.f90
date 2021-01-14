@@ -14,6 +14,7 @@ module pes
   use c_utility_wrapper
   use geometry
   use pes_data
+  use pes_input_template
 
   implicit none
   save
@@ -520,10 +521,12 @@ subroutine get_pes_forces(i,tid,conv_threshold,flag_conv,ig,pesf,pesg)
   ! @end_user: add a new "max_programname_threshold" parameter
   real(DBL), parameter                             :: max_gaussian_threshold = 1.0E-5
   real(DBL), parameter                             :: max_siesta_threshold   = 1.0E-1
-  integer,   parameter                             :: fnumb_in               = 1000
-  integer,   parameter                             :: fnumb_out              = 2000
-  integer,   parameter                             :: tid_lim                = fnumb_out-fnumb_in-1
+  integer,   parameter                             :: base_fnumb_in          = 1000
+  integer,   parameter                             :: base_fnumb_out         = 2000
+  integer,   parameter                             :: tid_lim                = base_fnumb_out-base_fnumb_in-1
   integer,   parameter                             :: opt_arg                = 3
+  integer                                          :: fnumb_in
+  integer                                          :: fnumb_out
   character(8)                                     :: tid_lim_str
   character(8)                                     :: real_str
   character(120)                                   :: fname_in
@@ -584,6 +587,8 @@ subroutine get_pes_forces(i,tid,conv_threshold,flag_conv,ig,pesf,pesg)
   end select
 
   ! Preparing and executing the external program ----------
+  fnumb_in  = base_fnumb_in + tid
+  fnumb_out = base_fnumb_out + tid
   call set_dir(i,dirname,auxdirname)
   call f_chdir(dirname)
 
@@ -591,23 +596,22 @@ subroutine get_pes_forces(i,tid,conv_threshold,flag_conv,ig,pesf,pesg)
   select case (pes_program)
   case ("gaussian")
     if (arg_presence(1)) then
-      call write_gaussian_input(i,conv_threshold,fnumb_in+tid,fname_in,fname_out,ig)
+      call write_gaussian_input(i,conv_threshold,fnumb_in,fname_in,fname_out,ig)
     else
-      call write_gaussian_input(i,conv_threshold,fnumb_in+tid,fname_in,fname_out)
+      call write_gaussian_input(i,conv_threshold,fnumb_in,fname_in,fname_out)
     end if
     call exec_gaussian(fname_in,flag_conv)
     if (flag_conv) then
       if (arg_presence(1)) then
-        call get_gaussian_output(i,fnumb_out+tid,fname_out,pesf,pesg)
+        call get_gaussian_output(i,fnumb_out,fname_out,pesf,pesg)
       else
-        call get_gaussian_output(i,fnumb_out+tid,fname_out)
+        call get_gaussian_output(i,fnumb_out,fname_out)
       end if
     end if
-!    call clean_gaussian_file(fnumb_in+tid,fname_in,fnumb_out+tid,fname_out)
   case ("siesta")
-    call write_siesta_input(i,conv_threshold,fnumb_in+tid,fname_in,fname_out)
+    call write_siesta_input(i,conv_threshold,fnumb_in,fname_in,fname_out)
     call exec_siesta(fname_in,fname_out)
-    call get_siesta_output(i,fnumb_out+tid,fname_out,flag_conv)
+    call get_siesta_output(i,fnumb_out,fname_out,flag_conv)
   case default
     call error("get_pes_forces: unknown program """//trim(pes_program)//"""")
   end select
@@ -1265,84 +1269,84 @@ end subroutine mmpi_compute_pes_forces
 ! Private
 !====================================================================
 
-subroutine write_user_basis_set(fnumb)
-
-  !--------------------------------------------------------
-  ! Being a private subroutine,
-  ! it assumes fnumb opened and user_basis_set allocated.
-  ! Those checks *must* be done by calling subroutine.
-  !--------------------------------------------------------
-
-  integer, intent(IN) :: fnumb
-
-  integer             :: i
-  integer             :: buff_len
-
-  if (flag_user_basis_set.eqv..false.) then
-    call error("write_user_basis_set: user_basis_set is not setted")
-  end if
-
-  buff_len = size(user_basis_set,1)
-
-  do i=1, buff_len
-    write(fnumb,'(A)') trim(user_basis_set(i))
-  end do
-
-end subroutine write_user_basis_set
-
-!====================================================================
-
-subroutine write_user_pseudo_potential(fnumb)
-
-  !--------------------------------------------------------
-  ! Being a private subroutine,
-  ! it assumes fnumb opened and user_pseudo_potential allocated.
-  ! Those checks *must* be done by calling subroutine.
-  !--------------------------------------------------------
-
-  integer, intent(IN) :: fnumb
-
-  integer             :: i
-  integer             :: buff_len
-
-  if (flag_user_pseudo_potential.eqv..false.) then
-    call error("write_user_pseudo_potential: user_pseudo_potential is not setted")
-  end if
-
-  buff_len = size(user_pseudo_potential,1)
-
-  do i=1, buff_len
-    write(fnumb,'(A)') trim(user_pseudo_potential(i))
-  end do
-
-end subroutine write_user_pseudo_potential
+!subroutine write_user_basis_set(fnumb)
+!
+!  !--------------------------------------------------------
+!  ! Being a private subroutine,
+!  ! it assumes fnumb opened and user_basis_set allocated.
+!  ! Those checks *must* be done by calling subroutine.
+!  !--------------------------------------------------------
+!
+!  integer, intent(IN) :: fnumb
+!
+!  integer             :: i
+!  integer             :: buff_len
+!
+!  if (flag_user_basis_set.eqv..false.) then
+!    call error("write_user_basis_set: user_basis_set is not setted")
+!  end if
+!
+!  buff_len = size(user_basis_set,1)
+!
+!  do i=1, buff_len
+!    write(fnumb,'(A)') trim(user_basis_set(i))
+!  end do
+!
+!end subroutine write_user_basis_set
 
 !====================================================================
 
-subroutine write_pes_input_template(fnumb)
+!subroutine write_user_pseudo_potential(fnumb)
+!
+!  !--------------------------------------------------------
+!  ! Being a private subroutine,
+!  ! it assumes fnumb opened and user_pseudo_potential allocated.
+!  ! Those checks *must* be done by calling subroutine.
+!  !--------------------------------------------------------
+!
+!  integer, intent(IN) :: fnumb
+!
+!  integer             :: i
+!  integer             :: buff_len
+!
+!  if (flag_user_pseudo_potential.eqv..false.) then
+!    call error("write_user_pseudo_potential: user_pseudo_potential is not setted")
+!  end if
+!
+!  buff_len = size(user_pseudo_potential,1)
+!
+!  do i=1, buff_len
+!    write(fnumb,'(A)') trim(user_pseudo_potential(i))
+!  end do
+!
+!end subroutine write_user_pseudo_potential
 
-  !--------------------------------------------------------
-  ! Being a private subroutine,
-  ! it assumes fnumb opened and pes_input_template allocated.
-  ! Those checks *must* be done by calling subroutine.
-  !--------------------------------------------------------
+!====================================================================
 
-  integer, intent(IN) :: fnumb
-
-  integer             :: i
-  integer             :: buff_len
-
-  if (flag_pes_input_template.eqv..false.) then
-    call error("write_pes_input_template: pes_input_template is not setted")
-  end if
-
-  buff_len = size(pes_input_template,1)
-
-  do i=1, buff_len
-    write(fnumb,'(A)') trim(pes_input_template(i))
-  end do
-
-end subroutine write_pes_input_template
+!subroutine write_pes_input_template(fnumb)
+!
+!  !--------------------------------------------------------
+!  ! Being a private subroutine,
+!  ! it assumes fnumb opened and pes_input_template allocated.
+!  ! Those checks *must* be done by calling subroutine.
+!  !--------------------------------------------------------
+!
+!  integer, intent(IN) :: fnumb
+!
+!  integer             :: i
+!  integer             :: buff_len
+!
+!  if (flag_pes_input_template.eqv..false.) then
+!    call error("write_pes_input_template: pes_input_template is not setted")
+!  end if
+!
+!  buff_len = size(pes_input_template,1)
+!
+!  do i=1, buff_len
+!    write(fnumb,'(A)') trim(pes_input_template(i))
+!  end do
+!
+!end subroutine write_pes_input_template
 
 !====================================================================
 ! Generic subroutines for get_pes_forces
@@ -1541,18 +1545,20 @@ subroutine write_gaussian_input(i,conv_threshold,fnumb_in,fname_in,fname_out,ig)
 
   integer                                        :: j
   integer                                        :: conv_val
+  integer                                        :: indx
   character(30)                                  :: tmp_str
   character(8)                                   :: i_str
-  character(8)                                   :: charge_str
   character(120)                                 :: err_msg
   integer                                        :: err_n
 
+  ! preliminary checks ------------------------------------
   if (present(ig)) then
     if (size(ig)/=geom_len) then
       call error("write_gaussian_input: wrong ig argument size")
     end if
   end if
 
+  ! set fname_in and fname_out ----------------------------
   write(i_str,'(I8)') i
   i_str     = adjustl(i_str)
   fname_in  = base_name//trim(i_str)//".com"
@@ -1568,68 +1574,21 @@ subroutine write_gaussian_input(i,conv_threshold,fnumb_in,fname_in,fname_out,ig)
   end if
 
   ! write stuffs ------------------------------------------
-  ! proc
-  if (flag_pes_proc) then
-    write(tmp_str,'(I4)') pes_proc
-    tmp_str = adjustl(tmp_str)
-    write(fnumb_in,'("%nproc=",A)') trim(tmp_str)
-  end if
+  ! #PESINPUTTEMPLATE 1
+  call write_pes_it(1)
 
-  ! mem
-  if (flag_pes_mem) then
-    write(tmp_str,'(I20)') pes_mem
-    tmp_str = adjustl(tmp_str)
-    write(fnumb_in,'("%mem=",A)',advance="NO") trim(tmp_str)
-    if (pes_mem_scale=="k") then
-      write(fnumb_in,'("KB")')
-    else if (pes_mem_scale=="m") then
-      write(fnumb_in,'("MB")')
-    else if (pes_mem_scale=="g") then
-      write(fnumb_in,'("GB")')
-    else
-      call error("write_gaussian_input: wrong scale """&
-        &//pes_mem_scale//"""")
-    end if
-  end if
-
-  ! computational details
-  write(fnumb_in,'(A,A,A,A)') "#p ",trim(method),"/",trim(basis_set)
-
+  ! write SCF threshold
   write(tmp_str,'(I30)') abs(nint(log10(conv_threshold)))
   tmp_str = adjustl(tmp_str)
   write(fnumb_in,'(A,A,A)') "#scf(conver=",trim(tmp_str),")"
 
-  if (flag_pesd_scfcycle) then
-    write(tmp_str,'(I30)') pesd_scfcycle
-    tmp_str = adjustl(tmp_str)
-    write(fnumb_in,'(A,A,A)') "#scf(maxcycle=",trim(tmp_str),")"
-  end if
-
-  if (flag_pesd_scfvshift) then
-    write(tmp_str,'(I30)') pesd_scfvshift
-    tmp_str = adjustl(tmp_str)
-    write(fnumb_in,'(A,A,A)') "#scf(vshift=",trim(tmp_str),")"
-  end if
-  
-  if (flag_pesd_intgrid) then
-    write(fnumb_in,'(A,A,A)') "#int=(",trim(adjustl(pesd_intgrid)),")"
-  end if
-
+  ! write forces
   write(fnumb_in,'(A)') "#force test"
 
-  if (flag_pesd_additional_cmd) then
-    write(fnumb_in,'(A)') trim(adjustl(pesd_additional_cmd))
-  end if
-
-  write(fnumb_in,*)
-
-  ! title
-  write(fnumb_in,'(A)') fname_in
-  write(fnumb_in,*)
+  ! #PESINPUTTEMPLATE 2
+  call write_pes_it(2)
 
   ! geometry
-  write(charge_str,'(I8)') geom_charge
-  write(fnumb_in,'(A,1X,I3)') trim(adjustl(charge_str)), geom_multip
   do j=1, geom_len
     if (mod(j,3)==1) then
       write(fnumb_in,'(A3,1X)',advance='no') element(j/3+1)
@@ -1647,16 +1606,10 @@ subroutine write_gaussian_input(i,conv_threshold,fnumb_in,fname_in,fname_out,ig)
   end do
   write(fnumb_in,*)
 
-  ! basis set
-  if (flag_user_basis_set) then
-    call write_user_basis_set(fnumb_in)
-    write(fnumb_in,*)
-  end if
-
-  ! pseudo potential
-  if (flag_user_pseudo_potential) then
-    call write_user_pseudo_potential(fnumb_in)
-    write(fnumb_in,*)
+  ! #PESINPUTTEMPLATE 3 (optional)
+  indx = get_pes_it_n(3)
+  if (indx/=0) then
+    call write_pes_it(3)
   end if
 
   ! close unit --------------------------------------------
@@ -1674,12 +1627,12 @@ subroutine exec_gaussian(fname_in,flag_conv)
   character(*), intent(IN)  :: fname_in
   logical,      intent(OUT) :: flag_conv
 
+  integer, parameter        :: consecutive_failures_lim = 100
+  integer, save             :: consecutive_failures     = 0
   character(140)            :: cmd
   integer                   :: exit_n
   integer                   :: cmd_n
-  !character(8)              :: exit_n_str
-
-  flag_conv = .true.
+  character(8)              :: i_str
 
   cmd = trim(pes_exec)//" "//fname_in(:len_trim(fname_in)-4)
   call execute_command_line(trim(cmd),&
@@ -1691,11 +1644,18 @@ subroutine exec_gaussian(fname_in,flag_conv)
   
   ! if gaussian does not converge, it returns an exit status /= 0
   if (exit_n/=0) then
+    consecutive_failures = consecutive_failures+1
+    if (consecutive_failures >= consecutive_failures_lim) then
+      write(i_str,'(I8)') consecutive_failures
+      i_str = adjustl(i_str)
+      call error("exec_gaussian: Gaussian has failed consecutively "//trim(i_str)//" times")
+    end if
+
     flag_conv = .false.
-    !write(exit_n_str,'(I8)') exit_n
-    !exit_n_str=adjustl(exit_n_str)
-    !call error("exec_gaussian: "//trim(pes_exec)//&
-    !  &" terminated with exit code: "//trim(exit_n_str))
+  else
+    consecutive_failures = 0
+
+    flag_conv = .true.
   end if
 
 end subroutine exec_gaussian
@@ -1836,42 +1796,6 @@ subroutine get_gaussian_output(i,fnumb_out,fname_out,pesf,pesg)
 end subroutine get_gaussian_output
 
 !====================================================================
-
-!subroutine clean_gaussian_file(fnumb_in,fname_in,fnumb_out,fname_out)
-!
-!  integer,      intent(IN) :: fnumb_in
-!  character(*), intent(IN) :: fname_in
-!  integer,      intent(IN) :: fnumb_out
-!  character(*), intent(IN) :: fname_out
-!
-!  character(120)           :: err_msg
-!  integer                  :: err_n
-!
-!  ! Delete input ------------------------------------------
-!  open(unit=fnumb_in,file=fname_in,status='OLD',action='READ',&
-!    &iostat=err_n,iomsg=err_msg,position='REWIND')
-!  if (err_n/=0) then
-!    call error("clean_gaussian_file: "//trim(err_msg))
-!  end if
-!  close(unit=fnumb_in,status='DELETE',iostat=err_n,iomsg=err_msg)
-!  if (err_n/=0) then
-!    call error("clean_gaussian_file: "//trim(err_msg))
-!  end if
-!
-!  ! Delete output -----------------------------------------
-!  open(unit=fnumb_out,file=fname_out,status='OLD',action='READ',&
-!    &iostat=err_n,iomsg=err_msg,position='REWIND')
-!  if (err_n/=0) then
-!    call error("clean_gaussian_file: "//trim(err_msg))
-!  end if
-!  close(unit=fnumb_out,status='DELETE',iostat=err_n,iomsg=err_msg)
-!  if (err_n/=0) then
-!    call error("clean_gaussian_file: "//trim(err_msg))
-!  end if
-!
-!end subroutine clean_gaussian_file
-
-!====================================================================
 ! Siesta Section
 !====================================================================
 
@@ -1890,6 +1814,7 @@ subroutine write_siesta_input(i,conv_threshold,fnumb_in,fname_in,fname_out,ig)
   integer                                        :: err_n
   character(120)                                 :: err_msg
 
+  ! set fname_in and fname_out ----------------------------
   write(i_str,'(I8)') i
   i_str     = adjustl(i_str)
   fname_in  = base_name//trim(i_str)//".fdf"
@@ -1904,46 +1829,10 @@ subroutine write_siesta_input(i,conv_threshold,fnumb_in,fname_in,fname_out,ig)
   end if
 
   ! write stuffs ------------------------------------------
-  ! title
-  write(fnumb_in,'("######################")')
-  write(fnumb_in,'("# ",A)') trim(fname_in)
-  write(fnumb_in,'("######################")')
-  write(fnumb_in,*)
-
-  ! neb generated input
-  write(fnumb_in,'("######################")')
-  write(fnumb_in,'("# neb generated input")')
-  write(fnumb_in,'("######################")')
-  write(fnumb_in,*)
-
-  ! label
-  write(fnumb_in,'("SystemName  ",A)') label
-  write(fnumb_in,'("SystemLabel ",A)') label
-  write(fnumb_in,*)
-
-  ! tolerance
-  write(fnumb_in,'("DM.Tolerance ",ES9.2)') conv_threshold
-  write(fnumb_in,*)
-
-  ! scf cycles
-  write(fnumb_in,'("MaxSCFIterations ",I8)') get_scfcycle()
-  write(fnumb_in,*)
-
-  ! charge
-  write(fnumb_in,'("NetCharge ",I8)') geom_charge
-  write(fnumb_in,*)
-
-  ! number of atoms
-  write(fnumb_in,'("NumberOfAtoms ",I8)') geom_len/3
-  write(fnumb_in,*)
-
-  ! write forces
-  write(fnumb_in,'("WriteForces true")')
-  write(fnumb_in,*)
+  ! #PESINPUTTEMPLATE 1
+  call write_pes_it(1)
 
   ! geometry
-  write(fnumb_in,'("AtomicCoordinatesFormat    Ang")')
-  write(fnumb_in,'("%block AtomicCoordinatesAndAtomicSpecies")')
   do j=1, geom_len
     if (present(ig)) then
       write(fnumb_in,'(1X,F13.6)',advance='no') ig(j)
@@ -1955,21 +1844,18 @@ subroutine write_siesta_input(i,conv_threshold,fnumb_in,fname_in,fname_out,ig)
       write(fnumb_in,'(1X,A3)') elabel(j/3)
     end if
   end do
-  write(fnumb_in,'("%endblock AtomicCoordinatesAndAtomicSpecies")')
+
+  ! #PESINPUTTEMPLATE 2
+  call write_pes_it(2)
+
+  ! write SCF threshold
+  write(fnumb_in,'("DM.Tolerance ",ES9.2)') conv_threshold
   write(fnumb_in,*)
 
-  ! input template
-  write(fnumb_in,'("######################")')
-  write(fnumb_in,'("# user input template")')
-  write(fnumb_in,'("######################")')
+  ! write forces
+  write(fnumb_in,'("WriteForces true")')
   write(fnumb_in,*)
 
-  if (.not.flag_pes_input_template) then
-    call error("write_siesta_input: input template not specified")
-  end if
-  call write_pes_input_template(fnumb_in)
-  write(fnumb_in,*)
-  
   ! close unit --------------------------------------------
   close(unit=fnumb_in,iostat=err_n,iomsg=err_msg)
   if (err_n/=0) then

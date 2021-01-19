@@ -3,7 +3,7 @@ FC       = gfortran
 MPICC    = mpicc.openmpi 
 MPIFC    = mpif90.openmpi
 FLAGS    = -g -cpp -O2 -Wall -Wunused -Wpedantic -Wno-maybe-uninitialized
-CFLAGS   = -std=c99  
+CFLAGS   = -std=c11  
 FFLAGS   = -std=f2008
 LPATH    = -L./lib
 LIBS     = -llbfgsb

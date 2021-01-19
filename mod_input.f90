@@ -90,8 +90,8 @@ subroutine read_input(file_in)
       call check_neb_mandatory_kw(got_pes_program,got_pes_exec,&
         &got_geometries_file,got_start,got_start_energy,got_end,&
         &got_end_energy,got_images)
-!      call check_gaussian_mandatory_kw()
-!      call check_siesta_mandatory_kw(got_elabel)
+      call check_gaussian_mandatory_kw()
+      call check_siesta_mandatory_kw(got_elabel)
       exit
     end if
 
@@ -603,7 +603,7 @@ subroutine check_gaussian_mandatory_kw()
   do i=1, 2
     indx = get_pes_it_n(i)
 
-    if (indx/=i) then
+    if (indx==0) then
       write(i_str,'(I8)') i
       i_str=adjustl(i_str)
       write(FILEOUT,*) "WAR "//my_name//": ""#PESINPUTTEMPLATE "//trim(i_str)//""" block not specified"
@@ -639,7 +639,7 @@ subroutine check_siesta_mandatory_kw(got_elabel)
   do i=1, 2
     indx = get_pes_it_n(i)
 
-    if (indx/=i) then
+    if (indx==0) then
       write(i_str,'(I8)') i
       i_str=adjustl(i_str)
       write(FILEOUT,*) "WAR "//my_name//": ""#PESINPUTTEMPLATE "//trim(i_str)//""" block not specified"

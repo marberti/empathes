@@ -439,13 +439,6 @@ subroutine read_input(file_in)
     end if
   end if
 
-!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-call write_pes_it(1)
-call write_pes_it(4)
-call write_pes_it(7)
-stop 33
-!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
 end subroutine read_input
 
 !====================================================================

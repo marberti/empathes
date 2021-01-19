@@ -1575,7 +1575,7 @@ subroutine write_gaussian_input(i,conv_threshold,fnumb_in,fname_in,fname_out,ig)
 
   ! write stuffs ------------------------------------------
   ! #PESINPUTTEMPLATE 1
-  call write_pes_it(1)
+  call write_pes_it(fnumb_in,1)
 
   ! write SCF threshold
   write(tmp_str,'(I30)') abs(nint(log10(conv_threshold)))
@@ -1584,9 +1584,10 @@ subroutine write_gaussian_input(i,conv_threshold,fnumb_in,fname_in,fname_out,ig)
 
   ! write forces
   write(fnumb_in,'(A)') "#force test"
+  write(fnumb_in,*)
 
   ! #PESINPUTTEMPLATE 2
-  call write_pes_it(2)
+  call write_pes_it(fnumb_in,2)
 
   ! geometry
   do j=1, geom_len
@@ -1609,7 +1610,7 @@ subroutine write_gaussian_input(i,conv_threshold,fnumb_in,fname_in,fname_out,ig)
   ! #PESINPUTTEMPLATE 3 (optional)
   indx = get_pes_it_n(3)
   if (indx/=0) then
-    call write_pes_it(3)
+    call write_pes_it(fnumb_in,3)
   end if
 
   ! close unit --------------------------------------------
@@ -1830,7 +1831,7 @@ subroutine write_siesta_input(i,conv_threshold,fnumb_in,fname_in,fname_out,ig)
 
   ! write stuffs ------------------------------------------
   ! #PESINPUTTEMPLATE 1
-  call write_pes_it(1)
+  call write_pes_it(fnumb_in,1)
 
   ! geometry
   do j=1, geom_len
@@ -1846,7 +1847,7 @@ subroutine write_siesta_input(i,conv_threshold,fnumb_in,fname_in,fname_out,ig)
   end do
 
   ! #PESINPUTTEMPLATE 2
-  call write_pes_it(2)
+  call write_pes_it(fnumb_in,2)
 
   ! write SCF threshold
   write(fnumb_in,'("DM.Tolerance ",ES9.2)') conv_threshold

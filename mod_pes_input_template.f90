@@ -59,7 +59,7 @@ subroutine read_pes_it(n_str,fnumb,ending)
   ! get number of lines in the block ----------------------
   lines = get_lines(fnumb,ending)
   if (lines==0) then
-    call error(my_name//"input template not specified")
+    call error(my_name//"block #PESINPUTTEMPLATE "//trim(adjustl(n_str))//" is empty")
   end if
 
   ! add another element in pes_it array -------------------
@@ -86,14 +86,16 @@ end subroutine read_pes_it
 
 !====================================================================
 
-subroutine write_pes_it(n)
+subroutine write_pes_it(fnumb,n)
 
+  integer,     intent(IN) :: fnumb
   integer,     intent(IN) :: n
 
   character(*), parameter :: my_name = "write_pes_it: "
   character(8)            :: i_str
   integer                 :: i
   integer                 :: indx
+  logical                 :: is_open
 
   ! preliminary checks ------------------------------------
   indx = get_pes_it_n(n)
@@ -104,8 +106,15 @@ subroutine write_pes_it(n)
       &trim(i_str)//" not specified")
   end if
 
+  inquire(unit=fnumb,opened=is_open)
+
+  if (is_open.eqv..false.) then
+    call error(my_name//"output file was not opened")
+  end if
+
+  ! write -------------------------------------------------
   do i=1, pes_it(indx)%lines
-    write(*,*) trim(pes_it(indx)%s(i))
+    write(fnumb,'(A)') trim(pes_it(indx)%s(i))
   end do
 
 end subroutine write_pes_it

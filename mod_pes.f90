@@ -1267,6 +1267,11 @@ subroutine write_gaussian_input(i,conv_threshold,fnumb_in,fname_in,fname_out,ig)
   tmp_str = adjustl(tmp_str)
   write(fnumb_in,'(A,A,A)') "#scf(conver=",trim(tmp_str),")"
 
+  ! write SCF cycles
+  write(tmp_str,'(I30)') get_scfcycle()
+  tmp_str = adjustl(tmp_str)
+  write(fnumb_in,'(A,A,A)') "#scf(maxcycle=",trim(tmp_str),")"
+
   ! write forces
   write(fnumb_in,'(A)') "#force test"
   write(fnumb_in,*)
@@ -1534,6 +1539,10 @@ subroutine write_siesta_input(i,conv_threshold,fnumb_in,fname_in,fname_out,ig)
 
   ! write SCF threshold
   write(fnumb_in,'("DM.Tolerance ",ES9.2)') conv_threshold
+  write(fnumb_in,*)
+
+  ! write SCF cycles
+  write(fnumb_in,'("MaxSCFIterations ",I8)') get_scfcycle()
   write(fnumb_in,*)
 
   ! write forces

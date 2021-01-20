@@ -64,7 +64,7 @@ subroutine read_pes_it(n_str,fnumb,ending)
 
   ! add another element in pes_it array -------------------
   call add_pes_it(n,lines)
-  
+
   ! rewind the file ---------------------------------------
   do i=1, lines
     backspace(unit=fnumb,iostat=err_n,iomsg=err_msg)

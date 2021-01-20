@@ -185,11 +185,6 @@ subroutine write_pes_info()
 
   write(FILEOUT,*) "**  Pes Info:"
   write(FILEOUT,'(5X,"pes_program : ",A)') trim(pes_program)
-  
-  if (pes_program=="gaussian") then
-    write(FILEOUT,'(5X,"method      : ",A)') trim(method)
-    write(FILEOUT,'(5X,"basis_set   : ",A)') trim(basis_set)
-  end if
 
 end subroutine write_pes_info
 

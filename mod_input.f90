@@ -251,22 +251,6 @@ subroutine read_input(file_in)
  
       call set_pes_mem(arg)
 
-    case ("#METHOD")
-      call get_field(cmd_str,arg,2,err_n,err_msg)
-      if (err_n/=0) then
-        call error("read_input: "//trim(err_msg))
-      end if
- 
-      call set_method(arg)
-
-    case ("#BASISSET")
-      call get_field(cmd_str,arg,2,err_n,err_msg)
-      if (err_n/=0) then
-        call error("read_input: "//trim(err_msg))
-      end if
- 
-      call set_basis_set(arg)
-
     case ("#AUTOROTATION")
       call set_rotation(.true.)
 
@@ -297,12 +281,6 @@ subroutine read_input(file_in)
       end if
 
       call set_spring_mode(arg)
-
-    case ("#USERBASISSET")
-      call read_user_basis_set(file_n,"#ENDUSERBASISSET")
-
-    case ("#USERPSEUDOPOTENTIAL")
-      call read_user_pseudo_potential(file_n,"#ENDUSERPSEUDOPOTENTIAL")
 
     case ("#SCFCYCLE")
       call get_field(cmd_str,arg,2,err_n,err_msg)
@@ -830,102 +808,6 @@ subroutine read_elabel(fnumb,ending,ri_elabel)
   end do
 
 end subroutine read_elabel
-
-!====================================================================
-
-subroutine read_user_basis_set(fnumb,ending)
-
-  ! Reads the #USERBASISSET block
-
-  integer,      intent(IN) :: fnumb
-  character(*), intent(IN) :: ending
-
-  integer                  :: i
-  integer                  :: lines
-  character(120)           :: str
-  integer                  :: err_n
-  character(120)           :: err_msg
-
-  lines = get_lines(fnumb,ending)
-  if (lines==0) then
-    call error("read_user_basis_set: basis set not specified")
-  end if
-  
-  if (.not.allocated(user_basis_set)) then
-    allocate(user_basis_set(lines),stat=err_n,errmsg=err_msg)
-    if (err_n/=0) then
-      call error("read_user_basis_set: "//trim(err_msg))
-    end if
-  else
-    call error("read_user_basis_set: user basis set already specified")
-  end if
-
-  do i=1, lines
-    backspace(unit=fnumb,iostat=err_n,iomsg=err_msg)
-    if (err_n/=0) then
-      call error("read_user_basis_set: "//trim(err_msg))
-    end if
-  end do
-
-  do i=1, lines
-    read(fnumb,'(A120)',iostat=err_n) str
-    if (err_n/=0) then
-      call error("read_user_basis_set: "//trim(err_msg))
-    end if
-    user_basis_set(i) = str
-  end do
-  
-  call set_user_basis_set(.true.)
-
-end subroutine read_user_basis_set
-
-!====================================================================
-
-subroutine read_user_pseudo_potential(fnumb,ending)
-
-  ! Reads the #USERPSEUDOPOTENTIAL block
-
-  integer,      intent(IN) :: fnumb
-  character(*), intent(IN) :: ending
-
-  integer                  :: i
-  integer                  :: lines
-  character(120)           :: str
-  integer                  :: err_n
-  character(120)           :: err_msg
-
-  lines = get_lines(fnumb,ending)
-  if (lines==0) then
-    call error("read_user_pseudo_potential: pseudo potential not specified")
-  end if
-  
-  if (.not.allocated(user_pseudo_potential)) then
-    allocate(user_pseudo_potential(lines),stat=err_n,errmsg=err_msg)
-    if (err_n/=0) then
-      call error("read_user_pseudo_potential: "//trim(err_msg))
-    end if
-  else
-    call error("read_user_pseudo_potential: user pseudo potential already specified")
-  end if
-
-  do i=1, lines
-    backspace(unit=fnumb,iostat=err_n,iomsg=err_msg)
-    if (err_n/=0) then
-      call error("read_user_pseudo_potential: "//trim(err_msg))
-    end if
-  end do
-
-  do i=1, lines
-    read(fnumb,'(A120)',iostat=err_n) str
-    if (err_n/=0) then
-      call error("read_user_pseudo_potential: "//trim(err_msg))
-    end if
-    user_pseudo_potential(i) = str
-  end do
-
-  call set_user_pseudo_potential(.true.)
-
-end subroutine read_user_pseudo_potential
 
 !====================================================================
 ! Subroutines that read geometries file

@@ -20,15 +20,9 @@ module pes
   save
   private
 
-  ! public variables --------------------------------------
-  public    :: pes_input_template,        &
-               user_basis_set,            &
-               user_pseudo_potential
   ! protected variables -----------------------------------
   public    :: pes_program,               &
                pes_exec,                  &
-               method,                    &
-               basis_set,                 &
                pes_forces,                &
                pes_energy,                &
                start_energy,              &
@@ -36,8 +30,6 @@ module pes
                flag_init_pes_module
   protected :: pes_program,               &
                pes_exec,                  &
-               method,                    &
-               basis_set,                 &
                pes_forces,                &
                pes_energy,                &
                start_energy,              &
@@ -51,21 +43,15 @@ module pes
                set_pes_exec,              &
                set_pes_proc,              &
                set_pes_mem,               &
-               set_pes_input_template,    &
-               set_method,                &
-               set_basis_set,             &
                compute_pes_forces,        &
                get_pes_forces,            &
                update_pes_energy,         &
                update_pes_forces,         &
-               set_user_basis_set,        &
-               set_user_pseudo_potential, &
                get_scfconv,               &
                get_scfcycle
 
   !--------------------------------------------------------
   character(*), parameter                   :: base_name                  = "neb"
-  character(*), parameter                   :: base_label                 = "lbl_"
   character(*), parameter                   :: base_dirname               = "dir_neb"
   character(*), parameter                   :: base_auxdirname            = "dir_aux"
   logical                                   :: flag_init_pes_module       = .false.
@@ -73,23 +59,13 @@ module pes
   logical                                   :: flag_pes_exec              = .false.
   logical                                   :: flag_pes_proc              = .false.
   logical                                   :: flag_pes_mem               = .false.
-  logical                                   :: flag_method                = .false.
-  logical                                   :: flag_basis_set             = .false.
-  logical                                   :: flag_user_basis_set        = .false.
-  logical                                   :: flag_user_pseudo_potential = .false.
-  logical                                   :: flag_pes_input_template    = .false.
   logical                                   :: flag_start_energy          = .false.
   logical                                   :: flag_end_energy            = .false.
   character(30)                             :: pes_program
-  character(30)                             :: method
-  character(30)                             :: basis_set
   character(120)                            :: pes_exec
   integer                                   :: pes_proc
   integer                                   :: pes_mem
   character                                 :: pes_mem_scale
-  character(120), allocatable, dimension(:) :: pes_input_template
-  character(120), allocatable, dimension(:) :: user_basis_set
-  character(120), allocatable, dimension(:) :: user_pseudo_potential
   real(DBL), allocatable, dimension(:)      :: pes_energy
   real(DBL), allocatable, dimension(:,:)    :: pes_forces
   real(DBL)                                 :: start_energy
@@ -287,100 +263,6 @@ end subroutine set_pes_mem
 
 !====================================================================
 
-subroutine set_method(str)
-
-  character(*), optional, intent(INOUT) :: str
-
-  character(30)                         :: deflt
-
-  if (.not.present(str)) then
-    str = ""
-  end if
-
-  if (flag_method) then
-    write(FILEOUT,*) "Old definition: #METHOD -> ", trim(method)
-  end if
-
-  deflt = "hf"
-  if (len_trim(str)==0) then
-    method = deflt
-  else
-    call tolower(str)
-    method = str
-  end if
-
-  if (flag_method) then
-    write(FILEOUT,*) "New definition: #METHOD -> ", trim(method)
-  end if
-
-  flag_method = .true.
-
-end subroutine set_method
-
-!====================================================================
-
-subroutine set_basis_set(str)
-
-  character(*), optional, intent(INOUT) :: str
-
-  character(30)                         :: deflt
-
-  if (.not.present(str)) then
-    str = ""
-  end if
-
-  if (flag_basis_set) then
-    write(FILEOUT,*) "Old definition: #BASISSET -> ", trim(basis_set)
-  end if
-
-  deflt = "sto-3g"
-  if (len_trim(str)==0) then
-    basis_set = deflt
-  else
-    call tolower(str)
-    basis_set = str
-  end if
-
-  if (flag_basis_set) then
-    write(FILEOUT,*) "New definition: #BASISSET -> ", trim(basis_set)
-  end if
-
-  flag_basis_set = .true.
-
-end subroutine set_basis_set
-
-!====================================================================
-
-subroutine set_user_basis_set(flag)
-
-  logical, intent(IN) :: flag
-
-  flag_user_basis_set = flag
-
-end subroutine set_user_basis_set
-
-!====================================================================
-
-subroutine set_user_pseudo_potential(flag)
-
-  logical, intent(IN) :: flag
-
-  flag_user_pseudo_potential = flag
-
-end subroutine set_user_pseudo_potential
-
-!====================================================================
-
-subroutine set_pes_input_template(flag)
-
-  logical, intent(IN) :: flag
-
-  flag_pes_input_template = flag
-
-end subroutine set_pes_input_template
-
-!====================================================================
-
 subroutine init_pes_module()
 
   !--------------------------------------------------------
@@ -429,13 +311,6 @@ subroutine init_pes_module()
   pes_energy            = 0.0_DBL
   pes_energy(0)         = start_energy
   pes_energy(image_n+1) = end_energy
-
-  if (flag_method.eqv..false.) then
-    call set_method()
-  end if
-  if (flag_basis_set.eqv..false.) then
-    call set_basis_set()
-  end if
 
   flag_init_pes_module = .true.
 
@@ -733,7 +608,6 @@ subroutine mmpi_init_pes_module()
 
   character(8)   :: istr
   integer        :: cmd
-  integer        :: sz
   character(30)  :: str30
   character(120) :: str120
   logical        :: flag
@@ -756,14 +630,6 @@ subroutine mmpi_init_pes_module()
     str120 = pes_exec
     call mpi_bcast(str120,len(str120),MPI_CHARACTER,0,MPI_COMM_WORLD,err_n)
 
-    ! bcast method
-    str30 = method
-    call mpi_bcast(str30,len(str30),MPI_CHARACTER,0,MPI_COMM_WORLD,err_n)
-
-    ! bcast basis_set
-    str30 = basis_set
-    call mpi_bcast(str30,len(str30),MPI_CHARACTER,0,MPI_COMM_WORLD,err_n)
-
     ! optional variables ----------------------------------
     ! bcast pes_proc
     flag = flag_pes_proc
@@ -781,36 +647,6 @@ subroutine mmpi_init_pes_module()
       write(str30,'(I29,A1)') pes_mem, pes_mem_scale
       str30 = adjustl(str30)
       call mpi_bcast(str30,len(str30),MPI_CHARACTER,0,MPI_COMM_WORLD,err_n)
-    end if
-
-    ! bcast user_basis_set
-    flag = flag_user_basis_set
-    call mpi_bcast(flag,1,MPI_LOGICAL,0,MPI_COMM_WORLD,err_n)
-    if (flag) then
-      sz = size(user_basis_set,1)
-      call mpi_bcast(sz,1,MPI_INTEGER,0,MPI_COMM_WORLD,err_n)
-      call mpi_bcast(user_basis_set,sz*len(user_basis_set),&
-        &MPI_CHARACTER,0,MPI_COMM_WORLD,err_n)
-    end if
-
-    ! bcast user_pseudo_potential
-    flag = flag_user_pseudo_potential
-    call mpi_bcast(flag,1,MPI_LOGICAL,0,MPI_COMM_WORLD,err_n)
-    if (flag) then
-      sz = size(user_pseudo_potential,1)
-      call mpi_bcast(sz,1,MPI_INTEGER,0,MPI_COMM_WORLD,err_n)
-      call mpi_bcast(user_pseudo_potential,sz*len(user_pseudo_potential),&
-        &MPI_CHARACTER,0,MPI_COMM_WORLD,err_n)
-    end if
-
-    ! bcast pes_input_template
-    flag = flag_pes_input_template
-    call mpi_bcast(flag,1,MPI_LOGICAL,0,MPI_COMM_WORLD,err_n)
-    if (flag) then
-      sz = size(pes_input_template,1)
-      call mpi_bcast(sz,1,MPI_INTEGER,0,MPI_COMM_WORLD,err_n)
-      call mpi_bcast(pes_input_template,sz*len(pes_input_template),&
-        &MPI_CHARACTER,0,MPI_COMM_WORLD,err_n)
     end if
 
     ! pes_data variables ----------------------------------
@@ -889,14 +725,6 @@ subroutine mmpi_init_pes_module()
     call mpi_bcast(str120,len(str120),MPI_CHARACTER,0,MPI_COMM_WORLD,err_n)
     call set_pes_exec(str120)
 
-    ! bcast method
-    call mpi_bcast(str30,len(str30),MPI_CHARACTER,0,MPI_COMM_WORLD,err_n)
-    call set_method(str30)
-
-    ! bcast basis_set
-    call mpi_bcast(str30,len(str30),MPI_CHARACTER,0,MPI_COMM_WORLD,err_n)
-    call set_basis_set(str30)
-
     ! optional variables ----------------------------------
     ! bcast pes_proc
     call mpi_bcast(flag,1,MPI_LOGICAL,0,MPI_COMM_WORLD,err_n)
@@ -910,60 +738,6 @@ subroutine mmpi_init_pes_module()
     if (flag) then
       call mpi_bcast(str30,len(str30),MPI_CHARACTER,0,MPI_COMM_WORLD,err_n)
       call set_pes_mem(str30)
-    end if
-
-    ! bcast user_basis_set
-    call mpi_bcast(flag,1,MPI_LOGICAL,0,MPI_COMM_WORLD,err_n)
-    if (flag) then
-      call mpi_bcast(sz,1,MPI_INTEGER,0,MPI_COMM_WORLD,err_n)
-      
-      allocate (user_basis_set(sz),stat=err_n,errmsg=err_msg)
-      if (err_n/=0) then
-        write(istr,'(I8)') proc_id
-        istr = adjustl(istr)
-        call error("mmpi_init_pes_module: process "//&
-          &trim(istr)//": "//trim(err_msg))
-      end if
-
-      call mpi_bcast(user_basis_set,sz*len(user_basis_set),&
-        &MPI_CHARACTER,0,MPI_COMM_WORLD,err_n)
-      call set_user_basis_set(flag)
-    end if
-
-    ! bcast user_pseudo_potential
-    call mpi_bcast(flag,1,MPI_LOGICAL,0,MPI_COMM_WORLD,err_n)
-    if (flag) then
-      call mpi_bcast(sz,1,MPI_INTEGER,0,MPI_COMM_WORLD,err_n)
-      
-      allocate (user_pseudo_potential(sz),stat=err_n,errmsg=err_msg)
-      if (err_n/=0) then
-        write(istr,'(I8)') proc_id
-        istr = adjustl(istr)
-        call error("mmpi_init_pes_module: process "//&
-          &trim(istr)//": "//trim(err_msg))
-      end if
-
-      call mpi_bcast(user_pseudo_potential,sz*len(user_pseudo_potential),&
-        &MPI_CHARACTER,0,MPI_COMM_WORLD,err_n)
-      call set_user_pseudo_potential(flag)
-    end if
-
-    ! bcast pes_input_template
-    call mpi_bcast(flag,1,MPI_LOGICAL,0,MPI_COMM_WORLD,err_n)
-    if (flag) then
-      call mpi_bcast(sz,1,MPI_INTEGER,0,MPI_COMM_WORLD,err_n)
-      
-      allocate (pes_input_template(sz),stat=err_n,errmsg=err_msg)
-      if (err_n/=0) then
-        write(istr,'(I8)') proc_id
-        istr = adjustl(istr)
-        call error("mmpi_init_pes_module: process "//&
-          &trim(istr)//": "//trim(err_msg))
-      end if
-
-      call mpi_bcast(pes_input_template,sz*len(pes_input_template),&
-        &MPI_CHARACTER,0,MPI_COMM_WORLD,err_n)
-      call set_pes_input_template(flag)
     end if
 
     ! pes_data variables ----------------------------------
@@ -1027,21 +801,11 @@ subroutine mmpi_init_pes_module()
 !    write(*,*) proc_id," flag  ",flag_pes_program
 !    write(*,*) proc_id," exec  ",trim(pes_exec)
 !    write(*,*) proc_id," flag  ",flag_pes_exec
-!    write(*,*) proc_id," methd ",trim(method)
-!    write(*,*) proc_id," flag  ",flag_method
-!    write(*,*) proc_id," basis ",trim(basis_set)
-!    write(*,*) proc_id," flag  ",flag_basis_set
 !    write(*,*) proc_id," pproc ",pes_proc
 !    write(*,*) proc_id," flag  ",flag_pes_proc
 !    write(*,*) proc_id," pmem  ",pes_mem
 !    write(*,*) proc_id," pmems ",pes_mem_scale
 !    write(*,*) proc_id," flag  ",flag_pes_mem
-!    write(*,*) proc_id," usrbs ",flag_user_basis_set
-!    if (flag_user_basis_set) call write_user_basis_set(STDOUT)
-!    write(*,*) proc_id," usrpp ",flag_user_pseudo_potential
-!    if (flag_user_pseudo_potential) call write_user_pseudo_potential(STDOUT)
-!    write(*,*) proc_id," psint ",flag_pes_input_template
-!    if (flag_pes_input_template) call write_pes_input_template(STDOUT)
 !    write(*,*) proc_id,"-------------------"
 !    write(*,*) proc_id," pesd_scfcycle       ",pesd_scfcycle
 !    write(*,*) proc_id," pesd_scfconv        ",pesd_scfconv
@@ -1268,85 +1032,6 @@ end subroutine mmpi_compute_pes_forces
 !====================================================================
 ! Private
 !====================================================================
-
-!subroutine write_user_basis_set(fnumb)
-!
-!  !--------------------------------------------------------
-!  ! Being a private subroutine,
-!  ! it assumes fnumb opened and user_basis_set allocated.
-!  ! Those checks *must* be done by calling subroutine.
-!  !--------------------------------------------------------
-!
-!  integer, intent(IN) :: fnumb
-!
-!  integer             :: i
-!  integer             :: buff_len
-!
-!  if (flag_user_basis_set.eqv..false.) then
-!    call error("write_user_basis_set: user_basis_set is not setted")
-!  end if
-!
-!  buff_len = size(user_basis_set,1)
-!
-!  do i=1, buff_len
-!    write(fnumb,'(A)') trim(user_basis_set(i))
-!  end do
-!
-!end subroutine write_user_basis_set
-
-!====================================================================
-
-!subroutine write_user_pseudo_potential(fnumb)
-!
-!  !--------------------------------------------------------
-!  ! Being a private subroutine,
-!  ! it assumes fnumb opened and user_pseudo_potential allocated.
-!  ! Those checks *must* be done by calling subroutine.
-!  !--------------------------------------------------------
-!
-!  integer, intent(IN) :: fnumb
-!
-!  integer             :: i
-!  integer             :: buff_len
-!
-!  if (flag_user_pseudo_potential.eqv..false.) then
-!    call error("write_user_pseudo_potential: user_pseudo_potential is not setted")
-!  end if
-!
-!  buff_len = size(user_pseudo_potential,1)
-!
-!  do i=1, buff_len
-!    write(fnumb,'(A)') trim(user_pseudo_potential(i))
-!  end do
-!
-!end subroutine write_user_pseudo_potential
-
-!====================================================================
-
-!subroutine write_pes_input_template(fnumb)
-!
-!  !--------------------------------------------------------
-!  ! Being a private subroutine,
-!  ! it assumes fnumb opened and pes_input_template allocated.
-!  ! Those checks *must* be done by calling subroutine.
-!  !--------------------------------------------------------
-!
-!  integer, intent(IN) :: fnumb
-!
-!  integer             :: i
-!  integer             :: buff_len
-!
-!  if (flag_pes_input_template.eqv..false.) then
-!    call error("write_pes_input_template: pes_input_template is not setted")
-!  end if
-!
-!  buff_len = size(pes_input_template,1)
-!
-!  do i=1, buff_len
-!    write(fnumb,'(A)') trim(pes_input_template(i))
-!  end do
-!
-!end subroutine write_pes_input_template
 
 !====================================================================
 ! Generic subroutines for get_pes_forces
@@ -1809,7 +1494,6 @@ subroutine write_siesta_input(i,conv_threshold,fnumb_in,fname_in,fname_out,ig)
   character(*),                      intent(OUT) :: fname_out
   real(DBL), dimension(:), optional, intent(IN)  :: ig
 
-  character(30)                                  :: label
   character(8)                                   :: i_str
   integer                                        :: j
   integer                                        :: err_n
@@ -1820,7 +1504,6 @@ subroutine write_siesta_input(i,conv_threshold,fnumb_in,fname_in,fname_out,ig)
   i_str     = adjustl(i_str)
   fname_in  = base_name//trim(i_str)//".fdf"
   fname_out = base_name//trim(i_str)//".out"
-  label     = base_label//base_name//trim(i_str)
 
   ! open unit ---------------------------------------------
   open(unit=fnumb_in,file=fname_in,status='NEW',action='WRITE',&

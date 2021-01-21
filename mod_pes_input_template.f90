@@ -1,5 +1,8 @@
 module pes_input_template
 
+#ifdef USE_MPI
+  use mpi
+#endif
   use utility
 
   implicit none
@@ -10,6 +13,9 @@ module pes_input_template
   public :: read_pes_it,  &
             write_pes_it, &
             get_pes_it_n
+#ifdef USE_MPI
+  public :: mmpi_sync_pes_it
+#endif
 
   !--------------------------------------------------------
   integer, parameter                                 :: IT_STR_LEN = 200
@@ -139,6 +145,64 @@ integer function get_pes_it_n(n)
   end do
 
 end function get_pes_it_n
+
+!====================================================================
+
+#ifdef USE_MPI
+subroutine mmpi_sync_pes_it()
+
+  integer        :: i
+  character(8)   :: i_str
+  integer        :: lines
+  integer        :: err_n
+  character(120) :: err_msg
+
+  ! both master and slaves are here -----------------------
+
+  ! pes_it_len bcast --------------------------------------
+  call mpi_bcast(pes_it_len,1,MPI_INTEGER,0,MPI_COMM_WORLD,err_n)
+
+  if (pes_it_len==0) then
+    return
+  end if
+
+  ! slaves allocate pes_it --------------------------------
+  if (proc_id/=0) then
+    allocate (pes_it(pes_it_len),stat=err_n,errmsg=err_msg)
+    if (err_n/=0) then
+      write(i_str,'(I8)') proc_id
+      i_str = adjustl(i_str)
+      call error("mmpi_init_pes_module: process "//&
+        &trim(i_str)//": "//trim(err_msg))
+    end if
+  end if
+
+  ! master sends pes_it data ------------------------------
+  do i=1, pes_it_len
+    ! bcast n and lines
+    call mpi_bcast(pes_it(i)%n,1,MPI_INTEGER,0,MPI_COMM_WORLD,err_n)
+    call mpi_bcast(pes_it(i)%lines,1,MPI_INTEGER,0,MPI_COMM_WORLD,err_n)
+
+    lines = pes_it(i)%lines
+
+    ! slaves allocate pes_it buffer strings
+    if (proc_id/=0) then
+      allocate (pes_it(i)%s(lines),stat=err_n,errmsg=err_msg)
+      if (err_n/=0) then
+        write(i_str,'(I8)') proc_id
+        i_str = adjustl(i_str)
+        call error("mmpi_init_pes_module: process "//&
+          &trim(i_str)//": "//trim(err_msg))
+      end if
+    end if
+
+    ! bcast buffer strings
+    call mpi_bcast(pes_it(i)%s,lines*IT_STR_LEN,&
+      &MPI_CHARACTER,0,MPI_COMM_WORLD,err_n)
+  end do
+
+end subroutine mmpi_sync_pes_it
+#endif
 
 !====================================================================
 ! Private

@@ -695,6 +695,9 @@ subroutine mmpi_init_pes_module()
       call mpi_bcast(str120,len(str120),MPI_CHARACTER,0,MPI_COMM_WORLD,err_n)
     end if
 
+    ! pes_input_template variables ------------------------
+    call mmpi_sync_pes_it()
+
 !DEBUG: used to check if message passing was successful
 !    call end_main_exec()
 
@@ -775,6 +778,9 @@ subroutine mmpi_init_pes_module()
       call mpi_bcast(str120,len(str120),MPI_CHARACTER,0,MPI_COMM_WORLD,err_n)
       call set_pesd_additional_cmd(str120)
     end if
+
+    ! pes_input_template variables ------------------------
+    call mmpi_sync_pes_it()
 
     ! allocation section ------------------------------------
     allocate(pes_energy(0:image_n+1),stat=err_n,errmsg=err_msg)

@@ -83,8 +83,11 @@ program neb
       call write_build_version()
       call end_main_exec() ! version argument
     case ("-t","--template")
-      call write_neb_input_template()
+      call write_neb_input_template(.false.)
       call end_main_exec() ! template argument
+    case ("--verbose-template")
+      call write_neb_input_template(.true.)
+      call end_main_exec() ! verbose template argument
     case default
       if (i==cmdargcount) then
         fname_in=arg
@@ -281,9 +284,11 @@ subroutine write_help(cmd_name)
   write(STDOUT,'(A)') "Usage: "//trim(cmd_name)//" [OPTION] FILE"
   write(STDOUT,'(A)')
   write(STDOUT,'(A)') "OPTION list"
-  write(STDOUT,'(A)') "  -h, --help                print this help and exit"
-  write(STDOUT,'(A)') "  -t, --template            write an input template and exit"
-  write(STDOUT,'(A)') "  -v, --version             print version info and exit"
+  write(STDOUT,'(A)') "  -h, --help                Print this help and exit."
+  write(STDOUT,'(A)') "  -t, --template            Write an input template and exit."
+  write(STDOUT,'(A)') "      --verbose-template    Write a commented input template and exit."
+  write(STDOUT,'(A)') "                              Very useful if this is your first time using the program."
+  write(STDOUT,'(A)') "  -v, --version             Print version info and exit."
 
 end subroutine write_help
 

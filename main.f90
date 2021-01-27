@@ -82,6 +82,9 @@ program neb
     case ("-v","--version")
       call write_build_version()
       call end_main_exec() ! version argument
+    case ("-t","--template")
+      call write_neb_input_template()
+      call end_main_exec() ! template argument
     case default
       if (i==cmdargcount) then
         fname_in=arg
@@ -275,7 +278,12 @@ subroutine write_help(cmd_name)
 
   character(*), intent(IN) :: cmd_name
   
-  write(STDOUT,*) "usage: ",trim(cmd_name)," [options] input_file"
+  write(STDOUT,'(A)') "Usage: "//trim(cmd_name)//" [OPTION] FILE"
+  write(STDOUT,'(A)')
+  write(STDOUT,'(A)') "OPTION list"
+  write(STDOUT,'(A)') "  -h, --help                print this help and exit"
+  write(STDOUT,'(A)') "  -t, --template            write an input template and exit"
+  write(STDOUT,'(A)') "  -v, --version             print version info and exit"
 
 end subroutine write_help
 
@@ -283,27 +291,27 @@ end subroutine write_help
 
 subroutine write_build_version()
   
-  integer :: ostream
+  integer :: out_stream
 #ifdef USE_MPI
   integer :: version
   integer :: subversion
 #endif
 
   if (flag_fileout) then
-    ostream=FILEOUT
+    out_stream=FILEOUT
   else
-    ostream=STDOUT
+    out_stream=STDOUT
   end if
 
   if (flag_mpi) then
-    write(ostream,'(5X,"Parallel Version")')
+    write(out_stream,'("Parallel Version")')
 #ifdef USE_MPI
     call mpi_get_version(version,subversion,err_n)
-    write(ostream,'(7X,"Distributed Memory via MPI (version ",&
+    write(out_stream,'("Distributed Memory via MPI (version ",&
       &I1,".",I1,")")') version, subversion
 #endif
   else
-    write(ostream,'(5X,"Serial Version")')
+    write(out_stream,'("Serial Version")')
   end if
 
 end subroutine write_build_version

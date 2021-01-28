@@ -452,6 +452,7 @@ subroutine write_neb_input_template(verbose)
   write(tmplt_fnumb,'(A)') "! Comment lines begin with the ""!"" character."
   write(tmplt_fnumb,'(A)') "! Comments are useful for obscuring keywords without having to delete them."
   write(tmplt_fnumb,'(A)')
+  write(tmplt_fnumb,'(A)') "! [Optional]"
   write(tmplt_fnumb,'(A)') "! If the #ONLYINTERPOLATION keyword is specified,"
   write(tmplt_fnumb,'(A)') "! the program will write only the files containing"
   write(tmplt_fnumb,'(A)') "! the interpolated geometries of the images,"
@@ -460,22 +461,40 @@ subroutine write_neb_input_template(verbose)
   write(tmplt_fnumb,'(A)') "!#ONLYINTERPOLATION"
   write(tmplt_fnumb,'(A)')
   if (verbose.eqv..true.) then
+  write(tmplt_fnumb,'(A)') "! [Optional]"
+  write(tmplt_fnumb,'(A)') "! The #OPTALGORITHM keyword, followed by a string,"
+  write(tmplt_fnumb,'(A)') "! specifies what algorithm to use for the elastic band optimization."
+  write(tmplt_fnumb,'(A)') "! Accepted arguments are ""sd"" (for the steepest descent),"
+  write(tmplt_fnumb,'(A)') "! and ""fire"" (default, for the fast inertial relaxation engine)."
+  end if
+  write(tmplt_fnumb,'(A)') "!#OPTALGORITHM fire"
+  write(tmplt_fnumb,'(A)')
+  if (verbose.eqv..true.) then
+  write(tmplt_fnumb,'(A)') "! [Optional]"
   write(tmplt_fnumb,'(A)') "! The #OPTCYCLE keyword, followed by an integer, specifies"
   write(tmplt_fnumb,'(A)') "! the max optimization cycles that will be performed."
   write(tmplt_fnumb,'(A)') "! A negative argument means infinite cycles until convergence."
+  write(tmplt_fnumb,'(A)') "! Despite this keyword is optional, you are strongly advised"
+  write(tmplt_fnumb,'(A)') "! to specify it, as optimization cycles number varies between"
+  write(tmplt_fnumb,'(A)') "! optimization algorithms and program versions."
   end if
   write(tmplt_fnumb,'(A)') "#OPTCYCLE -1"
   write(tmplt_fnumb,'(A)')
   if (verbose.eqv..true.) then
+  write(tmplt_fnumb,'(A)') "! [Optional]"
   write(tmplt_fnumb,'(A)') "! The #OPTCONV keyword, followed by a real, specifies"
   write(tmplt_fnumb,'(A)') "! the convergence threshold that must be achieved"
   write(tmplt_fnumb,'(A)') "! by all images for a successful execution."
+  write(tmplt_fnumb,'(A)') "! Despite this keyword is optional, you are strongly advised"
+  write(tmplt_fnumb,'(A)') "! to specify it, as optimization cycles number varies between"
+  write(tmplt_fnumb,'(A)') "! optimization algorithms and program versions."
   end if
   write(tmplt_fnumb,'(A)') "#OPTCONV 1.0E-3"
   write(tmplt_fnumb,'(A)')
   if (verbose.eqv..true.) then
+  write(tmplt_fnumb,'(A)') "! [Optional]"
   write(tmplt_fnumb,'(A)') "! If the #IDPP keyword is specified,"
-  write(tmplt_fnumb,'(A)') "! an interpolation technique called."
+  write(tmplt_fnumb,'(A)') "! an interpolation technique called"
   write(tmplt_fnumb,'(A)') "! Image Dependent Pair Potential will be performed."
   write(tmplt_fnumb,'(A)') "! This is way better than the standard linear interpolation,"
   write(tmplt_fnumb,'(A)') "! so we strongly advise to use it."
@@ -483,13 +502,25 @@ subroutine write_neb_input_template(verbose)
   write(tmplt_fnumb,'(A)') "#IDPP"
   write(tmplt_fnumb,'(A)')
   if (verbose.eqv..true.) then
-  write(tmplt_fnumb,'(A)') "! The integer following the #IMAGES keyword"
+  write(tmplt_fnumb,'(A)') "! [Optional]"
+  write(tmplt_fnumb,'(A)') "! The #IDPPCONV keyword, followed by a real, specifies"
+  write(tmplt_fnumb,'(A)') "! the convergence threshold that must be achieved"
+  write(tmplt_fnumb,'(A)') "! during the IDPP interpolation technique."
+  write(tmplt_fnumb,'(A)') "! Default value is 1.0E-3, and it can be increased"
+  write(tmplt_fnumb,'(A)') "! in case the interpolation does not converge the first time."
+  end if
+  write(tmplt_fnumb,'(A)') "!#IDPPCONV 1.0E-3"
+  write(tmplt_fnumb,'(A)')
+  if (verbose.eqv..true.) then
+  write(tmplt_fnumb,'(A)') "! [Mandatory], conflicts with #GEOMETRIESFILE"
+  write(tmplt_fnumb,'(A)') "! The #IMAGES keyword, followed by an integer,"
   write(tmplt_fnumb,'(A)') "! specifies the number of of images that will be interposed"
   write(tmplt_fnumb,'(A)') "! between the initial and final geometries."
   end if
   write(tmplt_fnumb,'(A)') "#IMAGES 6"
   write(tmplt_fnumb,'(A)')
   if (verbose.eqv..true.) then
+  write(tmplt_fnumb,'(A)') "! [Mandatory], conflicts with #START, #END, #IMAGES"
   write(tmplt_fnumb,'(A)') "! The #GEOMETRIESFILE keyword, followed by a string,"
   write(tmplt_fnumb,'(A)') "! specifies the name of the file from which the"
   write(tmplt_fnumb,'(A)') "! starting, ending and images geometries will be read."
@@ -500,6 +531,7 @@ subroutine write_neb_input_template(verbose)
   write(tmplt_fnumb,'(A)') "!#GEOMETRIESFILE geometries.input"
   write(tmplt_fnumb,'(A)')
   if (verbose.eqv..true.) then
+  write(tmplt_fnumb,'(A)') "! [Mandatory], conflicts with #GEOMETRIESFILE"
   write(tmplt_fnumb,'(A)') "! The #START keyword specifies the initial geometry of the NEB."
   write(tmplt_fnumb,'(A)') "! Geometry is specified similar to a xyz file."
   end if
@@ -511,6 +543,7 @@ subroutine write_neb_input_template(verbose)
   write(tmplt_fnumb,'(A)') "H    -1.805419   -0.945297    0.000000"
   write(tmplt_fnumb,'(A)')
   if (verbose.eqv..true.) then
+  write(tmplt_fnumb,'(A)') "! [Mandatory], conflicts with #GEOMETRIESFILE"
   write(tmplt_fnumb,'(A)') "! The #END keyword specifies the final geometry of the NEB."
   end if
   write(tmplt_fnumb,'(A)') "#END"
@@ -521,18 +554,21 @@ subroutine write_neb_input_template(verbose)
   write(tmplt_fnumb,'(A)') "H     0.296335   -0.928935    0.000000"
   write(tmplt_fnumb,'(A)')
   if (verbose.eqv..true.) then
+  write(tmplt_fnumb,'(A)') "! [Mandatory]"
   write(tmplt_fnumb,'(A)') "! The #STARTENERGY keyword, followed by a real,"
   write(tmplt_fnumb,'(A)') "! specifies the energy of the starting geometry"
   end if
   write(tmplt_fnumb,'(A)') "#STARTENERGY -114.507640701"
   write(tmplt_fnumb,'(A)')
   if (verbose.eqv..true.) then
+  write(tmplt_fnumb,'(A)') "! [Mandatory]"
   write(tmplt_fnumb,'(A)') "! The #ENDENERGY keyword, followed by a real,"
   write(tmplt_fnumb,'(A)') "! specifies the energy of the ending geometry"
   end if
   write(tmplt_fnumb,'(A)') "#ENDENERGY -114.423707780"
   write(tmplt_fnumb,'(A)')
   if (verbose.eqv..true.) then
+  write(tmplt_fnumb,'(A)') "! [Optional]"
   write(tmplt_fnumb,'(A)') "! The #CLIMBING keyword specifies that"
   write(tmplt_fnumb,'(A)') "! the Climbing Image NEB method will be applied."
   write(tmplt_fnumb,'(A)') "! The CI-NEB only affects the images that are energy maxima."
@@ -544,6 +580,7 @@ subroutine write_neb_input_template(verbose)
   write(tmplt_fnumb,'(A)') "#CLIMBING 1"
   write(tmplt_fnumb,'(A)')
   if (verbose.eqv..true.) then
+  write(tmplt_fnumb,'(A)') "! [Optional]"
   write(tmplt_fnumb,'(A)') "! If the #CLIMBINGQUICKSTART keyword is specified,"
   write(tmplt_fnumb,'(A)') "! the CI-NEB will be performed from the very first iteration."
   write(tmplt_fnumb,'(A)') "! It's good practice to declare this keyword"
@@ -552,12 +589,32 @@ subroutine write_neb_input_template(verbose)
   write(tmplt_fnumb,'(A)') "!#CLIMBINGQUICKSTART"
   write(tmplt_fnumb,'(A)')
   if (verbose.eqv..true.) then
+  write(tmplt_fnumb,'(A)') "! [Optional]"
+  write(tmplt_fnumb,'(A)') "! The #DESCENDING keyword enable the Descending Image NEB."
+  write(tmplt_fnumb,'(A)') "! This means that all the images that are energy minima"
+  write(tmplt_fnumb,'(A)') "! will be optimized with respect to the real forces acting on them."
+  write(tmplt_fnumb,'(A)') "! Contrary to #CLIMBING, #DESCENDING automatically affects all energy minima."
+  end if
+  write(tmplt_fnumb,'(A)') "!#DESCENDING"
+  write(tmplt_fnumb,'(A)')
+  if (verbose.eqv..true.) then
+  write(tmplt_fnumb,'(A)') "! [Optional]"
+  write(tmplt_fnumb,'(A)') "! If the #DESCENDINGQUICKSTART keyword is specified,"
+  write(tmplt_fnumb,'(A)') "! the Descending Image NEB will be performed from the very first iteration."
+  write(tmplt_fnumb,'(A)') "! It's good practice to declare this keyword"
+  write(tmplt_fnumb,'(A)') "! if you want to resume a NEB calculation that ended abnormally."
+  end if
+  write(tmplt_fnumb,'(A)') "!#DESCENDINGQUICKSTART"
+  write(tmplt_fnumb,'(A)')
+  if (verbose.eqv..true.) then
+  write(tmplt_fnumb,'(A)') "! [Mandatory]"
   write(tmplt_fnumb,'(A)') "! The #PESPROGRAM keyword specifies the kind of external program"
   write(tmplt_fnumb,'(A)') "! that will be used. Accepted arguments are: ""gaussian"" and ""siesta""."
   end if
   write(tmplt_fnumb,'(A)') "#PESPROGRAM gaussian"
   write(tmplt_fnumb,'(A)')
   if (verbose.eqv..true.) then
+  write(tmplt_fnumb,'(A)') "! [Mandatory]"
   write(tmplt_fnumb,'(A)') "! The #PESEXEC keyword specifies the executable name"
   write(tmplt_fnumb,'(A)') "! of the external program, as it is called on your system."
   write(tmplt_fnumb,'(A)') "! Please note that the executable must be present inside any directory"
@@ -567,6 +624,7 @@ subroutine write_neb_input_template(verbose)
   write(tmplt_fnumb,'(A)') "#PESEXEC g09"
   write(tmplt_fnumb,'(A)')
   if (verbose.eqv..true.) then
+  write(tmplt_fnumb,'(A)') "! [Optional]"
   write(tmplt_fnumb,'(A)') "! The #PESPROC keyword, followed by an integer,"
   write(tmplt_fnumb,'(A)') "! specifies the number of processors on which the external program will run."
   write(tmplt_fnumb,'(A)') "! This is needed with siesta, because it's run by mpirun."
@@ -574,6 +632,32 @@ subroutine write_neb_input_template(verbose)
   write(tmplt_fnumb,'(A)') "!#PESPROC 2"
   write(tmplt_fnumb,'(A)')
   if (verbose.eqv..true.) then
+  write(tmplt_fnumb,'(A)') "! [Optional]"
+  write(tmplt_fnumb,'(A)') "! The #AUXINPUTFILES is followed by an integer N, and then by N strings."
+  write(tmplt_fnumb,'(A)') "! This keyword specifies how many and which files are needed"
+  write(tmplt_fnumb,'(A)') "! by the external program (such as the siesta pseudo potentials)."
+  write(tmplt_fnumb,'(A)') "! These files must be in the master directory where the neb is run,"
+  write(tmplt_fnumb,'(A)') "! and are automatically copied to the working directories"
+  write(tmplt_fnumb,'(A)') "! from which the external program is run."
+  write(tmplt_fnumb,'(A)') "! The following is a shortcut to copy all the "".psml"" files at once:"
+  end if
+  write(tmplt_fnumb,'(A)') "!#AUXINPUTFILES 1 *.psml"
+  write(tmplt_fnumb,'(A)')
+  if (verbose.eqv..true.) then
+  write(tmplt_fnumb,'(A)') "! [Optional]"
+  write(tmplt_fnumb,'(A)') "! The #AUXOUTPUTFILES is followed by an integer N, and then by N strings."
+  write(tmplt_fnumb,'(A)') "! This keyword specifies how many and which files are useful"
+  write(tmplt_fnumb,'(A)') "! for speeding up the next calculation (such as the density matrix)."
+  write(tmplt_fnumb,'(A)') "! These files are saved at the end of the calculation,"
+  write(tmplt_fnumb,'(A)') "! and then copied back into the working directory of the next calculation."
+  write(tmplt_fnumb,'(A)') "! These files are image specific, so the files produced by image M"
+  write(tmplt_fnumb,'(A)') "! will be reused only for the subsequent calculations on image M."
+  write(tmplt_fnumb,'(A)') "! Here we are saying that we want to save all the files ending in "".DM"":"
+  end if
+  write(tmplt_fnumb,'(A)') "!#AUXOUTPUTFILES 1 *.DM"
+  write(tmplt_fnumb,'(A)')
+  if (verbose.eqv..true.) then
+  write(tmplt_fnumb,'(A)') "! [Mandatory], numbers of the blocks depend on the selected external program"
   write(tmplt_fnumb,'(A)') "! Any number of #PESINPUTTEMPLATE blocks can be specified in this file,"
   write(tmplt_fnumb,'(A)') "! to ensure flexibility in the case"
   write(tmplt_fnumb,'(A)') "! of implementation of additional external programs."
@@ -595,6 +679,16 @@ subroutine write_neb_input_template(verbose)
   write(tmplt_fnumb,'(A)') "#ENDPESINPUTTEMPLATE"
   write(tmplt_fnumb,'(A)')
   if (verbose.eqv..true.) then
+  write(tmplt_fnumb,'(A)') "! [Mandatory] if using siesta"
+  write(tmplt_fnumb,'(A)') "! The #LABEL and #ENDLABEL keywords delimit a block of labels."
+  write(tmplt_fnumb,'(A)') "! This block must contain exactly one label per atom of the geometry."
+  write(tmplt_fnumb,'(A)') "! Each label must be specified on its line."
+  end if
+  write(tmplt_fnumb,'(A)') "!#LABEL"
+  write(tmplt_fnumb,'(A)') "!#ENDLABEL"
+  write(tmplt_fnumb,'(A)')
+  if (verbose.eqv..true.) then
+  write(tmplt_fnumb,'(A)') "! [Optional]"
   write(tmplt_fnumb,'(A)') "! The #SCFCYCLE keyword, followed by an integer,"
   write(tmplt_fnumb,'(A)') "! specifies the maximum number of SCF cycles that will be performed."
   write(tmplt_fnumb,'(A)') "! It's the NEB program itself that writes this information"
@@ -607,6 +701,7 @@ subroutine write_neb_input_template(verbose)
   write(tmplt_fnumb,'(A)') "!#SCFCYCLE 400"
   write(tmplt_fnumb,'(A)')
   if (verbose.eqv..true.) then
+  write(tmplt_fnumb,'(A)') "! [Optional]"
   write(tmplt_fnumb,'(A)') "! The #SCFCONV keyword, followed by a real,"
   write(tmplt_fnumb,'(A)') "! specifies the SCF convergence threshold."
   write(tmplt_fnumb,'(A)') "! This information must be known by the NEB program"
@@ -616,6 +711,14 @@ subroutine write_neb_input_template(verbose)
   write(tmplt_fnumb,'(A)') "! in a #PESINPUTTEMPLATE  block under any circumstances."
   end if
   write(tmplt_fnumb,'(A)') "!#SCFCONV 1.0e-6"
+  write(tmplt_fnumb,'(A)')
+  if (verbose.eqv..true.) then
+  write(tmplt_fnumb,'(A)') "! [Optional]"
+  write(tmplt_fnumb,'(A)') "! The #SPRINGMODE, followed by a string, specifies"
+  write(tmplt_fnumb,'(A)') "! the type of spring force constants to be used to connect the images."
+  write(tmplt_fnumb,'(A)') "! Accepted arguments are ""static"" and ""dynamic"" (default)."
+  end if
+  write(tmplt_fnumb,'(A)') "!#SPRINGMODE dynamic"
 
   ! close template file -----------------------------------
   close(unit=tmplt_fnumb,iostat=err_n,iomsg=err_msg)

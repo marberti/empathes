@@ -363,8 +363,6 @@ subroutine read_input(file_in)
     ! keywords to be ignored
     case ("#ENDLABEL")
     case ("#ENDPESINPUTTEMPLATE")
-    case ("#ENDUSERBASISSET")
-    case ("#ENDUSERPSEUDOPOTENTIAL")
 
     case default
       call error("read_input: unknown keyword """//trim(keyword)//"""")

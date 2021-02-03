@@ -601,7 +601,7 @@ subroutine mmpi_init_images()
     end if
 
 !DEBUG: used to check if message passing was successful
-!    call end_main_exec()
+!    call end_main_exec() ! MPI Debug
 
   else                 ! slaves stuffs --------------------
     ! preliminary checks ----------------------------------

@@ -699,7 +699,7 @@ subroutine mmpi_init_pes_module()
     call mmpi_sync_pes_it()
 
 !DEBUG: used to check if message passing was successful
-!    call end_main_exec()
+!    call end_main_exec() ! MPI Debug
 
   else                 ! slaves stuffs --------------------
     ! preliminary checks ----------------------------------

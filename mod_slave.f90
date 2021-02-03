@@ -28,7 +28,7 @@ subroutine slave_on_idle()
 
     select case(cmd)
     case (MMPI_MSG_END_MAIN_EXEC)
-      call end_main_exec()
+      call end_main_exec() ! slave
     case (MMPI_MSG_INIT_IMAGES)
       call init_images()
     case (MMPI_MSG_INIT_PES_MODULE)

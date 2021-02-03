@@ -67,8 +67,7 @@ program neb
 
   if (cmdargcount<1) then
     call write_help(cmd_name)
-    write(STDOUT,*)
-    call error("main: input file not specified")
+    call end_main_exec() ! no arguments
   end if
 
   ! parse arguments ---------------------------------------

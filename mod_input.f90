@@ -46,7 +46,8 @@ subroutine read_input(file_in)
   logical                                 :: got_error
   integer                                 :: err_n
   character(120)                          :: err_msg
-  ! got flags exist only for mandatory keywords
+  ! got flags check that there are no duplicate keywords in the input file
+  ! some of them are also used to perform input consistency checks
   logical                                 :: got_start
   logical                                 :: got_end
   logical                                 :: got_charge
@@ -60,8 +61,26 @@ subroutine read_input(file_in)
   logical                                 :: got_geometries_file
   logical                                 :: got_elabel
   logical                                 :: got_idpp
+  logical                                 :: got_idpp_conv
   logical                                 :: got_scfcycle
   logical                                 :: got_scfconv
+  logical                                 :: got_pes_proc
+  logical                                 :: got_pes_mem
+  logical                                 :: got_autorotation
+  logical                                 :: got_aux_input_files
+  logical                                 :: got_aux_output_files
+  logical                                 :: got_climbing
+  logical                                 :: got_climbing_quick_start
+  logical                                 :: got_descending
+  logical                                 :: got_descending_quick_start
+  logical                                 :: got_only_interpolation
+  logical                                 :: got_opt_algo
+  logical                                 :: got_opt_cycle
+  logical                                 :: got_opt_conv
+  logical                                 :: got_springmode
+  logical                                 :: got_scfvshift
+  logical                                 :: got_intgrid
+  logical                                 :: got_additional_cmd
 
   open(unit=file_n,file=file_in,status='OLD',action='READ',&
     &iostat=err_n,iomsg=err_msg,position='REWIND')
@@ -69,24 +88,43 @@ subroutine read_input(file_in)
     call error("read_input: "//trim(err_msg))
   end if
 
-  got_error              = .false.
-  got_start              = .false.
-  got_end                = .false.
-  got_charge             = .false.
-  got_multip             = .false.
-  got_images             = .false.
-  got_start_energy       = .false.
-  got_end_energy         = .false.
-  got_new_pes_program    = .false.
-  got_pes_program        = .false.
-  got_pes_exec           = .false.
-  got_geometries_file    = .false.
-  got_elabel             = .false.
-  got_idpp               = .false.
-  got_scfcycle           = .false.
-  got_scfconv            = .false.
-  ri_start_atoms         = -1
-  ri_end_atoms           = -1
+  got_error                  = .false.
+  got_start                  = .false.
+  got_end                    = .false.
+  got_charge                 = .false.
+  got_multip                 = .false.
+  got_images                 = .false.
+  got_start_energy           = .false.
+  got_end_energy             = .false.
+  got_new_pes_program        = .false.
+  got_pes_program            = .false.
+  got_pes_exec               = .false.
+  got_geometries_file        = .false.
+  got_elabel                 = .false.
+  got_idpp                   = .false.
+  got_idpp_conv              = .false.
+  got_scfcycle               = .false.
+  got_scfconv                = .false.
+  got_pes_proc               = .false.
+  got_pes_mem                = .false.
+  got_autorotation           = .false.
+  got_aux_input_files        = .false.
+  got_aux_output_files       = .false.
+  got_climbing               = .false.
+  got_climbing_quick_start   = .false.
+  got_descending             = .false.
+  got_descending_quick_start = .false.
+  got_only_interpolation     = .false.
+  got_opt_algo               = .false.
+  got_opt_cycle              = .false.
+  got_opt_conv               = .false.
+  got_springmode             = .false.
+  got_scfvshift              = .false.
+  got_intgrid                = .false.
+  got_additional_cmd         = .false.
+
+  ri_start_atoms             = -1
+  ri_end_atoms               = -1
 
   do
     ! Get command -----------------------------------------
@@ -127,31 +165,48 @@ subroutine read_input(file_in)
     ! Parse the keyword
     select case (keyword)
     case ("#START")
+      if (got_start) then
+        call error("read_input: #START specified more than once")
+      end if
+
       if (got_geometries_file) then
         call error("read_input: #GEOMETRIESFILE and #START are mutually exclusive")
       end if
+
       !TODO read start geometry with read_xyz
       call get_geometry(file_n,keyword,ri_start_atoms,ri_start_elem)
       got_start = .true.
 
     case ("#END")
+      if (got_end) then
+        call error("read_input: #END specified more than once")
+      end if
+
       if (got_geometries_file) then
         call error("read_input: #GEOMETRIESFILE and #END are mutually exclusive")
       end if
+
       !TODO read end geometry with read_xyz
       call get_geometry(file_n,keyword,ri_end_atoms,ri_end_elem)
       got_end = .true.
 
     case ("#GEOMETRIESFILE")
+      if (got_geometries_file) then
+        call error("read_input: #GEOMETRIESFILE specified more than once")
+      end if
+
       if (got_start) then
         call error("read_input: #START and #GEOMETRIESFILE are mutually exclusive")
       end if
+
       if (got_end) then
         call error("read_input: #END and #GEOMETRIESFILE are mutually exclusive")
       end if
+
       if (got_images) then
         call error("read_input: #IMAGES and #GEOMETRIESFILE are mutually exclusive")
       end if
+
       call get_field(cmd_str,arg,2,err_n,err_msg)
       if (err_n/=0) then
         call error("read_input: "//trim(err_msg))
@@ -161,6 +216,10 @@ subroutine read_input(file_in)
       got_geometries_file = .true.
 
     case ("#CHARGE")
+      if (got_charge) then
+        call error("read_input: #CHARGE specified more than once")
+      end if
+
       call get_field(cmd_str,arg,2,err_n,err_msg)
       if (err_n/=0) then
         call error("read_input: "//trim(err_msg))
@@ -170,6 +229,10 @@ subroutine read_input(file_in)
       got_charge = .true.
 
     case ("#MULTIP")
+      if (got_multip) then
+        call error("read_input: #MULTIP specified more than once")
+      end if
+
       call get_field(cmd_str,arg,2,err_n,err_msg)
       if (err_n/=0) then
         call error("read_input: "//trim(err_msg))
@@ -179,9 +242,14 @@ subroutine read_input(file_in)
       got_multip = .true.
 
     case ("#IMAGES")
+      if (got_images) then
+        call error("read_input: #IMAGES specified more than once")
+      end if
+
       if (got_geometries_file) then
         call error("read_input: #GEOMETRIESFILE and #IMAGES are mutually exclusive")
       end if
+
       call get_field(cmd_str,arg,2,err_n,err_msg)
       if (err_n/=0) then
         call error("read_input: "//trim(err_msg))
@@ -191,6 +259,10 @@ subroutine read_input(file_in)
       got_images = .true.
 
     case ("#STARTENERGY")
+      if (got_start_energy) then
+        call error("read_input: #STARTENERGY specified more than once")
+      end if
+
       call get_field(cmd_str,arg,2,err_n,err_msg)
       if (err_n/=0) then
         call error("read_input: "//trim(err_msg))
@@ -200,6 +272,10 @@ subroutine read_input(file_in)
       got_start_energy = .true.
 
     case ("#ENDENERGY")
+      if (got_end_energy) then
+        call error("read_input: #ENDENERGY specified more than once")
+      end if
+
       call get_field(cmd_str,arg,2,err_n,err_msg)
       if (err_n/=0) then
         call error("read_input: "//trim(err_msg))
@@ -209,18 +285,34 @@ subroutine read_input(file_in)
       got_end_energy = .true.
 
     case ("#IDPP")
+      if (got_idpp) then
+        call error("read_input: #IDPP specified more than once")
+      end if
+
       call set_idpp(.true.)
       got_idpp = .true.
 
     case ("#LABEL")
+      if (got_elabel) then
+        call error("read_input: #LABEL specified more than once")
+      end if
+
       call read_elabel(file_n,"#ENDLABEL",ri_elabel)
       got_elabel = .true.
 
     case ("#NEWPESPROGRAM")
+      if (got_new_pes_program) then
+        call error("read_input: #NEWPESPROGRAM specified more than once")
+      end if
+
       call set_new_pes_program(.true.)
       got_new_pes_program = .true.
 
     case ("#PESPROGRAM")
+      if (got_pes_program) then
+        call error("read_input: #PESPROGRAM specified more than once")
+      end if
+
       call get_field(cmd_str,arg,2,err_n,err_msg)
       if (err_n/=0) then
         call error("read_input: "//trim(err_msg))
@@ -230,6 +322,10 @@ subroutine read_input(file_in)
       got_pes_program = .true.
 
     case ("#PESEXEC")
+      if (got_pes_exec) then
+        call error("read_input: #PESEXEC specified more than once")
+      end if
+
       call get_field(cmd_str,arg,2,err_n,err_msg)
       if (err_n/=0) then
         call error("read_input: "//trim(err_msg))
@@ -239,6 +335,8 @@ subroutine read_input(file_in)
       got_pes_exec = .true.
 
     case ("#PESINPUTTEMPLATE")
+      ! no duplicate checking because this keyword can be specified more than once
+
       call get_field(cmd_str,arg,2,err_n,err_msg)
       if (err_n/=0) then
         call error("read_input: "//trim(err_msg))
@@ -247,53 +345,102 @@ subroutine read_input(file_in)
       call read_pes_it(arg,file_n,"#ENDPESINPUTTEMPLATE")
 
     case ("#PESPROC")
+      if (got_pes_proc) then
+        call error("read_input: #PESPROC specified more than once")
+      end if
+
       call get_field(cmd_str,arg,2,err_n,err_msg)
       if (err_n/=0) then
         call error("read_input: "//trim(err_msg))
       end if
  
       call set_pes_proc(arg)
+      got_pes_proc = .true.
 
     case ("#PESMEM")
+      if (got_pes_mem) then
+        call error("read_input: #PESMEM specified more than once")
+      end if
+
       call get_field(cmd_str,arg,2,err_n,err_msg)
       if (err_n/=0) then
         call error("read_input: "//trim(err_msg))
       end if
  
       call set_pes_mem(arg)
+      got_pes_mem = .true.
 
     case ("#AUTOROTATION")
+      if (got_autorotation) then
+        call error("read_input: #AUTOROTATION specified more than once")
+      end if
+
       call set_rotation(.true.)
+      got_autorotation = .true.
 
     case ("#CLIMBING")
+      if (got_climbing) then
+        call error("read_input: #CLIMBING specified more than once")
+      end if
+
       call get_field(cmd_str,arg,2,err_n,err_msg)
       if (err_n/=0) then
         call error("read_input: "//trim(err_msg))
       end if
  
       call set_climbing_image(arg)
+      got_climbing = .true.
 
     case ("#CLIMBINGQUICKSTART")
+      if (got_climbing_quick_start) then
+        call error("read_input: #CLIMBINGQUICKSTART specified more than once")
+      end if
+
       call set_climbing_quick_start(.true.)
+      got_climbing_quick_start = .true.
 
     case ("#DESCENDING")
+      if (got_descending) then
+        call error("read_input: #DESCENDING specified more than once")
+      end if
+
       call set_descending_image(.true.)
+      got_descending = .true.
 
     case ("#DESCENDINGQUICKSTART")
+      if (got_descending_quick_start) then
+        call error("read_input: #DESCENDINGQUICKSTART specified more than once")
+      end if
+
       call set_descending_quick_start(.true.)
+      got_descending_quick_start = .true.
 
     case ("#ONLYINTERPOLATION")
+      if (got_only_interpolation) then
+        call error("read_input: #ONLYINTERPOLATION specified more than once")
+      end if
+
       call set_only_interpolation(.true.)
+      got_only_interpolation = .true.
 
     case ("#SPRINGMODE")
+      if (got_springmode) then
+        call error("read_input: #SPRINGMODE specified more than once")
+      end if
+
       call get_field(cmd_str,arg,2,err_n,err_msg)
       if (err_n/=0) then
         call error("read_input: "//trim(err_msg))
       end if
 
       call set_spring_mode(arg)
+      got_springmode=.true.
 
     case ("#SCFCYCLE")
+      if (got_scfcycle) then
+        call error("read_input: #SCFCYCLE specified more than once")
+      end if
+
       call get_field(cmd_str,arg,2,err_n,err_msg)
       if (err_n/=0) then
         call error("read_input: "//trim(err_msg))
@@ -303,6 +450,10 @@ subroutine read_input(file_in)
       got_scfcycle = .true.
 
     case ("#SCFCONV")
+      if (got_scfconv) then
+        call error("read_input: #SCFCONV specified more than once")
+      end if
+
       call get_field(cmd_str,arg,2,err_n,err_msg)
       if (err_n/=0) then
         call error("read_input: "//trim(err_msg))
@@ -312,66 +463,111 @@ subroutine read_input(file_in)
       got_scfconv = .true.
 
     case ("#SCFVSHIFT")
+      if (got_scfvshift) then
+        call error("read_input: #SCFVSHIFT specified more than once")
+      end if
+
       call get_field(cmd_str,arg,2,err_n,err_msg)
       if (err_n/=0) then
         call error("read_input: "//trim(err_msg))
       end if
  
       call set_pesd_scfvshift(arg)
+      got_scfvshift = .true.
 
     case ("#INTGRID")
+      if (got_intgrid) then
+        call error("read_input: #INTGRID specified more than once")
+      end if
+
       call get_field(cmd_str,arg,2,err_n,err_msg)
       if (err_n/=0) then
         call error("read_input: "//trim(err_msg))
       end if
  
       call set_pesd_intgrid(arg)
+      got_intgrid = .true.
 
     case ("#ADDITIONALCMD")
+      if (got_additional_cmd) then
+        call error("read_input: #ADDITIONALCMD specified more than once")
+      end if
+
       read(file_n,'(A200)',iostat=err_n) cmd_str
       if (err_n/=0) then
         call error("read_input: cannot read additional command")
       end if
 
       call set_pesd_additional_cmd(trim(cmd_str))
+      got_additional_cmd = .true.
 
     case ("#OPTALGORITHM")
+      if (got_opt_algo) then
+        call error("read_input: #OPTALGORITHM specified more than once")
+      end if
+
       call get_field(cmd_str,arg,2,err_n,err_msg)
       if (err_n/=0) then
         call error("read_input: "//trim(err_msg))
       end if
  
       call set_optmz_algo(arg)
+      got_opt_algo = .true.
 
     case ("#OPTCYCLE")
+      if (got_opt_cycle) then
+        call error("read_input: #OPTCYCLE specified more than once")
+      end if
+
       call get_field(cmd_str,arg,2,err_n,err_msg)
       if (err_n/=0) then
         call error("read_input: "//trim(err_msg))
       end if
 
       call set_optmz_nsteps(arg)
+      got_opt_cycle = .true.
  
     case ("#OPTCONV")
+      if (got_opt_conv) then
+        call error("read_input: #OPTCONV specified more than once")
+      end if
+
       call get_field(cmd_str,arg,2,err_n,err_msg)
       if (err_n/=0) then
         call error("read_input: "//trim(err_msg))
       end if
 
       call set_optmz_tol(arg)
+      got_opt_conv = .true.
  
     case ("#IDPPCONV")
+      if (got_idpp_conv) then
+        call error("read_input: #IDPPCONV specified more than once")
+      end if
+
       call get_field(cmd_str,arg,2,err_n,err_msg)
       if (err_n/=0) then
         call error("read_input: "//trim(err_msg))
       end if
 
       call set_idpp_tol(arg)
+      got_idpp_conv = .true.
 
     case ("#AUXINPUTFILES")
+      if (got_aux_input_files) then
+        call error("read_input: #AUXINPUTFILES specified more than once")
+      end if
+
       call set_pesd_auxiliary_files(PESD_AUX_INPUT_FILES,cmd_str)
+      got_aux_input_files = .true.
 
     case ("#AUXOUTPUTFILES")
+      if (got_aux_output_files) then
+        call error("read_input: #AUXOUTPUTFILES specified more than once")
+      end if
+
       call set_pesd_auxiliary_files(PESD_AUX_OUTPUT_FILES,cmd_str)
+      got_aux_output_files = .true.
 
     ! keywords to be ignored
     case ("#ENDLABEL")

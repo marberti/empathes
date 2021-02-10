@@ -27,16 +27,19 @@ module pes
                pes_energy,                &
                start_energy,              &
                end_energy,                &
-               flag_init_pes_module
+               flag_init_pes_module,      &
+               flag_new_pes_program
   protected :: pes_program,               &
                pes_exec,                  &
                pes_forces,                &
                pes_energy,                &
                start_energy,              &
                end_energy,                &
-               flag_init_pes_module
+               flag_init_pes_module,      &
+               flag_new_pes_program
   ! public procedures -------------------------------------
   public    :: init_pes_module,           &
+               set_new_pes_program,       &
                set_start_energy,          &
                set_end_energy,            &
                set_pes_program,           &
@@ -55,6 +58,7 @@ module pes
   character(*), parameter                   :: base_dirname               = "dir_neb"
   character(*), parameter                   :: base_auxdirname            = "dir_aux"
   logical                                   :: flag_init_pes_module       = .false.
+  logical                                   :: flag_new_pes_program       = .false.
   logical                                   :: flag_pes_program           = .false.
   logical                                   :: flag_pes_exec              = .false.
   logical                                   :: flag_pes_proc              = .false.
@@ -75,6 +79,24 @@ contains
 
 !====================================================================
 ! Public
+!====================================================================
+
+subroutine set_new_pes_program(flag)
+
+  logical,     intent(IN) :: flag
+
+  character(*), parameter :: my_name    = "set_new_pes_program"
+  logical, save           :: first_call = .true.
+
+  if (first_call.eqv..false.) then
+    call error(my_name//": flag already setted")
+  end if
+
+  flag_new_pes_program = flag
+  first_call = .false.
+
+end subroutine set_new_pes_program
+
 !====================================================================
 
 subroutine set_start_energy(str)
@@ -149,7 +171,9 @@ subroutine set_pes_program(str)
     flag_warning = .true.
 #endif
   case default
-    call error("set_pes_program: invalid option """//trim(pes_program)//"""")
+    if (flag_new_pes_program.eqv..false.) then
+      call error("set_pes_program: invalid option """//trim(pes_program)//"""")
+    end if
   end select
 
   ! final checks ------------------------------------------
@@ -559,8 +583,13 @@ real(DBL) function get_scfconv()
     else if (pes_program=="siesta") then
       get_scfconv = siesta_conv
     else
-      call error("get_scfconv: unknown program """//&
-        &trim(pes_program)//"""")
+      if (flag_new_pes_program) then
+        call error("get_scfconv: by specifying #NEWPESPROGRAM,"//&
+          &" the #SCFCONV keyword becomes mandatory")
+      else
+        call error("get_scfconv: unknown program """//&
+          &trim(pes_program)//"""")
+      end if
     end if
   end if
 
@@ -588,8 +617,13 @@ integer function get_scfcycle()
     else if (pes_program=="siesta") then
       get_scfcycle = siesta_cycle
     else
-      call error("get_scfcycle: unknown program """//&
-        &trim(pes_program)//"""")
+      if (flag_new_pes_program) then
+        call error("get_scfcycle: by specifying #NEWPESPROGRAM,"//&
+          &" the #SCFCYCLE keyword becomes mandatory")
+      else
+        call error("get_scfcycle: unknown program """//&
+          &trim(pes_program)//"""")
+      end if
     end if
   end if
 

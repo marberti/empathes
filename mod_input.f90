@@ -39,6 +39,7 @@ subroutine read_input(file_in)
   character(200)                          :: cmd_str
   character(50)                           :: keyword
   character(50)                           :: arg
+  character(50)                           :: ri_pes_program
   character(3), allocatable, dimension(:) :: ri_start_elem
   character(3), allocatable, dimension(:) :: ri_end_elem
   character(3), allocatable, dimension(:) :: ri_elabel
@@ -53,11 +54,14 @@ subroutine read_input(file_in)
   logical                                 :: got_images
   logical                                 :: got_start_energy
   logical                                 :: got_end_energy
+  logical                                 :: got_new_pes_program
   logical                                 :: got_pes_program
   logical                                 :: got_pes_exec
   logical                                 :: got_geometries_file
   logical                                 :: got_elabel
   logical                                 :: got_idpp
+  logical                                 :: got_scfcycle
+  logical                                 :: got_scfconv
 
   open(unit=file_n,file=file_in,status='OLD',action='READ',&
     &iostat=err_n,iomsg=err_msg,position='REWIND')
@@ -73,11 +77,14 @@ subroutine read_input(file_in)
   got_images             = .false.
   got_start_energy       = .false.
   got_end_energy         = .false.
+  got_new_pes_program    = .false.
   got_pes_program        = .false.
   got_pes_exec           = .false.
   got_geometries_file    = .false.
   got_elabel             = .false.
   got_idpp               = .false.
+  got_scfcycle           = .false.
+  got_scfconv            = .false.
   ri_start_atoms         = -1
   ri_end_atoms           = -1
 
@@ -87,9 +94,9 @@ subroutine read_input(file_in)
     
     ! Check end of file -----------------------------------
     if (err_n/=0) then
-      call check_neb_mandatory_kw(got_pes_program,got_pes_exec,&
-        &got_geometries_file,got_start,got_start_energy,got_end,&
-        &got_end_energy,got_images)
+      call check_neb_mandatory_kw(got_new_pes_program,got_pes_program,&
+        &got_pes_exec,got_geometries_file,got_start,got_start_energy,got_end,&
+        &got_end_energy,got_images,got_scfcycle,got_scfconv)
       call check_gaussian_mandatory_kw()
       call check_siesta_mandatory_kw(got_elabel)
       exit
@@ -209,13 +216,17 @@ subroutine read_input(file_in)
       call read_elabel(file_n,"#ENDLABEL",ri_elabel)
       got_elabel = .true.
 
+    case ("#NEWPESPROGRAM")
+      call set_new_pes_program(.true.)
+      got_new_pes_program = .true.
+
     case ("#PESPROGRAM")
       call get_field(cmd_str,arg,2,err_n,err_msg)
       if (err_n/=0) then
         call error("read_input: "//trim(err_msg))
       end if
  
-      call set_pes_program(arg)
+      ri_pes_program  = arg
       got_pes_program = .true.
 
     case ("#PESEXEC")
@@ -289,6 +300,7 @@ subroutine read_input(file_in)
       end if
  
       call set_pesd_scfcycle(arg)
+      got_scfcycle = .true.
 
     case ("#SCFCONV")
       call get_field(cmd_str,arg,2,err_n,err_msg)
@@ -297,6 +309,7 @@ subroutine read_input(file_in)
       end if
  
       call set_pesd_scfconv(arg)
+      got_scfconv = .true.
 
     case ("#SCFVSHIFT")
       call get_field(cmd_str,arg,2,err_n,err_msg)
@@ -380,6 +393,10 @@ subroutine read_input(file_in)
     &ri_end_atoms,ri_start_elem,ri_end_elem,ri_elabel)
 
   ! external variables initialization ---------------------
+  ! set pes program
+  call set_pes_program(ri_pes_program)
+
+  ! set elements
   if (.not.got_geometries_file) then
     call set_geom_len(ri_start_atoms)
     if (allocated(ri_start_elem)) then
@@ -388,6 +405,7 @@ subroutine read_input(file_in)
     end if
   end if
 
+  ! set elements' lables
   if (allocated(ri_elabel)) then
     call init_elabel(size(ri_elabel,1))
     call update_elabel(ri_elabel)
@@ -498,10 +516,11 @@ end subroutine get_geometry
 ! Subroutines that check
 !====================================================================
 
-subroutine check_neb_mandatory_kw(got_pes_program,got_pes_exec,&
-    &got_geometries_file,got_start,got_start_energy,got_end,&
-    &got_end_energy,got_images)
+subroutine check_neb_mandatory_kw(got_new_pes_program,got_pes_program,&
+    &got_pes_exec,got_geometries_file,got_start,got_start_energy,got_end,&
+    &got_end_energy,got_images,got_scfcycle,got_scfconv)
 
+  logical,     intent(IN) :: got_new_pes_program
   logical,     intent(IN) :: got_pes_program
   logical,     intent(IN) :: got_pes_exec
   logical,     intent(IN) :: got_geometries_file
@@ -510,6 +529,8 @@ subroutine check_neb_mandatory_kw(got_pes_program,got_pes_exec,&
   logical,     intent(IN) :: got_end
   logical,     intent(IN) :: got_end_energy
   logical,     intent(IN) :: got_images
+  logical,     intent(IN) :: got_scfcycle
+  logical,     intent(IN) :: got_scfconv
 
   character(*), parameter :: my_name   = "check_neb_mandatory_kw"
   logical                 :: got_error
@@ -517,40 +538,52 @@ subroutine check_neb_mandatory_kw(got_pes_program,got_pes_exec,&
   got_error = .false.
 
   if (.not.got_pes_program) then
-    write(FILEOUT,* )"WAR "//my_name//": #PESPROGRAM not specified"
+    write(FILEOUT,* )"WAR "//my_name//": #PESPROGRAM was not specified"
     got_error = .true.
   end if
 
   if (.not.got_pes_exec) then
-    write(FILEOUT,*) "WAR "//my_name//": #PESEXEC not specified"
+    write(FILEOUT,*) "WAR "//my_name//": #PESEXEC was not specified"
     got_error = .true.
   end if
 
   if (.not.got_geometries_file) then
     if (.not.got_start) then
-      write(FILEOUT,*) "WAR "//my_name//": #START not specified"
+      write(FILEOUT,*) "WAR "//my_name//": #START was not specified"
       got_error = .true.
     end if
 
     if (.not.got_end) then
-      write(FILEOUT,*) "WAR "//my_name//": #END not specified"
+      write(FILEOUT,*) "WAR "//my_name//": #END was not specified"
       got_error = .true.
     end if
 
     if (.not.got_images) then
-      write(FILEOUT,*) "WAR "//my_name//": #IMAGES not specified"
+      write(FILEOUT,*) "WAR "//my_name//": #IMAGES was not specified"
       got_error = .true.
     end if
   end if
 
   if (.not.got_start_energy) then
-    write(FILEOUT,*) "WAR "//my_name//": #STARTENERGY not specified"
+    write(FILEOUT,*) "WAR "//my_name//": #STARTENERGY was not specified"
     got_error = .true.
   end if
 
   if (.not.got_end_energy) then
-    write(FILEOUT,*) "WAR "//my_name//": #ENDENERGY not specified"
+    write(FILEOUT,*) "WAR "//my_name//": #ENDENERGY was not specified"
     got_error = .true.
+  end if
+
+  if (got_new_pes_program) then
+    if (.not.got_scfcycle) then
+      write(FILEOUT,*) "WAR "//my_name//": #NEWPESPROGRAM used but #SCFCYCLE was not specified"
+      got_error = .true.
+    end if
+
+    if (.not.got_scfconv) then
+      write(FILEOUT,*) "WAR "//my_name//": #NEWPESPROGRAM used but #SCFCONV was not specified"
+      got_error = .true.
+    end if
   end if
 
   if (got_error) then

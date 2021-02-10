@@ -614,6 +614,16 @@ subroutine write_neb_input_template(verbose)
   write(tmplt_fnumb,'(A)') "#PESPROGRAM gaussian"
   write(tmplt_fnumb,'(A)')
   if (verbose.eqv..true.) then
+  write(tmplt_fnumb,'(A)') "! [Optional]"
+  write(tmplt_fnumb,'(A)') "! The #NEWPESPROGRAM keyword must be used if the user specifies,"
+  write(tmplt_fnumb,'(A)') "! via the #PESPROGRAM keywork,"
+  write(tmplt_fnumb,'(A)') "! an external program other than those currently supported."
+  write(tmplt_fnumb,'(A)') "! Its function is to suppress some checks inside the code."
+  write(tmplt_fnumb,'(A)') "! Read the documentation to learn how to write an interface for a new program."
+  end if
+  write(tmplt_fnumb,'(A)') "!#NEWPESPROGRAM"
+  write(tmplt_fnumb,'(A)')
+  if (verbose.eqv..true.) then
   write(tmplt_fnumb,'(A)') "! [Mandatory]"
   write(tmplt_fnumb,'(A)') "! The #PESEXEC keyword specifies the executable name"
   write(tmplt_fnumb,'(A)') "! of the external program, as it is called on your system."
@@ -688,7 +698,7 @@ subroutine write_neb_input_template(verbose)
   write(tmplt_fnumb,'(A)') "!#ENDLABEL"
   write(tmplt_fnumb,'(A)')
   if (verbose.eqv..true.) then
-  write(tmplt_fnumb,'(A)') "! [Optional]"
+  write(tmplt_fnumb,'(A)') "! [Optional / Mandatory if #NEWPESPROGRAM is specified]"
   write(tmplt_fnumb,'(A)') "! The #SCFCYCLE keyword, followed by an integer,"
   write(tmplt_fnumb,'(A)') "! specifies the maximum number of SCF cycles that will be performed."
   write(tmplt_fnumb,'(A)') "! It's the NEB program itself that writes this information"
@@ -701,7 +711,7 @@ subroutine write_neb_input_template(verbose)
   write(tmplt_fnumb,'(A)') "!#SCFCYCLE 400"
   write(tmplt_fnumb,'(A)')
   if (verbose.eqv..true.) then
-  write(tmplt_fnumb,'(A)') "! [Optional]"
+  write(tmplt_fnumb,'(A)') "! [Optional / Mandatory if #NEWPESPROGRAM is specified]"
   write(tmplt_fnumb,'(A)') "! The #SCFCONV keyword, followed by a real,"
   write(tmplt_fnumb,'(A)') "! specifies the SCF convergence threshold."
   write(tmplt_fnumb,'(A)') "! This information must be known by the NEB program"
@@ -829,7 +839,11 @@ subroutine write_delta_e(n)
     de_au    = de_ev / AU_ON_EV
     de_kjmol = de_ev * EV_ON_J * 1.0E-3_DBL * AVOGADRO
   case default
-    call error("write_delta_e: invalid option """//trim(pes_program)//"""")
+    if (flag_new_pes_program) then
+      return
+    else
+      call error("write_delta_e: invalid option """//trim(pes_program)//"""")
+    end if
   end select
 
   write(FILEOUT,'(5X,"DE_rea  : ",F12.6," a.u. ; ",&

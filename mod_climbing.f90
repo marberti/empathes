@@ -61,6 +61,13 @@ subroutine set_climbing_image(str)
 
   character(*), intent(INOUT) :: str
 
+  character(*), parameter     :: my_name    = "set_climbing_image"
+  logical, save               :: first_call = .true.
+
+  if (first_call.eqv..false.) then
+    call error(my_name//": subroutine called more than once")
+  end if
+
   call tolower(str)
 
   if (isinteger(trim(adjustl(str)))) then
@@ -92,6 +99,8 @@ subroutine set_climbing_image(str)
     end select
   end if
 
+  first_call = .false.
+
 end subroutine set_climbing_image
 
 !====================================================================
@@ -100,7 +109,15 @@ subroutine set_climbing_quick_start(flag)
 
   logical, intent(IN) :: flag
 
+  character(*), parameter     :: my_name    = "set_climbing_quick_start"
+  logical, save               :: first_call = .true.
+
+  if (first_call.eqv..false.) then
+    call error(my_name//": subroutine called more than once")
+  end if
+
   flag_climbing_quick_start = flag
+  first_call = .false.
 
 end subroutine set_climbing_quick_start
 
@@ -110,7 +127,15 @@ subroutine set_descending_image(flag)
 
   logical, intent(IN) :: flag
 
+  character(*), parameter     :: my_name    = "set_descending_image"
+  logical, save               :: first_call = .true.
+
+  if (first_call.eqv..false.) then
+    call error(my_name//": subroutine called more than once")
+  end if
+
   flag_descending_image = flag
+  first_call = .false.
 
 end subroutine set_descending_image
 
@@ -120,7 +145,15 @@ subroutine set_descending_quick_start(flag)
 
   logical, intent(IN) :: flag
 
+  character(*), parameter     :: my_name    = "set_descending_quick_start"
+  logical, save               :: first_call = .true.
+
+  if (first_call.eqv..false.) then
+    call error(my_name//": subroutine called more than once")
+  end if
+
   flag_descending_quick_start = flag
+  first_call = .false.
 
 end subroutine set_descending_quick_start
 

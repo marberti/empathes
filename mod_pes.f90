@@ -1341,6 +1341,7 @@ subroutine write_gaussian_input(i,conv_threshold,fnumb_in,fname_in,fname_out,ig)
   indx = get_pes_it_n(3)
   if (indx/=0) then
     call write_pes_it(fnumb_in,3)
+    write(fnumb_in,*)
   end if
 
   ! close unit --------------------------------------------

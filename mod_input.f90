@@ -28,7 +28,7 @@ subroutine read_input(file_in)
 
   !--------------------------------------------------------
   ! Open file_in input file, read all the informations
-  ! and when it's done close the stream
+  ! and when it's done close the stream and set variables
   !--------------------------------------------------------
 
   character(*),                intent(IN) :: file_in
@@ -126,17 +126,13 @@ subroutine read_input(file_in)
   ri_start_atoms             = -1
   ri_end_atoms               = -1
 
+  ! read the input file -----------------------------------
   do
-    ! Get command -----------------------------------------
+    ! Get a string ----------------------------------------
     read(file_n,'(A200)',iostat=err_n) cmd_str
     
     ! Check end of file -----------------------------------
     if (err_n/=0) then
-      call check_neb_mandatory_kw(got_new_pes_program,got_pes_program,&
-        &got_pes_exec,got_geometries_file,got_start,got_start_energy,got_end,&
-        &got_end_energy,got_images,got_scfcycle,got_scfconv)
-      call check_gaussian_mandatory_kw()
-      call check_siesta_mandatory_kw(got_elabel)
       exit
     end if
 
@@ -584,7 +580,15 @@ subroutine read_input(file_in)
     call error("read_input: "//trim(err_msg))
   end if
 
-  ! consistency check -------------------------------------
+  ! input checks ------------------------------------------
+  call check_neb_mandatory_kw(got_new_pes_program,got_pes_program,&
+    &got_pes_exec,got_geometries_file,got_start,got_start_energy,got_end,&
+    &got_end_energy,got_images,got_scfcycle,got_scfconv)
+
+  call check_gaussian_mandatory_kw()
+
+  call check_siesta_mandatory_kw(got_elabel)
+
   call consistency_check(got_geometries_file,ri_start_atoms,&
     &ri_end_atoms,ri_start_elem,ri_end_elem,ri_elabel)
 
@@ -601,7 +605,7 @@ subroutine read_input(file_in)
     end if
   end if
 
-  ! set elements' lables
+  ! set elements' labels
   if (allocated(ri_elabel)) then
     call init_elabel(size(ri_elabel,1))
     call update_elabel(ri_elabel)

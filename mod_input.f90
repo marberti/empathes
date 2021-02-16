@@ -581,9 +581,9 @@ subroutine read_input(file_in)
   end if
 
   ! input checks ------------------------------------------
-  call check_neb_mandatory_kw(got_new_pes_program,got_pes_program,&
+  call check_neb_kw(got_new_pes_program,got_pes_program,&
     &got_pes_exec,got_geometries_file,got_start,got_start_energy,got_end,&
-    &got_end_energy,got_images,got_scfcycle,got_scfconv)
+    &got_end_energy,got_images,got_scfcycle,got_scfconv,got_idpp)
 
   call check_gaussian_mandatory_kw()
 
@@ -716,9 +716,9 @@ end subroutine get_geometry
 ! Subroutines that check
 !====================================================================
 
-subroutine check_neb_mandatory_kw(got_new_pes_program,got_pes_program,&
+subroutine check_neb_kw(got_new_pes_program,got_pes_program,&
     &got_pes_exec,got_geometries_file,got_start,got_start_energy,got_end,&
-    &got_end_energy,got_images,got_scfcycle,got_scfconv)
+    &got_end_energy,got_images,got_scfcycle,got_scfconv,got_idpp)
 
   logical,     intent(IN) :: got_new_pes_program
   logical,     intent(IN) :: got_pes_program
@@ -731,8 +731,9 @@ subroutine check_neb_mandatory_kw(got_new_pes_program,got_pes_program,&
   logical,     intent(IN) :: got_images
   logical,     intent(IN) :: got_scfcycle
   logical,     intent(IN) :: got_scfconv
+  logical,     intent(IN) :: got_idpp
 
-  character(*), parameter :: my_name   = "check_neb_mandatory_kw"
+  character(*), parameter :: my_name   = "check_neb_kw"
   logical                 :: got_error
 
   got_error = .false.
@@ -764,6 +765,13 @@ subroutine check_neb_mandatory_kw(got_new_pes_program,got_pes_program,&
     end if
   end if
 
+  if (got_geometries_file) then
+    if (got_idpp) then
+      write(FILEOUT,*) "WAR "//my_name//": #IDPP can not be used with #GEOMETRIESFILE"
+      got_error = .true.
+    end if
+  end if
+
   if (.not.got_start_energy) then
     write(FILEOUT,*) "WAR "//my_name//": #STARTENERGY was not specified"
     got_error = .true.
@@ -787,10 +795,10 @@ subroutine check_neb_mandatory_kw(got_new_pes_program,got_pes_program,&
   end if
 
   if (got_error) then
-    call error(my_name//": some necessary keywords were not specified")
+    call error(my_name//": found errors in the input file, please correct and try again")
   end if
 
-end subroutine check_neb_mandatory_kw
+end subroutine check_neb_kw
 
 !====================================================================
 

@@ -417,7 +417,7 @@ subroutine get_pes_forces(i,tid,conv_threshold,flag_conv,ig,pesf,pesg)
   real(DBL),               optional, intent(OUT)   :: pesf
   real(DBL), dimension(:), optional, intent(OUT)   :: pesg
 
-  ! @end_user: add a new "max_programname_threshold" parameter
+  ! @end_user: add a new real(DBL) "max_programname_threshold" parameter
   real(DBL), parameter                             :: max_gaussian_threshold = 1.0E-5
   real(DBL), parameter                             :: max_siesta_threshold   = 1.0E-1
   integer,   parameter                             :: base_fnumb_in          = 1000
@@ -465,7 +465,9 @@ subroutine get_pes_forces(i,tid,conv_threshold,flag_conv,ig,pesf,pesg)
   end if
 
   ! SCF Convergence threshold check -----------------------
-  ! @end_user: add "case ("programname")" with the proper check
+  ! @end_user: add a new "case ("programname")"
+  !            with the proper check for SCF convergence threshold
+  !            yust before "case default"
   select case (pes_program)
   case ("gaussian")
     if (nint(log10(conv_threshold))>nint(log10(max_gaussian_threshold))) then
@@ -491,7 +493,9 @@ subroutine get_pes_forces(i,tid,conv_threshold,flag_conv,ig,pesf,pesg)
   call set_dir(i,dirname,auxdirname)
   call f_chdir(dirname)
 
-  ! @end_user: add "case ("programname")" with the 3 new subroutines
+  ! @end_user: add a new "case ("programname")"
+  !            with the calls to the 3 new subroutines
+  !            yust before "case default"
   select case (pes_program)
   case ("gaussian")
     if (arg_presence(1)) then

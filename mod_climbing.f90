@@ -117,6 +117,7 @@ subroutine set_climbing_quick_start(flag)
   end if
 
   flag_climbing_quick_start = flag
+
   first_call = .false.
 
 end subroutine set_climbing_quick_start
@@ -135,6 +136,7 @@ subroutine set_descending_image(flag)
   end if
 
   flag_descending_image = flag
+
   first_call = .false.
 
 end subroutine set_descending_image
@@ -153,6 +155,7 @@ subroutine set_descending_quick_start(flag)
   end if
 
   flag_descending_quick_start = flag
+
   first_call = .false.
 
 end subroutine set_descending_quick_start

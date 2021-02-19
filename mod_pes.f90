@@ -89,10 +89,11 @@ subroutine set_new_pes_program(flag)
   logical, save           :: first_call = .true.
 
   if (first_call.eqv..false.) then
-    call error(my_name//": flag already setted")
+    call error(my_name//": subroutine called more than once")
   end if
 
   flag_new_pes_program = flag
+
   first_call = .false.
 
 end subroutine set_new_pes_program

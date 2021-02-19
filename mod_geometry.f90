@@ -160,7 +160,7 @@ subroutine set_image_n(str)
     call error("set_image_n: images number already setted")
   end if
 
-  ! reading value -----------------------------------------
+  ! read value --------------------------------------------
   if (isinteger(trim(adjustl(str)))) then
     read(str,*) image_n
   else
@@ -493,9 +493,18 @@ end subroutine set_geom_multip
 
 subroutine set_only_interpolation(flag)
 
-  logical, intent(IN) :: flag
+  logical,     intent(IN) :: flag
+
+  character(*), parameter :: my_name    = "set_only_interpolation"
+  logical, save           :: first_call = .true.
+
+  if (first_call.eqv..false.) then
+    call error(my_name//": subroutine called more than once")
+  end if
 
   flag_only_interpolation = flag
+
+  first_call = .false.
 
 end subroutine set_only_interpolation
 
@@ -503,9 +512,18 @@ end subroutine set_only_interpolation
 
 subroutine set_geometries_file(flag)
 
-  logical, intent(IN) :: flag
+  logical,     intent(IN) :: flag
+
+  character(*), parameter :: my_name    = "set_geometries_file"
+  logical, save           :: first_call = .true.
+
+  if (first_call.eqv..false.) then
+    call error(my_name//": subroutine called more than once")
+  end if
 
   flag_geometries_file = flag
+
+  first_call = .false.
 
 end subroutine set_geometries_file
 

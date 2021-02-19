@@ -1123,7 +1123,7 @@ subroutine read_geometries_file(gf_fname)
   end if
 
   do i=0, image_n+1
-    call read_xyz(gf_fnumb,elem_arr,geom_arr)
+    call read_xyz(gf_fnumb,elem_arr,geom_arr,.true.)
     
     if (i==0) then
       elem_dfl = elem_arr
@@ -1221,7 +1221,7 @@ end subroutine get_geometries_info
 
 !====================================================================
 
-subroutine read_xyz(fnumb,elem_arr,geom_arr)
+subroutine read_xyz(fnumb,elem_arr,geom_arr,comment_line)
 
   !--------------------------------------------------------
   ! Reads an xyz format geometry from fnumb.
@@ -1232,43 +1232,60 @@ subroutine read_xyz(fnumb,elem_arr,geom_arr)
   integer,                    intent(IN)  :: fnumb
   character(*), dimension(:), intent(OUT) :: elem_arr
   real(DBL),    dimension(:), intent(OUT) :: geom_arr
+  logical,                    intent(IN)  :: comment_line
 
+  character(*), parameter                 :: my_name = "read_xyz"
   logical                                 :: is_open
   integer                                 :: i
   integer                                 :: j
+  integer                                 :: i_start
   integer                                 :: atoms
+  character(8)                            :: i_str
   character(120)                          :: str
   character(40)                           :: field
   integer                                 :: err_n
   character(120)                          :: err_msg
 
+  ! preliminary checks ------------------------------------
   inquire(unit=fnumb,opened=is_open)
   if (.not.is_open) then
-    call error("read_xyz: input stream not opened")
+    call error(my_name//": input stream not opened")
   end if
 
+  ! read the number of atoms ------------------------------
   read(fnumb,'(A120)',iostat=err_n) str
   if (err_n/=0) then
-    call error("read_xyz: bad format in geometries file")
+    call error(my_name//": line with number of atoms not found")
   end if
   str = adjustl(str)
 
   if (.not.isinteger(trim(adjustl(str)))) then
-    call error("read_xyz: bad format in geometries file")
+    call error(my_name//": line with number of atoms is not an integer")
   end if
   read(str,*) atoms
 
+  ! check size of argument arrays -------------------------
   if (size(elem_arr,1)/=atoms) then
-    call error("read_xyz: wrong elem_arr argument size")
+    call error(my_name//": wrong size of elem_arr argument")
   end if
   if (size(geom_arr,1)/=(atoms*3)) then
-    call error("read_xyz: wrong geom_arr argument size")
+    call error(my_name//": wrong size of geom_arr argument")
   end if
 
-  do i=0, atoms
+  ! set loop starting point -------------------------------
+  if (comment_line.eqv..true.) then
+    i_start = 0
+  else
+    i_start = 1
+  end if
+
+  ! get the geometry --------------------------------------
+  do i=i_start, atoms
     read(fnumb,'(A120)',iostat=err_n) str
     if (err_n/=0) then
-      call error("read_xyz: bad format in geometries file")
+      write(i_str,'(I8)') i
+      i_str = adjustl(i_str)
+      call error(my_name//": missing line "//trim(i_str)//" while reading geometry")
     end if
     str = adjustl(str)
 
@@ -1278,7 +1295,7 @@ subroutine read_xyz(fnumb,elem_arr,geom_arr)
 
     call get_field(str,field,1,err_n,err_msg)
     if (err_n/=0) then
-      call error("read_xyz: "//trim(err_msg))
+      call error(my_name//": "//trim(err_msg))
     end if
 
     elem_arr(i) = field
@@ -1286,11 +1303,11 @@ subroutine read_xyz(fnumb,elem_arr,geom_arr)
     do j=2, 4
       call get_field(str,field,j,err_n,err_msg)
       if (err_n/=0) then
-        call error("read_xyz: "//trim(err_msg))
+        call error(my_name//": "//trim(err_msg))
       end if
 
       if (.not.isreal(trim(adjustl(field)))) then
-        call error("read_xyz: bad coordinates format in geometries file")
+        call error(my_name//": wrong formatting for coordinates, real numbers were expected")
       end if
       read(field,*) geom_arr(3*(i-1)+j-1)
     end do

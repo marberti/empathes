@@ -17,14 +17,17 @@ program neb
 
   implicit none
 
-  integer :: i, cmdargcount
+  integer       :: i
+  integer       :: cmdargcount
   integer(LONG) :: end_clock
-  character(80) :: arg, cmd_name, fname_in
-  logical :: fmain_converged
+  character(80) :: arg
+  character(80) :: cmd_name
+  character(80) :: fname_in
+  logical       :: fmain_converged
 #ifdef USE_MPI
-  integer :: priv_comm_sz
-  integer :: priv_proc_id
-  integer :: err_n
+  integer       :: priv_comm_sz
+  integer       :: priv_proc_id
+  integer       :: err_n
 #endif
 
   !==================================================================
@@ -89,7 +92,7 @@ program neb
       call end_main_exec() ! verbose template argument
     case default
       if (i==cmdargcount) then
-        fname_in=arg
+        fname_in = arg
       else
         call error("main: wrong argument: "//arg)
       end if

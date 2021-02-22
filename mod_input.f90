@@ -600,14 +600,14 @@ subroutine read_input(file_in)
   if (.not.got_geometries_file) then
     call set_geom_len(ri_start_atoms)
     if (allocated(ri_start_elem)) then
-      call allocate_element(ri_start_atoms)
+      call allocate_element()
       call update_element(ri_start_elem)
     end if
   end if
 
   ! set elements' labels
   if (allocated(ri_elabel)) then
-    call allocate_elabel(size(ri_elabel,1))
+    call allocate_elabel()
     call update_elabel(ri_elabel)
   end if
 
@@ -1098,7 +1098,7 @@ subroutine read_geometries_file(gf_fname)
   call set_geom_len(natom)
   call set_image_n(trim(str))
   call allocate_image_geom()
-  call allocate_element(geom_len/3)
+  call allocate_element()
 
   ! allocate stuffs ---------------------------------------
   allocate(elem_arr(geom_len/3),stat=err_n,errmsg=err_msg)

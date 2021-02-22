@@ -347,9 +347,7 @@ end subroutine update_image_geom
 
 !====================================================================
 
-subroutine allocate_element(n)
-
-  integer,     intent(IN) :: n
+subroutine allocate_element()
 
   character(*), parameter :: my_name = "allocate_element"
   integer                 :: err_n
@@ -360,12 +358,12 @@ subroutine allocate_element(n)
     call error(my_name//": element array already allocated")
   end if
 
-  if (n<=0) then
-    call error(my_name//": argument must be a non-zero positive integer")
+  if (flag_set_geom_len.eqv..false.) then
+    call error(my_name//": geom_len not setted")
   end if
 
   ! allocation section ------------------------------------
-  allocate(element(n),stat=err_n,errmsg=err_msg)
+  allocate(element(geom_len/3),stat=err_n,errmsg=err_msg)
   if (err_n/=0) then
     call error(my_name//": "//trim(err_msg))
   end if
@@ -396,9 +394,7 @@ end subroutine update_element
 
 !====================================================================
 
-subroutine allocate_elabel(n)
-
-  integer,     intent(IN) :: n
+subroutine allocate_elabel()
 
   character(*), parameter :: my_name = "allocate_elabel"
   integer                 :: err_n
@@ -409,12 +405,12 @@ subroutine allocate_elabel(n)
     call error(my_name//": elabel array already allocated")
   end if
 
-  if (n<=0) then
-    call error(my_name//": argument must be a non-zero positive integer")
+  if (flag_set_geom_len.eqv..false.) then
+    call error(my_name//": geom_len not setted")
   end if
 
   ! allocation section ------------------------------------
-  allocate(elabel(n),stat=err_n,errmsg=err_msg)
+  allocate(elabel(geom_len/3),stat=err_n,errmsg=err_msg)
   if (err_n/=0) then
     call error(my_name//": "//trim(err_msg))
   end if
@@ -663,7 +659,7 @@ subroutine mmpi_init_images()
 
     call mpi_bcast(e_buff,sz*len(e_buff),&
       &MPI_CHARACTER,0,MPI_COMM_WORLD,err_n)
-    call allocate_element(sz)
+    call allocate_element()
     call update_element(e_buff)
 
     ! optional variables ----------------------------------
@@ -686,7 +682,7 @@ subroutine mmpi_init_images()
     if (flag) then
       call mpi_bcast(e_buff,sz*len(e_buff),&
         &MPI_CHARACTER,0,MPI_COMM_WORLD,err_n)
-      call allocate_elabel(sz)
+      call allocate_elabel()
       call update_elabel(e_buff)
     end if
 

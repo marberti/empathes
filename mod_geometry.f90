@@ -46,7 +46,7 @@ module geometry
                update_image_geom,       &
                allocate_element,        &
                update_element,          &
-               init_elabel,             &
+               allocate_elabel,         &
                update_elabel,           &
                set_geom_charge,         &
                set_geom_multip,         &
@@ -59,7 +59,7 @@ module geometry
   logical                                   :: flag_geom_charge        = .false.
   logical                                   :: flag_geom_multip        = .false.
   logical                                   :: flag_element            = .false.
-  logical                                   :: flag_init_elabel        = .false.
+  logical                                   :: flag_elabel             = .false.
   logical                                   :: flag_set_image_n        = .false.
   logical                                   :: flag_set_geom_len       = .false.
   logical                                   :: flag_geometries_file    = .false.
@@ -396,31 +396,32 @@ end subroutine update_element
 
 !====================================================================
 
-subroutine init_elabel(n)
+subroutine allocate_elabel(n)
 
-  integer, intent(IN) :: n
+  integer,     intent(IN) :: n
 
-  integer             :: err_n
-  character(120)      :: err_msg
+  character(*), parameter :: my_name = "allocate_elabel"
+  integer                 :: err_n
+  character(120)          :: err_msg
 
   ! preliminary checks ------------------------------------
-  if (flag_init_elabel) then
-    call error("init_elabel: element label already initialized")
+  if (flag_elabel) then
+    call error(my_name//": elabel array already allocated")
   end if
 
   if (n<=0) then
-    call error("init_elabel: argument must be a non-zero positive integer")
+    call error(my_name//": argument must be a non-zero positive integer")
   end if
 
   ! allocation section ------------------------------------
   allocate(elabel(n),stat=err_n,errmsg=err_msg)
   if (err_n/=0) then
-    call error("init_elabel: "//trim(err_msg))
+    call error(my_name//": "//trim(err_msg))
   end if
 
-  flag_init_elabel = .true.
+  flag_elabel = .true.
 
-end subroutine init_elabel
+end subroutine allocate_elabel
 
 !====================================================================
 
@@ -609,7 +610,7 @@ subroutine mmpi_init_images()
     end if
 
     ! bcast elabel
-    flag = flag_init_elabel
+    flag = flag_elabel
     call mpi_bcast(flag,1,MPI_LOGICAL,0,MPI_COMM_WORLD,err_n)
     if (flag) then
       e_buff = elabel
@@ -685,7 +686,7 @@ subroutine mmpi_init_images()
     if (flag) then
       call mpi_bcast(e_buff,sz*len(e_buff),&
         &MPI_CHARACTER,0,MPI_COMM_WORLD,err_n)
-      call init_elabel(sz)
+      call allocate_elabel(sz)
       call update_elabel(e_buff)
     end if
 
@@ -710,7 +711,7 @@ subroutine mmpi_init_images()
 !    write(*,*) proc_id,"geom_multip ",geom_multip
 !    write(*,*) proc_id,"element"
 !    write(*,*) element
-!    if (flag_init_elabel) then
+!    if (flag_elabel) then
 !      write(*,*) proc_id,"elabel"
 !      write(*,*) elabel
 !    end if

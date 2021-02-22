@@ -607,7 +607,7 @@ subroutine read_input(file_in)
 
   ! set elements' labels
   if (allocated(ri_elabel)) then
-    call init_elabel(size(ri_elabel,1))
+    call allocate_elabel(size(ri_elabel,1))
     call update_elabel(ri_elabel)
   end if
 

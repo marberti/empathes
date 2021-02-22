@@ -208,7 +208,7 @@ subroutine read_input(file_in)
         call error("read_input: "//trim(err_msg))
       end if
  
-      call read_geometries_file(trim(arg))
+      call read_geometries_from_file(trim(arg))
       got_geometries_file = .true.
 
     case ("#CHARGE")
@@ -1052,7 +1052,7 @@ end subroutine read_elabel
 ! Subroutines that read geometries file
 !====================================================================
 
-subroutine read_geometries_file(gf_fname)
+subroutine read_geometries_from_file(gf_fname)
 
   !--------------------------------------------------------
   ! Reads geometries from gf_fname and
@@ -1062,6 +1062,7 @@ subroutine read_geometries_file(gf_fname)
 
   character(*),                intent(IN) :: gf_fname
 
+  character(*), parameter                 :: my_name  = "read_geometries_from_file"
   integer, parameter                      :: gf_fnumb = 101
   integer                                 :: i
   integer                                 :: j
@@ -1078,19 +1079,18 @@ subroutine read_geometries_file(gf_fname)
   open(unit=gf_fnumb,file=gf_fname,status='OLD',action='READ',&
     &iostat=err_n,iomsg=err_msg,position='REWIND')
   if (err_n/=0) then
-    call error("read_geometries_file: "//trim(err_msg))
+    call error(my_name//": "//trim(err_msg))
   end if
 
   ! get the info ------------------------------------------
   call get_geometries_info(gf_fnumb,ngeom,natom)
 
   if (ngeom<=2) then
-    call error("read_geometries_file: "//trim(gf_fname)//&
-      &" must contain 3 or more geometries")
+    call error(my_name//": "//trim(gf_fname)//" must contain 3 or more geometries")
   end if
 
   if (natom<=0) then
-    call error("read_geometries_file: bad format in geometries file")
+    call error(my_name//": bad format in geometries file")
   end if
 
   write(str,'(I8)') ngeom-2
@@ -1103,23 +1103,23 @@ subroutine read_geometries_file(gf_fname)
   ! allocate stuffs ---------------------------------------
   allocate(elem_arr(geom_len/3),stat=err_n,errmsg=err_msg)
   if (err_n/=0) then
-    call error("read_geometries_file: "//trim(err_msg))
+    call error(my_name//": "//trim(err_msg))
   end if
 
   allocate(elem_dfl(geom_len/3),stat=err_n,errmsg=err_msg)
   if (err_n/=0) then
-    call error("read_geometries_file: "//trim(err_msg))
+    call error(my_name//": "//trim(err_msg))
   end if
 
   allocate(geom_arr(geom_len),stat=err_n,errmsg=err_msg)
   if (err_n/=0) then
-    call error("read_geometries_file: "//trim(err_msg))
+    call error(my_name//": "//trim(err_msg))
   end if
 
   ! read all the geometries -------------------------------
   rewind(unit=gf_fnumb,iostat=err_n,iomsg=err_msg)
   if (err_n/=0) then
-    call error("read_geometries_file: "//trim(err_msg))
+    call error(my_name//": "//trim(err_msg))
   end if
 
   do i=0, image_n+1
@@ -1131,7 +1131,7 @@ subroutine read_geometries_file(gf_fname)
     else
       do j=1, size(elem_arr,1)
         if (elem_dfl(j)/=elem_arr(j)) then
-          call error("read_geometries_file: input geometries are inconsistent")
+          call error(my_name//": input geometries are inconsistent")
         end if
       end do
     end if
@@ -1142,28 +1142,28 @@ subroutine read_geometries_file(gf_fname)
   ! deallocate stuffs -------------------------------------
   deallocate(elem_arr,stat=err_n,errmsg=err_msg)
   if (err_n/=0) then
-    call error("read_geometries_file: "//trim(err_msg))
+    call error(my_name//": "//trim(err_msg))
   end if
 
   deallocate(elem_dfl,stat=err_n,errmsg=err_msg)
   if (err_n/=0) then
-    call error("read_geometries_file: "//trim(err_msg))
+    call error(my_name//": "//trim(err_msg))
   end if
 
   deallocate(geom_arr,stat=err_n,errmsg=err_msg)
   if (err_n/=0) then
-    call error("read_geometries_file: "//trim(err_msg))
+    call error(my_name//": "//trim(err_msg))
   end if
 
   ! close unit --------------------------------------------
   close(unit=gf_fnumb,iostat=err_n,iomsg=err_msg)
   if (err_n/=0) then
-    call error("read_input: "//trim(err_msg))
+    call error(my_name//": "//trim(err_msg))
   end if
 
   call set_geometries_file(.true.)
 
-end subroutine read_geometries_file
+end subroutine read_geometries_from_file
 
 !====================================================================
 

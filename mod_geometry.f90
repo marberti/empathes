@@ -87,6 +87,12 @@ subroutine allocate_geom(geom,len)
   integer                  :: err_n
   character(120)           :: err_msg
 
+  ! preliminary checks ------------------------------------
+  if (len<=0) then
+    call error("allocate_geom: argument ""len"" must be a non-zero positive integer")
+  end if
+
+  ! allocation section ------------------------------------
   if (geom=="#START") then
     allocate(start_geom(len),stat=err_n,errmsg=err_msg)
   else if (geom=="#END") then
@@ -135,6 +141,7 @@ subroutine set_geom_len(atoms)
 
   integer, intent(IN) :: atoms
 
+  ! preliminary checks ------------------------------------
   if (flag_set_geom_len) then
     call error("set_geom_len: geometry length already setted")
   end if
@@ -143,6 +150,7 @@ subroutine set_geom_len(atoms)
     call error("set_geom_len: argument must be a non-zero positive integer")
   end if
 
+  ! set value ---------------------------------------------
   geom_len = 3*atoms
 
   flag_set_geom_len = .true.

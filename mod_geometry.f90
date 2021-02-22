@@ -44,7 +44,7 @@ module geometry
                init_images,             &
                update_images,           &
                update_image_geom,       &
-               init_element,            &
+               allocate_element,        &
                update_element,          &
                init_elabel,             &
                update_elabel,           &
@@ -58,7 +58,7 @@ module geometry
   logical                                   :: flag_only_interpolation = .false.
   logical                                   :: flag_geom_charge        = .false.
   logical                                   :: flag_geom_multip        = .false.
-  logical                                   :: flag_init_element       = .false.
+  logical                                   :: flag_element            = .false.
   logical                                   :: flag_init_elabel        = .false.
   logical                                   :: flag_set_image_n        = .false.
   logical                                   :: flag_set_geom_len       = .false.
@@ -347,31 +347,32 @@ end subroutine update_image_geom
 
 !====================================================================
 
-subroutine init_element(n)
+subroutine allocate_element(n)
 
-  integer, intent(IN) :: n
+  integer,     intent(IN) :: n
 
-  integer             :: err_n
-  character(120)      :: err_msg
+  character(*), parameter :: my_name = "allocate_element"
+  integer                 :: err_n
+  character(120)          :: err_msg
 
   ! preliminary checks ------------------------------------
-  if (flag_init_element) then
-    call error("init_element: element already initialized")
+  if (flag_element) then
+    call error(my_name//": element array already allocated")
   end if
 
   if (n<=0) then
-    call error("init_element: argument must be a non-zero positive integer")
+    call error(my_name//": argument must be a non-zero positive integer")
   end if
 
   ! allocation section ------------------------------------
   allocate(element(n),stat=err_n,errmsg=err_msg)
   if (err_n/=0) then
-    call error("init_element: "//trim(err_msg))
+    call error(my_name//": "//trim(err_msg))
   end if
 
-  flag_init_element = .true.
+  flag_element = .true.
 
-end subroutine init_element
+end subroutine allocate_element
 
 !====================================================================
 
@@ -661,7 +662,7 @@ subroutine mmpi_init_images()
 
     call mpi_bcast(e_buff,sz*len(e_buff),&
       &MPI_CHARACTER,0,MPI_COMM_WORLD,err_n)
-    call init_element(sz)
+    call allocate_element(sz)
     call update_element(e_buff)
 
     ! optional variables ----------------------------------

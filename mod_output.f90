@@ -846,9 +846,9 @@ subroutine write_delta_e(n)
     end if
   end select
 
-  write(FILEOUT,'(5X,"DE_rea  : ",F12.6," a.u. ; ",&
+  write(FILEOUT,'(5X,"Energy barrier, direct reaction  : ",F12.6," a.u. ; ",&
     &F12.1," kJ/mol ; ",F12.2," eV")') de_au(1), de_kjmol(1), de_ev(1)
-  write(FILEOUT,'(5X,"DE_prod : ",F12.6," a.u. ; ",&
+  write(FILEOUT,'(5X,"Energy barrier, reverse reaction : ",F12.6," a.u. ; ",&
     &F12.1," kJ/mol ; ",F12.2," eV")') de_au(2), de_kjmol(2), de_ev(2)
 
 end subroutine write_delta_e

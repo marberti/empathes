@@ -24,16 +24,16 @@ contains
 ! Public
 !====================================================================
 
-subroutine read_input(file_in)
+subroutine read_input(fname_in)
 
   !--------------------------------------------------------
-  ! Open file_in input file, read all the informations
+  ! Open fname_in input file, read all the informations
   ! and when it's done close the stream and set variables
   !--------------------------------------------------------
 
-  character(*),                intent(IN) :: file_in
+  character(*),                intent(IN) :: fname_in
 
-  integer, parameter                      :: file_n = 100
+  integer, parameter                      :: fnumb_in = 100
   integer                                 :: ri_start_atoms
   integer                                 :: ri_end_atoms
   character(200)                          :: cmd_str
@@ -82,7 +82,7 @@ subroutine read_input(file_in)
   logical                                 :: got_intgrid
   logical                                 :: got_additional_cmd
 
-  open(unit=file_n,file=file_in,status='OLD',action='READ',&
+  open(unit=fnumb_in,file=fname_in,status='OLD',action='READ',&
     &iostat=err_n,iomsg=err_msg,position='REWIND')
   if (err_n/=0) then
     call error("read_input: "//trim(err_msg))
@@ -129,7 +129,7 @@ subroutine read_input(file_in)
   ! read the input file -----------------------------------
   do
     ! Get a string ----------------------------------------
-    read(file_n,'(A200)',iostat=err_n) cmd_str
+    read(fnumb_in,'(A200)',iostat=err_n) cmd_str
     
     ! Check end of file -----------------------------------
     if (err_n/=0) then
@@ -169,7 +169,7 @@ subroutine read_input(file_in)
         call error("read_input: #GEOMETRIESFILE and #START are mutually exclusive")
       end if
 
-      call read_geometries_from_input(file_n,keyword,ri_start_atoms,ri_start_elem)
+      call read_geometries_from_input(fnumb_in,keyword,ri_start_atoms,ri_start_elem)
       got_start = .true.
 
     case ("#END")
@@ -181,7 +181,7 @@ subroutine read_input(file_in)
         call error("read_input: #GEOMETRIESFILE and #END are mutually exclusive")
       end if
 
-      call read_geometries_from_input(file_n,keyword,ri_end_atoms,ri_end_elem)
+      call read_geometries_from_input(fnumb_in,keyword,ri_end_atoms,ri_end_elem)
       got_end = .true.
 
     case ("#GEOMETRIESFILE")
@@ -291,7 +291,7 @@ subroutine read_input(file_in)
         call error("read_input: #LABEL specified more than once")
       end if
 
-      call read_elabel(file_n,"#ENDLABEL",ri_elabel)
+      call read_elabel(fnumb_in,"#ENDLABEL",ri_elabel)
       got_elabel = .true.
 
     case ("#NEWPESPROGRAM")
@@ -336,7 +336,7 @@ subroutine read_input(file_in)
         call error("read_input: "//trim(err_msg))
       end if
 
-      call read_pes_it(arg,file_n,"#ENDPESINPUTTEMPLATE")
+      call read_pes_it(arg,fnumb_in,"#ENDPESINPUTTEMPLATE")
 
     case ("#PESPROC")
       if (got_pes_proc) then
@@ -487,7 +487,7 @@ subroutine read_input(file_in)
         call error("read_input: #ADDITIONALCMD specified more than once")
       end if
 
-      read(file_n,'(A200)',iostat=err_n) cmd_str
+      read(fnumb_in,'(A200)',iostat=err_n) cmd_str
       if (err_n/=0) then
         call error("read_input: cannot read additional command")
       end if
@@ -573,7 +573,7 @@ subroutine read_input(file_in)
     end select
   end do
 
-  close(unit=file_n,iostat=err_n,iomsg=err_msg)
+  close(unit=fnumb_in,iostat=err_n,iomsg=err_msg)
   if (err_n/=0) then
     call error("read_input: "//trim(err_msg))
   end if
@@ -637,9 +637,9 @@ end subroutine read_input
 ! Private
 !====================================================================
 
-subroutine read_geometries_from_input(file_n,point,atoms,elem)
+subroutine read_geometries_from_input(fnumb_in,point,atoms,elem)
 
-  integer,                                 intent(IN)  :: file_n
+  integer,                                 intent(IN)  :: fnumb_in
   character(*),                            intent(IN)  :: point
   integer,                                 intent(OUT) :: atoms
   character(3), allocatable, dimension(:), intent(OUT) :: elem
@@ -655,7 +655,7 @@ subroutine read_geometries_from_input(file_n,point,atoms,elem)
   integer                                              :: err_n
   character(120)                                       :: err_msg
 
-  read(file_n,*,iostat=err_n) str
+  read(fnumb_in,*,iostat=err_n) str
   if (err_n/=0) then
     call error(my_name//": atom number not specified")
   end if
@@ -685,7 +685,7 @@ subroutine read_geometries_from_input(file_n,point,atoms,elem)
     ! read coordinates ------------------------------------
     do i=1, g_len, +3
       indx = i/3+1
-      read(file_n,*,iostat=err_n) elem(indx),x,y,z
+      read(fnumb_in,*,iostat=err_n) elem(indx),x,y,z
       if (err_n/=0) then
         call error(my_name//": error while reading start geometry")
       end if
@@ -697,7 +697,7 @@ subroutine read_geometries_from_input(file_n,point,atoms,elem)
     ! read coordinates ------------------------------------
     do i=1, g_len, +3
       indx = i/3+1
-      read(file_n,*,iostat=err_n) elem(indx),x,y,z
+      read(fnumb_in,*,iostat=err_n) elem(indx),x,y,z
       if (err_n/=0) then
         call error(my_name//": error while reading end geometry")
       end if

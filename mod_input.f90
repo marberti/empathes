@@ -169,8 +169,7 @@ subroutine read_input(file_in)
         call error("read_input: #GEOMETRIESFILE and #START are mutually exclusive")
       end if
 
-      !TODO read start geometry with read_xyz
-      call get_geometry(file_n,keyword,ri_start_atoms,ri_start_elem)
+      call read_geometries_from_input(file_n,keyword,ri_start_atoms,ri_start_elem)
       got_start = .true.
 
     case ("#END")
@@ -182,8 +181,7 @@ subroutine read_input(file_in)
         call error("read_input: #GEOMETRIESFILE and #END are mutually exclusive")
       end if
 
-      !TODO read end geometry with read_xyz
-      call get_geometry(file_n,keyword,ri_end_atoms,ri_end_elem)
+      call read_geometries_from_input(file_n,keyword,ri_end_atoms,ri_end_elem)
       got_end = .true.
 
     case ("#GEOMETRIESFILE")
@@ -639,13 +637,14 @@ end subroutine read_input
 ! Private
 !====================================================================
 
-subroutine get_geometry(file_n,point,atoms,elem)
+subroutine read_geometries_from_input(file_n,point,atoms,elem)
 
   integer,                                 intent(IN)  :: file_n
   character(*),                            intent(IN)  :: point
   integer,                                 intent(OUT) :: atoms
   character(3), allocatable, dimension(:), intent(OUT) :: elem
 
+  character(*), parameter                              :: my_name = "read_geometries_from_input"
   integer                                              :: g_len
   integer                                              :: i
   integer                                              :: indx
@@ -658,17 +657,17 @@ subroutine get_geometry(file_n,point,atoms,elem)
 
   read(file_n,*,iostat=err_n) str
   if (err_n/=0) then
-    call error("get_geometry: atom number not specified")
+    call error(my_name//": atom number not specified")
   end if
 
   if (isinteger(trim(adjustl(str)))) then
     read(str,*) atoms
   else
-    call error("get_geometry: got """//trim(str)//""", expected integer")
+    call error(my_name//": got """//trim(str)//""", expected integer")
   end if
 
   if (atoms<=0) then
-    call error("get_geometry: non-positive atom number in input file")
+    call error(my_name//": non-positive atom number in input file")
   end if
  
   g_len = 3*atoms
@@ -678,7 +677,7 @@ subroutine get_geometry(file_n,point,atoms,elem)
   if (.not.allocated(elem)) then
     allocate(elem(atoms),stat=err_n,errmsg=err_msg)
     if (err_n/=0) then
-      call error("get_geometry: "//trim(err_msg))
+      call error(my_name//": "//trim(err_msg))
     end if
   end if
 
@@ -688,7 +687,7 @@ subroutine get_geometry(file_n,point,atoms,elem)
       indx = i/3+1
       read(file_n,*,iostat=err_n) elem(indx),x,y,z
       if (err_n/=0) then
-        call error("get_geometry: error while reading start geometry")
+        call error(my_name//": error while reading start geometry")
       end if
       start_geom(i)   = x
       start_geom(i+1) = y
@@ -700,17 +699,17 @@ subroutine get_geometry(file_n,point,atoms,elem)
       indx = i/3+1
       read(file_n,*,iostat=err_n) elem(indx),x,y,z
       if (err_n/=0) then
-        call error("get_geometry: error while reading end geometry")
+        call error(my_name//": error while reading end geometry")
       end if
       end_geom(i)   = x
       end_geom(i+1) = y
       end_geom(i+2) = z
     end do
   else
-    call error("get_geometry: unknown argument "//trim(point))
+    call error(my_name//": unknown argument "//trim(point))
   end if
 
-end subroutine get_geometry
+end subroutine read_geometries_from_input
 
 !====================================================================
 ! Subroutines that check

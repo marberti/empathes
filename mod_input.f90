@@ -639,22 +639,18 @@ end subroutine read_input
 
 subroutine read_geometries_from_input(fnumb_in,point,atoms,elem)
 
-  integer,                                 intent(IN)  :: fnumb_in
-  character(*),                            intent(IN)  :: point
-  integer,                                 intent(OUT) :: atoms
-  character(3), allocatable, dimension(:), intent(OUT) :: elem
+  integer,                                 intent(IN)    :: fnumb_in
+  character(*),                            intent(IN)    :: point
+  integer,                                 intent(OUT)   :: atoms
+  character(3), allocatable, dimension(:), intent(INOUT) :: elem
 
-  character(*), parameter                              :: my_name = "read_geometries_from_input"
-  integer                                              :: g_len
-  integer                                              :: i
-  integer                                              :: indx
-  character(120)                                       :: str
-  real(DBL)                                            :: x
-  real(DBL)                                            :: y
-  real(DBL)                                            :: z
-  integer                                              :: err_n
-  character(120)                                       :: err_msg
+  character(*), parameter                                :: my_name = "read_geometries_from_input"
+  integer                                                :: g_len
+  character(120)                                         :: str
+  integer                                                :: err_n
+  character(120)                                         :: err_msg
 
+  ! read the number of atoms ------------------------------
   read(fnumb_in,*,iostat=err_n) str
   if (err_n/=0) then
     call error(my_name//": atom number not specified")
@@ -669,45 +665,36 @@ subroutine read_geometries_from_input(fnumb_in,point,atoms,elem)
   if (atoms<=0) then
     call error(my_name//": non-positive atom number in input file")
   end if
- 
+
+  ! allocate start_geom or end_geom -----------------------
   g_len = 3*atoms
 
   call allocate_geom(point,g_len)
 
-  if (.not.allocated(elem)) then
+  ! allocate elem -----------------------------------------
+  if (allocated(elem)) then
+    call error(my_name//": design error, this should never happen")
+  else
     allocate(elem(atoms),stat=err_n,errmsg=err_msg)
     if (err_n/=0) then
       call error(my_name//": "//trim(err_msg))
     end if
   end if
 
-  if (point=="#START") then
-    ! read coordinates ------------------------------------
-    do i=1, g_len, +3
-      indx = i/3+1
-      read(fnumb_in,*,iostat=err_n) elem(indx),x,y,z
-      if (err_n/=0) then
-        call error(my_name//": error while reading start geometry")
-      end if
-      start_geom(i)   = x
-      start_geom(i+1) = y
-      start_geom(i+2) = z
-    end do
-  else if (point=="#END") then
-    ! read coordinates ------------------------------------
-    do i=1, g_len, +3
-      indx = i/3+1
-      read(fnumb_in,*,iostat=err_n) elem(indx),x,y,z
-      if (err_n/=0) then
-        call error(my_name//": error while reading end geometry")
-      end if
-      end_geom(i)   = x
-      end_geom(i+1) = y
-      end_geom(i+2) = z
-    end do
-  else
-    call error(my_name//": unknown argument "//trim(point))
+  ! read geometry -----------------------------------------
+  backspace(unit=fnumb_in,iostat=err_n,iomsg=err_msg)
+  if (err_n/=0) then
+    call error(my_name//": "//err_msg)
   end if
+
+  select case (point)
+  case ("#START")
+    call read_xyz(fnumb_in,elem,start_geom,.false.)
+  case ("#END")
+    call read_xyz(fnumb_in,elem,end_geom,.false.)
+  case default
+    call error(my_name//": unknown argument "//trim(point))
+  end select
 
 end subroutine read_geometries_from_input
 

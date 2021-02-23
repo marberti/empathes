@@ -379,7 +379,7 @@ subroutine update_element(arr)
   character(3), dimension(:), intent(IN) :: arr
 
   ! preliminary checks ------------------------------------
-  if (.not.allocated(element)) then
+  if (flag_element.eqv..false.) then
     call error("update_element: array element not allocated")
   end if
 
@@ -426,7 +426,7 @@ subroutine update_elabel(arr)
   character(3), dimension(:), intent(IN) :: arr
 
   ! preliminary checks ------------------------------------
-  if (.not.allocated(elabel)) then
+  if (flag_elabel.eqv..false.) then
     call error("update_elabel: array elabel not allocated")
   end if
 

@@ -44,7 +44,6 @@ subroutine read_input(fname_in)
   character(3), allocatable, dimension(:) :: ri_end_elem
   character(3), allocatable, dimension(:) :: ri_start_elab
   character(3), allocatable, dimension(:) :: ri_end_elab
-  character(3), allocatable, dimension(:) :: ri_elabel
   logical                                 :: got_error
   integer                                 :: err_n
   character(120)                          :: err_msg
@@ -61,7 +60,6 @@ subroutine read_input(fname_in)
   logical                                 :: got_pes_program
   logical                                 :: got_pes_exec
   logical                                 :: got_geometries_file
-  logical                                 :: got_elabel
   logical                                 :: got_start_elabel
   logical                                 :: got_end_elabel
   logical                                 :: got_idpp
@@ -106,7 +104,8 @@ subroutine read_input(fname_in)
   got_pes_program            = .false.
   got_pes_exec               = .false.
   got_geometries_file        = .false.
-  got_elabel                 = .false.
+  got_start_elabel           = .false.
+  got_end_elabel             = .false.
   got_idpp                   = .false.
   got_idpp_conv              = .false.
   got_scfcycle               = .false.
@@ -291,14 +290,6 @@ subroutine read_input(fname_in)
 
       call set_idpp(.true.)
       got_idpp = .true.
-
-    case ("#LABEL")
-      if (got_elabel) then
-        call error("read_input: #LABEL specified more than once")
-      end if
-
-      call read_elabel(fnumb_in,"#ENDLABEL",ri_elabel)
-      got_elabel = .true.
 
     case ("#NEWPESPROGRAM")
       if (got_new_pes_program) then
@@ -570,7 +561,6 @@ subroutine read_input(fname_in)
       got_aux_output_files = .true.
 
     ! keywords to be ignored
-    case ("#ENDLABEL")
     case ("#ENDPESINPUTTEMPLATE")
 
     case default
@@ -594,7 +584,8 @@ subroutine read_input(fname_in)
   call check_siesta_mandatory_kw()
 
   call consistency_check(got_geometries_file,ri_start_atoms,&
-    &ri_end_atoms,ri_start_elem,ri_end_elem,ri_elabel)
+    &ri_end_atoms,ri_start_elem,ri_end_elem,got_start_elabel,got_end_elabel,&
+    &ri_start_elab,ri_end_elab)
 
   ! external variables initialization ---------------------
   ! set pes program
@@ -638,13 +629,6 @@ subroutine read_input(fname_in)
 
   if (allocated(ri_end_elab)) then
     deallocate(ri_end_elab,stat=err_n,errmsg=err_msg)
-    if (err_n/=0) then
-      call error("read_input: "//trim(err_msg))
-    end if
-  end if
-
-  if (allocated(ri_elabel)) then
-    deallocate(ri_elabel,stat=err_n,errmsg=err_msg)
     if (err_n/=0) then
       call error("read_input: "//trim(err_msg))
     end if
@@ -893,14 +877,18 @@ end subroutine check_siesta_mandatory_kw
 !====================================================================
 
 subroutine consistency_check(got_geometries_file,ri_start_atoms,&
-    &ri_end_atoms,ri_start_elem,ri_end_elem,ri_elabel)
+    &ri_end_atoms,ri_start_elem,ri_end_elem,got_start_elabel,got_end_elabel,&
+    &ri_start_elab,ri_end_elab)
 
   logical,                                 intent(IN) :: got_geometries_file
   integer,                                 intent(IN) :: ri_start_atoms
   integer,                                 intent(IN) :: ri_end_atoms
-  character(3), allocatable, dimension(:), intent(IN) :: ri_start_elem
-  character(3), allocatable, dimension(:), intent(IN) :: ri_end_elem
-  character(3), allocatable, dimension(:), intent(IN) :: ri_elabel
+  character(*), allocatable, dimension(:), intent(IN) :: ri_start_elem
+  character(*), allocatable, dimension(:), intent(IN) :: ri_end_elem
+  logical,                                 intent(IN) :: got_start_elabel
+  logical,                                 intent(IN) :: got_end_elabel
+  character(*), allocatable, dimension(:), intent(IN) :: ri_start_elab
+  character(*), allocatable, dimension(:), intent(IN) :: ri_end_elab
 
   integer                                             :: i
   character(8)                                        :: i_str
@@ -912,17 +900,15 @@ subroutine consistency_check(got_geometries_file,ri_start_atoms,&
 
   ! those checks must be done only if ---------------------
   ! geometries file was not specified
-  if (.not.got_geometries_file) then
-    ! chack atoms numbers -----------------------------------
+  if (got_geometries_file.eqv..false.) then
+    ! check number of atoms -------------------------------
     if (ri_start_atoms<=0) then
-      write(FILEOUT,*) "WAR consistency_check: "//&
-        &"non-positive start atoms number"
+      write(FILEOUT,*) "WAR consistency_check: non-positive start number of atoms"
       flag_not_consistent = .true.
     end if
 
-    if (ri_start_atoms<=0) then
-      write(FILEOUT,*) "WAR consistency_check: "//&
-        &"non-positive end atoms number"
+    if (ri_end_atoms<=0) then
+      write(FILEOUT,*) "WAR consistency_check: non-positive end number of atoms"
       flag_not_consistent = .true.
     end if
 
@@ -958,7 +944,7 @@ subroutine consistency_check(got_geometries_file,ri_start_atoms,&
         flag_not_consistent = .true.
       end if
 
-      if (.not.flag_not_consistent) then
+      if (flag_not_consistent.eqv..false.) then
         do i=1, size(ri_start_elem,1)
           if (ri_start_elem(i)/=ri_end_elem(i)) then
             write(i_str,'(I8)') i
@@ -970,21 +956,35 @@ subroutine consistency_check(got_geometries_file,ri_start_atoms,&
         end do
       end if
     end if
-  end if
 
-  ! check element label -----------------------------------
-  if (allocated(ri_elabel)) then
-    if (got_geometries_file) then
-      if (size(ri_elabel,1)/=size(element,1)) then
-        write(FILEOUT,*) "WAR consistency_check: "//&
-          &"wrong element label array size"
-        flag_not_consistent = .true.
-      end if
+    ! check element label -----------------------------------
+    if (got_start_elabel.neqv.got_end_elabel) then
+      write(FILEOUT,*) "WAR consistency_check: element labels must be specified "&
+        &"in all the geometry blocks or none"
+      flag_not_consistent = .true.
     else
-      if (size(ri_elabel,1)/=ri_start_atoms) then
-        write(FILEOUT,*) "WAR consistency_check: "//&
-          &"wrong element label array size"
-        flag_not_consistent = .true.
+      if (got_start_elabel.eqv..true.) then
+        if (size(ri_start_elab,1)/=ri_start_atoms) then
+          write(FILEOUT,*) "WAR consistency_check: wrong start elabel array size"
+          flag_not_consistent = .true.
+        end if
+
+        if (size(ri_end_elab,1)/=ri_end_atoms) then
+          write(FILEOUT,*) "WAR consistency_check: wrong end elabel array size"
+          flag_not_consistent = .true.
+        end if
+
+        if (flag_not_consistent.eqv..false.) then
+          do i=1, size(ri_start_elab,1)
+            if (ri_start_elab(i)/=ri_end_elab(i)) then
+              write(i_str,'(I8)') i
+              i_str = adjustl(i_str)
+              write(FILEOUT,*) "WAR consistency_check: "//&
+                &"labels in line "//trim(i_str)//" are different"
+              flag_not_consistent = .true.
+            end if
+          end do
+        end if
       end if
     end if
   end if
@@ -1011,56 +1011,6 @@ subroutine consistency_check(got_geometries_file,ri_start_atoms,&
   end if
 
 end subroutine consistency_check
-
-!====================================================================
-! Subroutines that read blocks
-!====================================================================
-
-subroutine read_elabel(fnumb,ending,ri_elabel)
-
-  ! Reads the #LABEL block
-
-  integer,                                 intent(IN)  :: fnumb
-  character(*),                            intent(IN)  :: ending
-  character(3), allocatable, dimension(:), intent(OUT) :: ri_elabel
-
-  integer                                              :: i
-  integer                                              :: lines
-  character(30)                                        :: lab
-  integer                                              :: err_n
-  character(120)                                       :: err_msg
-
-  lines = get_lines(fnumb,ending)
-  if (lines==0) then
-    call error("read_elabel: element labels not specified")
-  end if
-  
-  if (.not.allocated(ri_elabel)) then
-    allocate(ri_elabel(lines),stat=err_n,errmsg=err_msg)
-    if (err_n/=0) then
-      call error("read_elabel: "//trim(err_msg))
-    end if
-  else
-    call error("read_elabel: element labels already specified")
-  end if
-
-  do i=1, lines
-    backspace(unit=fnumb,iostat=err_n,iomsg=err_msg)
-    if (err_n/=0) then
-      call error("read_elabel: "//trim(err_msg))
-    end if
-  end do
-
-  do i=1, lines
-    read(fnumb,'(A30)',iostat=err_n) lab
-    if (err_n/=0) then
-      call error("read_elabel: "//trim(err_msg))
-    end if
-    lab          = adjustl(lab)
-    ri_elabel(i) = lab(1:3)
-  end do
-
-end subroutine read_elabel
 
 !====================================================================
 ! Subroutines that read geometries file

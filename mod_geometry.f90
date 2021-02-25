@@ -24,7 +24,8 @@ module geometry
                flag_init_images,        &
                flag_only_interpolation, &
                flag_geom_charge,        &
-               flag_geom_multip
+               flag_geom_multip,        &
+               flag_elabel
   protected :: element,                 &
                elabel,                  &
                geom_len,                &
@@ -35,7 +36,8 @@ module geometry
                flag_init_images,        &
                flag_only_interpolation, &
                flag_geom_charge,        &
-               flag_geom_multip
+               flag_geom_multip,        &
+               flag_elabel
   ! public procedures -------------------------------------
   public    :: allocate_geom,           &
                allocate_image_geom,     &

@@ -86,12 +86,14 @@ subroutine read_input(fname_in)
   logical                                 :: got_intgrid
   logical                                 :: got_additional_cmd
 
+  ! open file ---------------------------------------------
   open(unit=fnumb_in,file=fname_in,status='OLD',action='READ',&
     &iostat=err_n,iomsg=err_msg,position='REWIND')
   if (err_n/=0) then
     call error("read_input: "//trim(err_msg))
   end if
 
+  ! set variables -----------------------------------------
   got_error                  = .false.
   got_start                  = .false.
   got_end                    = .false.
@@ -589,7 +591,7 @@ subroutine read_input(fname_in)
 
   call check_gaussian_mandatory_kw()
 
-  call check_siesta_mandatory_kw(got_elabel)
+  call check_siesta_mandatory_kw()
 
   call consistency_check(got_geometries_file,ri_start_atoms,&
     &ri_end_atoms,ri_start_elem,ri_end_elem,ri_elabel)
@@ -598,19 +600,18 @@ subroutine read_input(fname_in)
   ! set pes program
   call set_pes_program(ri_pes_program)
 
-  ! set elements
+  ! set elements and labels
   if (.not.got_geometries_file) then
     call set_geom_len(ri_start_atoms)
     if (allocated(ri_start_elem)) then
       call allocate_element()
       call update_element(ri_start_elem)
     end if
-  end if
 
-  ! set elements' labels
-  if (allocated(ri_elabel)) then
-    call allocate_elabel()
-    call update_elabel(ri_elabel)
+    if (got_start_elabel) then
+      call allocate_elabel()
+      call update_elabel(ri_start_elab)
+    end if
   end if
 
   ! deallocation section ----------------------------------
@@ -623,6 +624,20 @@ subroutine read_input(fname_in)
 
   if (allocated(ri_end_elem)) then
     deallocate(ri_end_elem,stat=err_n,errmsg=err_msg)
+    if (err_n/=0) then
+      call error("read_input: "//trim(err_msg))
+    end if
+  end if
+
+  if (allocated(ri_start_elab)) then
+    deallocate(ri_start_elab,stat=err_n,errmsg=err_msg)
+    if (err_n/=0) then
+      call error("read_input: "//trim(err_msg))
+    end if
+  end if
+
+  if (allocated(ri_end_elab)) then
+    deallocate(ri_end_elab,stat=err_n,errmsg=err_msg)
     if (err_n/=0) then
       call error("read_input: "//trim(err_msg))
     end if
@@ -837,9 +852,7 @@ end subroutine check_gaussian_mandatory_kw
 
 !====================================================================
 
-subroutine check_siesta_mandatory_kw(got_elabel)
-
-  logical,     intent(IN) :: got_elabel
+subroutine check_siesta_mandatory_kw()
 
   character(*), parameter :: my_name   = "check_siesta_mandatory_kw"
   logical                 :: got_error
@@ -865,9 +878,9 @@ subroutine check_siesta_mandatory_kw(got_elabel)
     end if
   end do
 
-  ! check that #LABEL block was specified
-  if (.not.got_elabel) then
-    write(FILEOUT,*) "WAR "//my_name//": #LABEL block not specified"
+  ! check that element labels were specified
+  if (flag_elabel.eqv..false.) then
+    write(FILEOUT,*) "WAR "//my_name//": element labels not specified in the geometry blocks"
     got_error = .true.
   end if
 
@@ -1104,7 +1117,6 @@ subroutine read_geometries_from_file(gf_fname)
   call set_image_n(trim(str))
   call allocate_image_geom()
   call allocate_element()
-  call allocate_elabel()
 
   ! allocation section ------------------------------------
   allocate(elem_arr(geom_len/3),stat=err_n,errmsg=err_msg)
@@ -1147,6 +1159,7 @@ subroutine read_geometries_from_file(gf_fname)
 
       found_elab_dfl = found_elab
       if (found_elab_dfl) then
+        call allocate_elabel()
         elab_dfl = elab_arr
         call update_elabel(elab_dfl)
       end if

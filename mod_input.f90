@@ -1104,6 +1104,7 @@ subroutine read_geometries_from_file(gf_fname)
   call set_image_n(trim(str))
   call allocate_image_geom()
   call allocate_element()
+  call allocate_elabel()
 
   ! allocation section ------------------------------------
   allocate(elem_arr(geom_len/3),stat=err_n,errmsg=err_msg)
@@ -1142,14 +1143,31 @@ subroutine read_geometries_from_file(gf_fname)
     
     if (i==0) then
       elem_dfl = elem_arr
-      elab_dfl = elab_arr
       call update_element(elem_dfl)
+
+      found_elab_dfl = found_elab
+      if (found_elab_dfl) then
+        elab_dfl = elab_arr
+        call update_elabel(elab_dfl)
+      end if
     else
+      if (found_elab.neqv.found_elab_dfl) then
+        call error(my_name//": labels must be specified for all geometries or none")
+      end if
+
       do j=1, size(elem_arr,1)
         if (elem_dfl(j)/=elem_arr(j)) then
-          call error(my_name//": input geometries are inconsistent")
+          call error(my_name//": elements in input geometries are inconsistent")
         end if
       end do
+
+      if (found_elab_dfl) then
+        do j=1, size(elab_arr,1)
+          if (elab_dfl(j)/=elab_arr(j)) then
+            call error(my_name//": labels in input geometries are inconsistent")
+          end if
+        end do
+      end if
     end if
 
     call update_image_geom(i,geom_arr)
@@ -1162,6 +1180,16 @@ subroutine read_geometries_from_file(gf_fname)
   end if
 
   deallocate(elem_dfl,stat=err_n,errmsg=err_msg)
+  if (err_n/=0) then
+    call error(my_name//": "//trim(err_msg))
+  end if
+
+  deallocate(elab_arr,stat=err_n,errmsg=err_msg)
+  if (err_n/=0) then
+    call error(my_name//": "//trim(err_msg))
+  end if
+
+  deallocate(elab_dfl,stat=err_n,errmsg=err_msg)
   if (err_n/=0) then
     call error(my_name//": "//trim(err_msg))
   end if

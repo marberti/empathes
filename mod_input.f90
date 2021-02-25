@@ -42,6 +42,8 @@ subroutine read_input(fname_in)
   character(50)                           :: ri_pes_program
   character(3), allocatable, dimension(:) :: ri_start_elem
   character(3), allocatable, dimension(:) :: ri_end_elem
+  character(3), allocatable, dimension(:) :: ri_start_elab
+  character(3), allocatable, dimension(:) :: ri_end_elab
   character(3), allocatable, dimension(:) :: ri_elabel
   logical                                 :: got_error
   integer                                 :: err_n
@@ -60,6 +62,8 @@ subroutine read_input(fname_in)
   logical                                 :: got_pes_exec
   logical                                 :: got_geometries_file
   logical                                 :: got_elabel
+  logical                                 :: got_start_elabel
+  logical                                 :: got_end_elabel
   logical                                 :: got_idpp
   logical                                 :: got_idpp_conv
   logical                                 :: got_scfcycle
@@ -169,7 +173,7 @@ subroutine read_input(fname_in)
         call error("read_input: #GEOMETRIESFILE and #START are mutually exclusive")
       end if
 
-      call read_geometries_from_input(fnumb_in,keyword,ri_start_atoms,ri_start_elem)
+      call read_geometries_from_input(fnumb_in,keyword,ri_start_atoms,ri_start_elem,ri_start_elab,got_start_elabel)
       got_start = .true.
 
     case ("#END")
@@ -181,7 +185,7 @@ subroutine read_input(fname_in)
         call error("read_input: #GEOMETRIESFILE and #END are mutually exclusive")
       end if
 
-      call read_geometries_from_input(fnumb_in,keyword,ri_end_atoms,ri_end_elem)
+      call read_geometries_from_input(fnumb_in,keyword,ri_end_atoms,ri_end_elem,ri_end_elab,got_end_elabel)
       got_end = .true.
 
     case ("#GEOMETRIESFILE")
@@ -637,12 +641,14 @@ end subroutine read_input
 ! Private
 !====================================================================
 
-subroutine read_geometries_from_input(fnumb_in,point,atoms,elem)
+subroutine read_geometries_from_input(fnumb_in,point,atoms,elem,elab,found_elab)
 
   integer,                                 intent(IN)    :: fnumb_in
   character(*),                            intent(IN)    :: point
   integer,                                 intent(OUT)   :: atoms
-  character(3), allocatable, dimension(:), intent(INOUT) :: elem
+  character(*), allocatable, dimension(:), intent(INOUT) :: elem
+  character(*), allocatable, dimension(:), intent(INOUT) :: elab
+  logical,                                 intent(OUT)   :: found_elab
 
   character(*), parameter                                :: my_name = "read_geometries_from_input"
   integer                                                :: g_len
@@ -671,11 +677,20 @@ subroutine read_geometries_from_input(fnumb_in,point,atoms,elem)
 
   call allocate_geom(point,g_len)
 
-  ! allocate elem -----------------------------------------
+  ! allocation section ------------------------------------
   if (allocated(elem)) then
-    call error(my_name//": design error, this should never happen")
+    call error(my_name//": design error, passed an already allocated elem")
   else
     allocate(elem(atoms),stat=err_n,errmsg=err_msg)
+    if (err_n/=0) then
+      call error(my_name//": "//trim(err_msg))
+    end if
+  end if
+
+  if (allocated(elab)) then
+    call error(my_name//": design error, passed an already allocated elab")
+  else
+    allocate(elab(atoms),stat=err_n,errmsg=err_msg)
     if (err_n/=0) then
       call error(my_name//": "//trim(err_msg))
     end if
@@ -689,9 +704,9 @@ subroutine read_geometries_from_input(fnumb_in,point,atoms,elem)
 
   select case (point)
   case ("#START")
-    call read_xyz(fnumb_in,elem,start_geom,.false.)
+    call read_xyz(fnumb_in,elem,start_geom,elab,found_elab,.false.)
   case ("#END")
-    call read_xyz(fnumb_in,elem,end_geom,.false.)
+    call read_xyz(fnumb_in,elem,end_geom,elab,found_elab,.false.)
   case default
     call error(my_name//": unknown argument "//trim(point))
   end select
@@ -1057,7 +1072,11 @@ subroutine read_geometries_from_file(gf_fname)
   character(120)                          :: str
   character(3), allocatable, dimension(:) :: elem_arr
   character(3), allocatable, dimension(:) :: elem_dfl
+  character(3), allocatable, dimension(:) :: elab_arr
+  character(3), allocatable, dimension(:) :: elab_dfl
   real(DBL),    allocatable, dimension(:) :: geom_arr
+  logical                                 :: found_elab
+  logical                                 :: found_elab_dfl
   integer                                 :: err_n
   character(120)                          :: err_msg
 
@@ -1086,13 +1105,23 @@ subroutine read_geometries_from_file(gf_fname)
   call allocate_image_geom()
   call allocate_element()
 
-  ! allocate stuffs ---------------------------------------
+  ! allocation section ------------------------------------
   allocate(elem_arr(geom_len/3),stat=err_n,errmsg=err_msg)
   if (err_n/=0) then
     call error(my_name//": "//trim(err_msg))
   end if
 
   allocate(elem_dfl(geom_len/3),stat=err_n,errmsg=err_msg)
+  if (err_n/=0) then
+    call error(my_name//": "//trim(err_msg))
+  end if
+
+  allocate(elab_arr(geom_len/3),stat=err_n,errmsg=err_msg)
+  if (err_n/=0) then
+    call error(my_name//": "//trim(err_msg))
+  end if
+
+  allocate(elab_dfl(geom_len/3),stat=err_n,errmsg=err_msg)
   if (err_n/=0) then
     call error(my_name//": "//trim(err_msg))
   end if
@@ -1109,10 +1138,11 @@ subroutine read_geometries_from_file(gf_fname)
   end if
 
   do i=0, image_n+1
-    call read_xyz(gf_fnumb,elem_arr,geom_arr,.true.)
+    call read_xyz(gf_fnumb,elem_arr,geom_arr,elab_arr,found_elab,.true.)
     
     if (i==0) then
       elem_dfl = elem_arr
+      elab_dfl = elab_arr
       call update_element(elem_dfl)
     else
       do j=1, size(elem_arr,1)
@@ -1207,21 +1237,27 @@ end subroutine get_geometries_info
 
 !====================================================================
 
-subroutine read_xyz(fnumb,elem_arr,geom_arr,comment_line)
+subroutine read_xyz(fnumb,elem_arr,geom_arr,elab_arr,found_elab,comment_line)
 
   !--------------------------------------------------------
   ! Reads an xyz format geometry from fnumb.
   ! Writes elements encountered in elem_arr,
-  ! and coordinates in geom_arr.
+  ! coordinates in geom_arr, and if they are present,
+  ! element lables in elab_arr.
+  ! Can be used with or without a comment line after
+  ! the first one that contains the number of atoms.
   !--------------------------------------------------------
 
   integer,                    intent(IN)  :: fnumb
   character(*), dimension(:), intent(OUT) :: elem_arr
   real(DBL),    dimension(:), intent(OUT) :: geom_arr
+  character(*), dimension(:), intent(OUT) :: elab_arr
+  logical,                    intent(OUT) :: found_elab
   logical,                    intent(IN)  :: comment_line
 
   character(*), parameter                 :: my_name = "read_xyz"
   logical                                 :: is_open
+  logical                                 :: elabels_are_specified
   integer                                 :: i
   integer                                 :: j
   integer                                 :: i_start
@@ -1237,6 +1273,9 @@ subroutine read_xyz(fnumb,elem_arr,geom_arr,comment_line)
   if (.not.is_open) then
     call error(my_name//": input stream not opened")
   end if
+
+  ! preliminary sets --------------------------------------
+  elabels_are_specified = .true.
 
   ! read the number of atoms ------------------------------
   read(fnumb,'(A120)',iostat=err_n) str
@@ -1254,8 +1293,13 @@ subroutine read_xyz(fnumb,elem_arr,geom_arr,comment_line)
   if (size(elem_arr,1)/=atoms) then
     call error(my_name//": wrong size of elem_arr argument")
   end if
+
   if (size(geom_arr,1)/=(atoms*3)) then
     call error(my_name//": wrong size of geom_arr argument")
+  end if
+
+  if (size(elab_arr,1)/=atoms) then
+    call error(my_name//": wrong size of elab_arr argument")
   end if
 
   ! set loop starting point -------------------------------
@@ -1297,7 +1341,26 @@ subroutine read_xyz(fnumb,elem_arr,geom_arr,comment_line)
       end if
       read(field,*) geom_arr(3*(i-1)+j-1)
     end do
+
+    call get_field(str,field,5,err_n,err_msg)
+    if (err_n/=0) then ! field was not found
+      if (i==1) then
+        elabels_are_specified = .false.
+      else
+        if (elabels_are_specified) then
+          call error(my_name//": labels must be specified for all the elements or none; "//trim(err_msg))
+        end if
+      end if
+    else               ! field was found
+      if (elabels_are_specified) then
+        elab_arr(i) = field
+      else
+        call error(my_name//": labels must be specified for all the elements or none")
+      end if
+    end if
   end do
+
+  found_elab = elabels_are_specified
 
 end subroutine read_xyz
 

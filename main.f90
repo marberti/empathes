@@ -252,6 +252,9 @@ program neb
     if (fmain_converged) then
       write(FILEOUT,*) "*** main: write_transition_state"
       call write_transition_state()
+
+      call last_geom_bkp(.false.,"final_geometries.xyz")
+
       write(FILEOUT,*) "*** main: Successful Termination :: Convergence Achieved"
     else
       write(FILEOUT,*) "*** main: Successful Termination :: Convergence NOT Achieved"

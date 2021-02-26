@@ -574,6 +574,9 @@ subroutine read_input(fname_in)
     call error("read_input: "//trim(err_msg))
   end if
 
+  ! set pes program ---------------------------------------
+  call set_pes_program(ri_pes_program)
+
   ! input checks ------------------------------------------
   call check_neb_kw(got_new_pes_program,got_pes_program,&
     &got_pes_exec,got_geometries_file,got_start,got_start_energy,got_end,&
@@ -587,11 +590,7 @@ subroutine read_input(fname_in)
     &ri_end_atoms,ri_start_elem,ri_end_elem,got_start_elabel,got_end_elabel,&
     &ri_start_elab,ri_end_elab)
 
-  ! external variables initialization ---------------------
-  ! set pes program
-  call set_pes_program(ri_pes_program)
-
-  ! set elements and labels
+  ! set elements and labels -------------------------------
   if (.not.got_geometries_file) then
     call set_geom_len(ri_start_atoms)
     if (allocated(ri_start_elem)) then

@@ -314,14 +314,14 @@ subroutine write_build_version()
   end if
 
   if (flag_mpi) then
-    write(out_stream,'("Parallel Version")')
+    write(out_stream,'(" Parallel Version")')
 #ifdef USE_MPI
     call mpi_get_version(version,subversion,err_n)
-    write(out_stream,'("Distributed Memory via MPI (version ",&
+    write(out_stream,'(" Distributed Memory via MPI (version ",&
       &I1,".",I1,")")') version, subversion
 #endif
   else
-    write(out_stream,'("Serial Version")')
+    write(out_stream,'(" Serial Version")')
   end if
 
 end subroutine write_build_version

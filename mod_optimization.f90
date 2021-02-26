@@ -378,15 +378,15 @@ subroutine optmz_steepest_descent(mode,flag_out,nsteps,stepsize,tol,&
     end if
 
     if ((p_writegeom/=-1).and.(mod(i,p_writegeom)==0)) then
-      call write_all_images()
+      call write_all_images(FILEOUT,.true.)
     end if
 
     if (p_savelastgeom) then
-      call last_geom_bkp()
+      call last_geom_bkp(.true.)
     end if
 
     if (p_verbose) then
-      call write_all_images()
+      call write_all_images(FILEOUT,.true.)
       call write_parall_elastic_forces()
       call write_perpen_pes_forces()
       call write_total_forces()
@@ -654,7 +654,7 @@ subroutine optmz_lbfgs(mode,flag_out,nsteps,memsize,prec,tol,verblvl,&
     end do
 
     if (p_savelastgeom) then
-      call last_geom_bkp()
+      call last_geom_bkp(.true.)
     end if
 
     ! check exit condition --------------------------------
@@ -895,7 +895,7 @@ subroutine optmz_fire(mode,flag_out,nsteps,maxstepsize,tol,&
     end do
 
     if (p_savelastgeom) then
-      call last_geom_bkp()
+      call last_geom_bkp(.true.)
     end if
 
     ! check exit condition --------------------------------

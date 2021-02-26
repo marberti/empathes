@@ -129,7 +129,7 @@ program neb
 
   write(FILEOUT,*) "*** main: init_images"
   call init_images()
-  call last_geom_bkp("linear-interpolation.xyz")
+  call last_geom_bkp(.false.,"linear-interpolation.xyz")
 
   write(FILEOUT,*) "*** main: init_pes_module"
   call init_pes_module()
@@ -152,11 +152,11 @@ program neb
     if (fmain_converged.eqv..false.) then
       call error("main: optmz_idpp did not converge")
     end if
-    call last_geom_bkp("idpp-interpolation.xyz")
+    call last_geom_bkp(.false.,"idpp-interpolation.xyz")
   end if
 
   write(FILEOUT,*) "*** main: write_all_images"
-  call write_all_images()
+  call write_all_images(FILEOUT,.true.)
   
   write(FILEOUT,*) "*** main: compute_total_forces"
   call compute_total_forces(PES_MODE,.true.)
@@ -208,7 +208,7 @@ program neb
 
   write(FILEOUT,*) "*** main: init_images"
   call init_images()
-  call last_geom_bkp("linear-interpolation.xyz")
+  call last_geom_bkp(.false.,"linear-interpolation.xyz")
 
   write(FILEOUT,*) "*** main: init_pes_module"
   call init_pes_module()
@@ -231,12 +231,12 @@ program neb
     if (fmain_converged.eqv..false.) then
       call error("main: optmz_idpp did not converge")
     end if
-    call last_geom_bkp("idpp-interpolation.xyz")
+    call last_geom_bkp(.false.,"idpp-interpolation.xyz")
   end if
 
   write(FILEOUT,*) "*** main: write_all_images"
   write(FILEOUT,*) "*** main: Initial Geometries"
-  call write_all_images()
+  call write_all_images(FILEOUT,.true.)
 
   if (flag_only_interpolation) then
     write(FILEOUT,*) "*** main: Specified: Only Interpolation"
@@ -247,7 +247,7 @@ program neb
 
     write(FILEOUT,*) "*** main: write_all_images"
     write(FILEOUT,*) "*** main: Final Geometries"
-    call write_all_images()
+    call write_all_images(FILEOUT,.true.)
 
     if (fmain_converged) then
       write(FILEOUT,*) "*** main: write_transition_state"

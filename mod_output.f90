@@ -70,31 +70,26 @@ end subroutine input_dumping
 
 !====================================================================
 
-subroutine write_all_images(fnumb)
+subroutine write_all_images(fnumb,write_elabel)
 
-  integer, optional, intent(IN) :: fnumb
+  integer,     intent(IN) :: fnumb
+  logical,     intent(IN) :: write_elabel
 
-  integer                       :: i
-  integer                       :: p_fnumb
-  logical                       :: is_open
+  character(*), parameter :: my_name = "write_all_images"
+  integer                 :: i
+  logical                 :: is_open
 
-  if (present(fnumb).and.(fnumb>0)) then
-    inquire(unit=fnumb,opened=is_open)
-    if (is_open) then
-      p_fnumb = fnumb
-    else
-      call error("write_all_image: output stream not opened")
-    end if
-  else
-    p_fnumb = FILEOUT
+  inquire(unit=fnumb,opened=is_open)
+  if (is_open.eqv..false.) then
+    call error(my_name//": output stream not opened")
   end if
 
-  if (p_fnumb==FILEOUT) then
-    write(FILEOUT,*) "**  Images Geometry:"
+  if (fnumb==FILEOUT) then
+    write(fnumb,*) "**  Images Geometry:"
   end if
 
   do i=0, image_n+1
-    call write_image(i,p_fnumb)
+    call write_image(i,fnumb,write_elabel)
   end do
 
 end subroutine write_all_images
@@ -326,11 +321,13 @@ end subroutine write_gnuplot_pes_energy
 
 !====================================================================
 
-subroutine last_geom_bkp(fname)
+subroutine last_geom_bkp(write_elabel,fname)
 
+  logical,                intent(IN) :: write_elabel
   character(*), optional, intent(IN) :: fname
 
-  integer, parameter                 :: bkp_fnumb = 610
+  character(*), parameter            :: my_name   = "last_geom_bkp"
+  integer,      parameter            :: bkp_fnumb = 610
   character(30)                      :: bkp_fname
   integer                            :: err_n
   character(120)                     :: err_msg
@@ -344,14 +341,14 @@ subroutine last_geom_bkp(fname)
   open(unit=bkp_fnumb,file=bkp_fname,status='REPLACE',action='WRITE',&
     &iostat=err_n,iomsg=err_msg,position='REWIND')
   if (err_n/=0) then
-    call error("last_geom_bkp: "//trim(err_msg))
+    call error(my_name//": "//trim(err_msg))
   end if
 
-  call write_all_images(bkp_fnumb)
+  call write_all_images(bkp_fnumb,write_elabel)
 
   close(unit=bkp_fnumb,iostat=err_n,iomsg=err_msg)
   if (err_n/=0) then
-    call error("last_geom_bkp: "//trim(err_msg))
+    call error(my_name//": "//trim(err_msg))
   end if
 
 end subroutine last_geom_bkp
@@ -413,7 +410,7 @@ subroutine write_transition_state()
     if (indx(i)) then
       n = n+1
       write(FILEOUT,'(5X,"TS ",I3)') n
-      call write_image(i,FILEOUT)
+      call write_image(i,FILEOUT,.false.)
       call write_delta_e(i)
     end if
   end do
@@ -767,22 +764,26 @@ end subroutine write_procs_info
 
 !====================================================================
 
-subroutine write_image(n,fnumb)
+subroutine write_image(n,fnumb,write_elabel)
 
-  integer, intent(IN) :: n
-  integer, intent(IN) :: fnumb
+  integer,     intent(IN) :: n
+  integer,     intent(IN) :: fnumb
+  logical,     intent(IN) :: write_elabel
 
-  integer             :: i
-  character(8)        :: atoms
-  character(120)      :: err_msg
+  character(*), parameter :: my_name = "write_image"
+  integer                 :: i
+  character(8)            :: atoms
+  character(120)          :: err_msg
 
+  ! preliminary checks ------------------------------------
   if (flag_init_images.eqv..false.) then
-    call error("write_image: images not initialized")
+    call error(my_name//": images not initialized")
   else if ((n<0).or.(n>(image_n+1))) then
-    write(err_msg,'(A,I5)') "write_image: wrong argument ", n
+    write(err_msg,'(A,I5)') my_name//": wrong argument ", n
     call error(err_msg)
   end if
 
+  ! write number of atoms and comment line ----------------
   write(atoms,'(I8)') geom_len/3
   write(fnumb,*) trim(adjustl(atoms))
   if (n==0) then
@@ -792,12 +793,14 @@ subroutine write_image(n,fnumb)
   else
     write(fnumb,'(" Image ",I3,8X)',advance="NO") n
   end if
+
   if (flag_init_pes_module) then
     write(fnumb,'(":: Energy ",F15.6)') pes_energy(n)
   else
     write(fnumb,*)
   end if
   
+  ! write the actual geometry -----------------------------
   do i=1, geom_len
     if (mod(i,3)==1) then
       write(fnumb,'(4X,A2,1X)',advance='no') element(i/3+1)
@@ -806,7 +809,11 @@ subroutine write_image(n,fnumb)
     write(fnumb,'(1X,F13.6)',advance='no') image_geom(n,i)
 
     if (mod(i,3)==0) then
-      write(fnumb,*)
+      if (write_elabel.and.flag_elabel) then
+        write(fnumb,'(2X,A)') elabel(i/3)
+      else
+        write(fnumb,*)
+      end if
     end if
   end do
 

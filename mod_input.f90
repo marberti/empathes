@@ -958,7 +958,7 @@ subroutine consistency_check(got_geometries_file,ri_start_atoms,&
 
     ! check element label -----------------------------------
     if (got_start_elabel.neqv.got_end_elabel) then
-      write(FILEOUT,*) "WAR consistency_check: element labels must be specified "&
+      write(FILEOUT,*) "WAR consistency_check: element labels must be specified "//&
         &"in all the geometry blocks or none"
       flag_not_consistent = .true.
     else

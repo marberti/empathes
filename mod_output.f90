@@ -686,15 +686,6 @@ subroutine write_neb_input_template(verbose)
   write(tmplt_fnumb,'(A)') "#ENDPESINPUTTEMPLATE"
   write(tmplt_fnumb,'(A)')
   if (verbose.eqv..true.) then
-  write(tmplt_fnumb,'(A)') "! [Mandatory] if using siesta"
-  write(tmplt_fnumb,'(A)') "! The #LABEL and #ENDLABEL keywords delimit a block of labels."
-  write(tmplt_fnumb,'(A)') "! This block must contain exactly one label per atom of the geometry."
-  write(tmplt_fnumb,'(A)') "! Each label must be specified on its line."
-  end if
-  write(tmplt_fnumb,'(A)') "!#LABEL"
-  write(tmplt_fnumb,'(A)') "!#ENDLABEL"
-  write(tmplt_fnumb,'(A)')
-  if (verbose.eqv..true.) then
   write(tmplt_fnumb,'(A)') "! [Optional / Mandatory if #NEWPESPROGRAM is specified]"
   write(tmplt_fnumb,'(A)') "! The #SCFCYCLE keyword, followed by an integer,"
   write(tmplt_fnumb,'(A)') "! specifies the maximum number of SCF cycles that will be performed."

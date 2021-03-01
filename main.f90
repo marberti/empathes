@@ -1,4 +1,4 @@
-program neb
+program main
 
 #ifdef USE_MPI
   use mpi
@@ -328,5 +328,5 @@ end subroutine write_build_version
 
 !====================================================================
 
-end program neb
+end program main
 

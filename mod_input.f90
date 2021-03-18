@@ -582,10 +582,6 @@ subroutine read_input(fname_in)
     &got_pes_exec,got_geometries_file,got_start,got_start_energy,got_end,&
     &got_end_energy,got_images,got_scfcycle,got_scfconv,got_idpp)
 
-  call check_gaussian_mandatory_kw()
-
-  call check_siesta_mandatory_kw()
-
   call consistency_check(got_geometries_file,ri_start_atoms,&
     &ri_end_atoms,ri_start_elem,ri_end_elem,got_start_elabel,got_end_elabel,&
     &ri_start_elab,ri_end_elab)
@@ -603,6 +599,10 @@ subroutine read_input(fname_in)
       call update_elabel(ri_start_elab)
     end if
   end if
+
+  ! check the mandatory keywords for the external program -
+  call check_gaussian_mandatory_kw()
+  call check_siesta_mandatory_kw()
 
   ! deallocation section ----------------------------------
   if (allocated(ri_start_elem)) then

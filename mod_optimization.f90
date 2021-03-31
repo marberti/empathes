@@ -735,9 +735,7 @@ subroutine optmz_fire(mode,flag_out,nsteps,maxstepsize,tol,&
   real(DBL)                              :: alpha
   logical                                :: flag_converged
   integer                                :: i
-  integer                                :: j
   integer                                :: stepi
-  real(DBL)                              :: rtmp
   character(8)                           :: istr
   integer                                :: err_n
   character(120)                         :: err_msg
@@ -876,24 +874,9 @@ subroutine optmz_fire(mode,flag_out,nsteps,maxstepsize,tol,&
     call update_images(x)
  
     ! write the results -----------------------------------
-    total_conv = .false.
-    write(FILEOUT,'(5X,"Image",12X,"Energy",9X,"Tot Force",4X,"Conv (",ES8.1,")")') p_tol
-    do j=1, image_n
-      rtmp = norm(total_forces(j,:))
-      if (rtmp<p_tol) then
-        total_conv(j) = .true.
-      end if
+    call write_opt_results(mode,total_conv,p_tol)
 
-      select case (mode)
-      case (PES_MODE)
-        write(FILEOUT,'(7X,I3,3X,F15.6,3X,F15.6,7X,L1)')&
-          &j,pes_energy(j),rtmp,total_conv(j)
-      case (IDPP_MODE)
-        write(FILEOUT,'(7X,I3,3X,F15.6,3X,F15.6,7X,L1)')&
-          &j,idpp_energy(j),rtmp,total_conv(j)
-      end select
-    end do
-
+    ! write geometry file ---------------------------------
     if (p_savelastgeom) then
       call last_geom_bkp(.true.)
     end if
@@ -1027,6 +1010,42 @@ subroutine total_forces_modifiers(mode,p_nsteps,i,p_fixed)
   end if
 
 end subroutine total_forces_modifiers
+
+!====================================================================
+
+subroutine write_opt_results(mode,total_conv,p_tol)
+
+  integer,               intent(IN)  :: mode
+  logical, dimension(:), intent(OUT) :: total_conv
+  real(DBL),             intent(IN)  :: p_tol
+
+  character(*), parameter            :: my_name = "write_opt_results"
+  integer                            :: j
+  real(DBL)                          :: rtmp
+
+  ! preliminary checks ------------------------------------
+  if (size(total_conv,1)/=image_n) then
+    call error(my_name//": wrong size of argument total_conv")
+  end if
+
+  ! write the results -------------------------------------
+  total_conv = .false.
+  write(FILEOUT,'(5X,"Image",12X,"Energy",9X,"Tot Force",4X,"Conv (",ES10.3,")")') p_tol
+  do j=1, image_n
+    rtmp = norm(total_forces(j,:))
+    if (rtmp<p_tol) then
+      total_conv(j) = .true.
+    end if
+
+    select case (mode)
+    case (PES_MODE)
+      write(FILEOUT,'(7X,I3,3X,F15.6,8X,ES10.3,7X,L1)') j, pes_energy(j), rtmp, total_conv(j)
+    case (IDPP_MODE)
+      write(FILEOUT,'(7X,I3,3X,F15.6,8X,ES10.3,7X,L1)') j, idpp_energy(j), rtmp, total_conv(j)
+    end select
+  end do
+
+end subroutine write_opt_results
 
 !====================================================================
 

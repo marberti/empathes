@@ -175,16 +175,8 @@ subroutine optmz_steepest_descent(mode,flag_out,nsteps,stepsize,tol,&
   integer                                :: j
   character(8)                           :: istr
   logical                                :: flag_converged
-  logical,   allocatable, dimension(:)   :: perpen_conv
   logical,   allocatable, dimension(:)   :: total_conv
-  logical,   allocatable, dimension(:)   :: delta_total_conv
   real(DBL), allocatable, dimension(:,:) :: new_geom
-  real(DBL), allocatable, dimension(:,:) :: old_geom
-  real(DBL), allocatable, dimension(:,:) :: delta_geom
-  real(DBL), allocatable, dimension(:,:) :: old_forces
-  real(DBL), allocatable, dimension(:,:) :: delta_forces
-  real(DBL)                              :: max_disp
-  real(DBL)                              :: max_force_norm
   real(DBL)                              :: tmp_real
   integer                                :: err_n
   character(120)                         :: err_msg
@@ -262,37 +254,7 @@ subroutine optmz_steepest_descent(mode,flag_out,nsteps,stepsize,tol,&
     call error("optmz_steepest_descent: "//trim(err_msg))
   end if
 
-  allocate(old_geom(image_n,geom_len),stat=err_n,errmsg=err_msg)
-  if (err_n/=0) then
-    call error("optmz_steepest_descent: "//trim(err_msg))
-  end if
-
-  allocate(delta_geom(image_n,geom_len),stat=err_n,errmsg=err_msg)
-  if (err_n/=0) then
-    call error("optmz_steepest_descent: "//trim(err_msg))
-  end if
-
-  allocate(old_forces(image_n,geom_len),stat=err_n,errmsg=err_msg)
-  if (err_n/=0) then
-    call error("optmz_steepest_descent: "//trim(err_msg))
-  end if
-
-  allocate(delta_forces(image_n,geom_len),stat=err_n,errmsg=err_msg)
-  if (err_n/=0) then
-    call error("optmz_steepest_descent: "//trim(err_msg))
-  end if
-
-  allocate(perpen_conv(image_n),stat=err_n,errmsg=err_msg)
-  if (err_n/=0) then
-    call error("optmz_steepest_descent: "//trim(err_msg))
-  end if
-
   allocate(total_conv(image_n),stat=err_n,errmsg=err_msg)
-  if (err_n/=0) then
-    call error("optmz_steepest_descent: "//trim(err_msg))
-  end if
-
-  allocate(delta_total_conv(image_n),stat=err_n,errmsg=err_msg)
   if (err_n/=0) then
     call error("optmz_steepest_descent: "//trim(err_msg))
   end if
@@ -300,7 +262,6 @@ subroutine optmz_steepest_descent(mode,flag_out,nsteps,stepsize,tol,&
   ! working section ---------------------------------------
   flag_converged = .false.
   new_geom       = image_geom(1:image_n,:)
-  old_geom       = image_geom(1:image_n,:)
 
   i = 1
   do
@@ -318,29 +279,6 @@ subroutine optmz_steepest_descent(mode,flag_out,nsteps,stepsize,tol,&
     call update_images(new_geom)
 
     ! write the results -----------------------------------
-    delta_geom = old_geom-new_geom
-    max_disp   = maxval(abs(delta_geom))
-    write(FILEOUT,'(5X,"Max Displacement = ",ES16.9)') max_disp
-
-    max_force_norm = -1.0_DBL
-    do j=1,image_n
-      tmp_real = norm(total_forces(j,:))
-      if (tmp_real>max_force_norm) then
-        max_force_norm = tmp_real
-      end if
-    end do
-    write(FILEOUT,'(5X,"Max Force Norm   = ",ES16.9)') max_force_norm
-
-    perpen_conv = .false.
-    write(FILEOUT,'(5X,"Image    Perp Force Norm   Conv (tol = ",ES8.1,")")') p_tol
-    do j=1, image_n
-      tmp_real = norm(perpen_pes_forces(j,:))
-      if (tmp_real<p_tol) then
-        perpen_conv(j) = .true.
-      end if
-      write(FILEOUT,'(7X,I3,3X,ES16.9,4X,L1)') j, tmp_real, perpen_conv(j)
-    end do
-
     total_conv = .false.
     write(FILEOUT,'(5X,"Image     Tot Force Norm   Conv (tol = ",ES8.1,")")') p_tol
     do j=1, image_n
@@ -350,19 +288,6 @@ subroutine optmz_steepest_descent(mode,flag_out,nsteps,stepsize,tol,&
       end if
       write(FILEOUT,'(7X,I3,3X,ES16.9,4X,L1)') j, tmp_real, total_conv(j)
     end do
-
-    delta_total_conv = .false.
-    if (i>1) then
-      write(FILEOUT,'(5X,"Image   Delta Tot F Norm   Conv (tol = ",ES8.1,")")') p_tol
-      delta_forces = old_forces-total_forces
-      do j=1, image_n
-        tmp_real = norm(delta_forces(j,:))
-        if (tmp_real<p_tol) then
-          delta_total_conv(j) = .true.
-        end if
-        write(FILEOUT,'(7X,I3,3X,ES16.9,4X,L1)') j, tmp_real, delta_total_conv(j)
-      end do
-    end if
 
     if ((p_writegp/=-1).and.(mod(i,p_writegp)==0)) then
       call write_gnuplot_pes_energy(i)
@@ -384,17 +309,11 @@ subroutine optmz_steepest_descent(mode,flag_out,nsteps,stepsize,tol,&
       flag_converged = .true.
     end if
     
-    if (alltrue(perpen_conv)) then
-      flag_converged = .true.
-    end if
-
     if (flag_converged) then
       exit
     end if
 
     ! update variables and loop index ---------------------
-    old_geom   = new_geom
-    old_forces = total_forces
     i          = i+1
   end do
 
@@ -404,37 +323,7 @@ subroutine optmz_steepest_descent(mode,flag_out,nsteps,stepsize,tol,&
     call error("optmz_steepest_descent: "//trim(err_msg))
   end if
 
-  deallocate(old_geom,stat=err_n,errmsg=err_msg)
-  if (err_n/=0) then
-    call error("optmz_steepest_descent: "//trim(err_msg))
-  end if
-
-  deallocate(delta_geom,stat=err_n,errmsg=err_msg)
-  if (err_n/=0) then
-    call error("optmz_steepest_descent: "//trim(err_msg))
-  end if
-
-  deallocate(old_forces,stat=err_n,errmsg=err_msg)
-  if (err_n/=0) then
-    call error("optmz_steepest_descent: "//trim(err_msg))
-  end if
-
-  deallocate(delta_forces,stat=err_n,errmsg=err_msg)
-  if (err_n/=0) then
-    call error("optmz_steepest_descent: "//trim(err_msg))
-  end if
-
-  deallocate(perpen_conv,stat=err_n,errmsg=err_msg)
-  if (err_n/=0) then
-    call error("optmz_steepest_descent: "//trim(err_msg))
-  end if
-
   deallocate(total_conv,stat=err_n,errmsg=err_msg)
-  if (err_n/=0) then
-    call error("optmz_steepest_descent: "//trim(err_msg))
-  end if
-
-  deallocate(delta_total_conv,stat=err_n,errmsg=err_msg)
   if (err_n/=0) then
     call error("optmz_steepest_descent: "//trim(err_msg))
   end if

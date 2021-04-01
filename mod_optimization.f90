@@ -172,12 +172,10 @@ subroutine optmz_steepest_descent(mode,flag_out,nsteps,stepsize,tol,&
   logical                                :: p_verbose
 
   integer                                :: i
-  integer                                :: j
   character(8)                           :: istr
   logical                                :: flag_converged
   logical,   allocatable, dimension(:)   :: total_conv
   real(DBL), allocatable, dimension(:,:) :: new_geom
-  real(DBL)                              :: tmp_real
   integer                                :: err_n
   character(120)                         :: err_msg
 
@@ -279,15 +277,7 @@ subroutine optmz_steepest_descent(mode,flag_out,nsteps,stepsize,tol,&
     call update_images(new_geom)
 
     ! write the results -----------------------------------
-    total_conv = .false.
-    write(FILEOUT,'(5X,"Image     Tot Force Norm   Conv (tol = ",ES8.1,")")') p_tol
-    do j=1, image_n
-      tmp_real = norm(total_forces(j,:))
-      if (tmp_real<p_tol) then
-        total_conv(j) = .true.
-      end if
-      write(FILEOUT,'(7X,I3,3X,ES16.9,4X,L1)') j, tmp_real, total_conv(j)
-    end do
+    call write_opt_results(mode,total_conv,p_tol)
 
     if ((p_writegp/=-1).and.(mod(i,p_writegp)==0)) then
       call write_gnuplot_pes_energy(i)

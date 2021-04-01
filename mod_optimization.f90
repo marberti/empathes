@@ -123,8 +123,7 @@ subroutine optmz_pes(flag_out)
 
   select case (optmz_algo)
   case (ALGO_SD)
-    call optmz_steepest_descent(PES_MODE,flag_out,nsteps=500,stepsize=0.01_DBL,writegp=1,&
-      &writegeom=-1)
+    call optmz_steepest_descent(PES_MODE,flag_out)
   case (ALGO_LBFGS)
     call optmz_lbfgs(PES_MODE,flag_out)
   case (ALGO_FIRE)

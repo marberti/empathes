@@ -151,7 +151,7 @@ end subroutine optmz_idpp
 !====================================================================
 
 subroutine optmz_steepest_descent(mode,flag_out,nsteps,stepsize,tol,&
-    &writegp,writegeom,fixed,savelastgeom,verbose)
+    &writegp,fixed,savelastgeom,verbose)
 
   integer,                   intent(IN)  :: mode
   logical,                   intent(OUT) :: flag_out ! true if convergent, false otherwise
@@ -159,14 +159,12 @@ subroutine optmz_steepest_descent(mode,flag_out,nsteps,stepsize,tol,&
   real(DBL), optional,       intent(IN)  :: stepsize
   real(DBL), optional,       intent(IN)  :: tol
   integer,   optional,       intent(IN)  :: writegp
-  integer,   optional,       intent(IN)  :: writegeom
   logical,   optional,       intent(IN)  :: fixed
   logical,   optional,       intent(IN)  :: savelastgeom
   logical,   optional,       intent(IN)  :: verbose
 
   integer                                :: p_nsteps
   integer                                :: p_writegp
-  integer                                :: p_writegeom
   real(DBL)                              :: p_stepsize
   real(DBL)                              :: p_tol
   logical                                :: p_fixed
@@ -222,12 +220,6 @@ subroutine optmz_steepest_descent(mode,flag_out,nsteps,stepsize,tol,&
     p_writegp = writegp
   else
     p_writegp = -1
-  end if
-
-  if (present(writegeom).and.(writegeom>0)) then
-    p_writegeom = writegeom
-  else
-    p_writegeom = -1
   end if
 
   if (present(fixed)) then
@@ -374,10 +366,6 @@ subroutine optmz_steepest_descent(mode,flag_out,nsteps,stepsize,tol,&
 
     if ((p_writegp/=-1).and.(mod(i,p_writegp)==0)) then
       call write_gnuplot_pes_energy(i)
-    end if
-
-    if ((p_writegeom/=-1).and.(mod(i,p_writegeom)==0)) then
-      call write_all_images(FILEOUT,.true.)
     end if
 
     if (p_savelastgeom) then

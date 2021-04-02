@@ -33,12 +33,13 @@ subroutine read_input(fname_in)
 
   character(*),                intent(IN) :: fname_in
 
-  integer, parameter                      :: fnumb_in    = 100
-  integer, parameter                      :: SLEN        = 300
-  character(*), parameter                 :: SLEN_FORMAT = "(A300)"
+  integer, parameter                      :: fnumb_in       = 100
+  integer, parameter                      :: SLEN           = 300
+  character(*), parameter                 :: SLEN_FORMAT    = "(A300)"
+  character(*), parameter                 :: CMD_STR_FORMAT = "(A301)"
   integer                                 :: ri_start_atoms
   integer                                 :: ri_end_atoms
-  character(SLEN)                         :: cmd_str
+  character(SLEN+1)                       :: cmd_str
   character(SLEN)                         :: keyword
   character(SLEN)                         :: arg
   character(SLEN)                         :: ri_pes_program
@@ -46,6 +47,7 @@ subroutine read_input(fname_in)
   character(3), allocatable, dimension(:) :: ri_end_elem
   character(3), allocatable, dimension(:) :: ri_start_elab
   character(3), allocatable, dimension(:) :: ri_end_elab
+  character(8)                            :: istr
   logical                                 :: got_error
   integer                                 :: err_n
   character(120)                          :: err_msg
@@ -136,11 +138,18 @@ subroutine read_input(fname_in)
   ! read the input file -----------------------------------
   do
     ! Get a string ----------------------------------------
-    read(fnumb_in,SLEN_FORMAT,iostat=err_n) cmd_str
+    read(fnumb_in,CMD_STR_FORMAT,iostat=err_n) cmd_str
     
     ! Check end of file -----------------------------------
     if (err_n/=0) then
       exit
+    end if
+
+    ! Check string len ------------------------------------
+    if (len_trim(cmd_str)>SLEN) then
+      write(istr,'(I8)') SLEN
+      istr = adjustl(istr)
+      call error("read_input: each line of input cannot exceed "//trim(istr)//" characters")
     end if
 
     ! Parse command ---------------------------------------

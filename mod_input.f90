@@ -33,13 +33,15 @@ subroutine read_input(fname_in)
 
   character(*),                intent(IN) :: fname_in
 
-  integer, parameter                      :: fnumb_in = 100
+  integer, parameter                      :: fnumb_in    = 100
+  integer, parameter                      :: SLEN        = 300
+  character(*), parameter                 :: SLEN_FORMAT = "(A300)"
   integer                                 :: ri_start_atoms
   integer                                 :: ri_end_atoms
-  character(200)                          :: cmd_str
-  character(50)                           :: keyword
-  character(50)                           :: arg
-  character(50)                           :: ri_pes_program
+  character(SLEN)                         :: cmd_str
+  character(SLEN)                         :: keyword
+  character(SLEN)                         :: arg
+  character(SLEN)                         :: ri_pes_program
   character(3), allocatable, dimension(:) :: ri_start_elem
   character(3), allocatable, dimension(:) :: ri_end_elem
   character(3), allocatable, dimension(:) :: ri_start_elab
@@ -134,7 +136,7 @@ subroutine read_input(fname_in)
   ! read the input file -----------------------------------
   do
     ! Get a string ----------------------------------------
-    read(fnumb_in,'(A200)',iostat=err_n) cmd_str
+    read(fnumb_in,SLEN_FORMAT,iostat=err_n) cmd_str
     
     ! Check end of file -----------------------------------
     if (err_n/=0) then
@@ -484,7 +486,7 @@ subroutine read_input(fname_in)
         call error("read_input: #ADDITIONALCMD specified more than once")
       end if
 
-      read(fnumb_in,'(A200)',iostat=err_n) cmd_str
+      read(fnumb_in,SLEN_FORMAT,iostat=err_n) cmd_str
       if (err_n/=0) then
         call error("read_input: cannot read additional command")
       end if

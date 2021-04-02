@@ -576,6 +576,8 @@ subroutine get_field(str_in,str_out,n,err_n,err_msg)
   integer                   :: end_field
   character(1)              :: ch
   character(3)              :: n_str
+  character(8)              :: istr1
+  character(8)              :: istr2
   logical                   :: prev_space
 
   if (n<1) then
@@ -622,9 +624,14 @@ subroutine get_field(str_in,str_out,n,err_n,err_msg)
     return
   end if
 
-  if ((end_field-start_field)>len(str_out)) then
+  if ((end_field-start_field+1)>len(str_out)) then
     err_n   = FAILURE
-    err_msg = "get_field: output string too small"
+    write(istr1,'(I8)') len(str_out)
+    istr1 = adjustl(istr1)
+    write(istr2,'(I8)') end_field-start_field+1
+    istr2 = adjustl(istr2)
+    err_msg = "get_field: output string too small ("//trim(istr1)//&
+      &") to contain the field ("//trim(istr2)//")"
     return
   end if
 

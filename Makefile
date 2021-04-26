@@ -1,3 +1,20 @@
+# Copyright (C) 2020-2021  Marco Bertini
+#
+# This file is part of Empathes.
+#
+# Empathes is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Empathes is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Empathes.  If not, see <https://www.gnu.org/licenses/>.
+
 CC       = gcc     
 FC       = gfortran
 MPICC    = mpicc.openmpi 
@@ -30,7 +47,7 @@ FSOURCES = mod_utility.f90            \
 
 COBJECTS = $(CSOURCES:.c=.o)
 FOBJECTS = $(FSOURCES:.f90=.o)
-OUT      = neb.x
+OUT      = empathes
 
 # main compilation options --------------------------------
 .PHONY: default

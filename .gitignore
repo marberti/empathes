@@ -4,6 +4,7 @@
 *.mod
 *.x
 *.ignore
+empathes
 
 !liblbfgsb.a
 

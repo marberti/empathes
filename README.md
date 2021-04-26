@@ -1,7 +1,7 @@
-# NEB - Nudged Elastic Band
+# Empathes - Extensible Minimum Path Estimator
 
-This is an implementation of the NEB method for finding transition states.
-It works as an interface for external programs (currently Gaussian and SIESTA), from which it takes all the informations it needs, like molecular energy and atomic forces. 
+Empathes is an implementation of the CI-NEB method for finding transition states.
+It works as an interface for external programs (currently Gaussian and Siesta), from which it takes the information it needs, like molecular energies and atomic forces, to get the job done.
 
 ## References
 

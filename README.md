@@ -3,6 +3,32 @@
 Empathes is an implementation of the CI-NEB method for finding transition states.
 It works as an interface for external programs (currently Gaussian and Siesta), from which it takes the information it needs, like molecular energies and atomic forces, to get the job done.
 
+## Installation
+
+Firstly clone the repository with
+
+    git clone https://github.com/marberti/empathes.git
+
+Then enter the directory
+
+    cd empathes
+
+Before compiling, make sure that gfortran and make are installed on your system.
+Compile the serial version of empathes
+
+    make serial
+
+If, instead, you want to compile the parallel version, make sure to have an MPI implementation installed on your system.
+The default MPI compilers used in the Makefile are those from OpenMPI.
+If you prefer another implementation, please change the Makefile variables MPICC and MPIFC with the appropriate mpicc and mpifort executable.
+Compile the parallel version of empathes
+
+    make parallel
+
+To confirm that the build process was successful, run empathes with the -v argument
+
+    ./empathes -v
+
 ## References
 
 1. Henkelman et al., Improved tangent estimate in the nudged elastic band method for finding minimum energy paths and saddle points (doi: 10.1063/1.1323224)

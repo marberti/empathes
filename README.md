@@ -5,7 +5,7 @@ It works as an interface for external programs (currently Gaussian and Siesta), 
 
 ## Installation
 
-Firstly clone the repository with
+First clone the repository
 
     git clone https://github.com/marberti/empathes.git
 
@@ -13,7 +13,9 @@ Then enter the directory
 
     cd empathes
 
-Before compiling, make sure that gfortran and make are installed on your system.
+Before compiling, make sure that a C compiler, a Fortran compiler and the _make_ utility are installed on your system.
+The default copilers used in the Makefile are gcc and gfortran.
+If you prefer other compilers, please change the Makefile variables CC and FC accordingly.
 Compile the serial version of empathes
 
     make serial

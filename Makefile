@@ -22,7 +22,7 @@ MPIFC    = mpif90.openmpi
 FLAGS    = -g -cpp -O2 -Wall -Wunused -Wpedantic -Wno-maybe-uninitialized
 CFLAGS   = -std=c11  
 FFLAGS   = -std=f2008
-LPATH    = -L./lib
+LPATH    = -Llib/liblbfgsb
 LIBS     = -llbfgsb
 
 CSOURCES = c_utility.c
@@ -58,7 +58,7 @@ debug0: FLAGS += -DDBG0
 debug0: serial
 
 .PHONY: serial
-serial: clean $(OUT)
+serial: full-clean $(OUT)
 
 .PHONY: parallel
 parallel: CC = $(MPICC)
@@ -74,19 +74,30 @@ help:
 	@echo "  make serial          Serial compilation"
 	@echo "  make parallel        Parallel compilation (MPI)"
 
+.PHONY: full-clean
+full-clean: clean-lib clean
+
 .PHONY: clean
 clean:
 	@printf "Cleaning..."
 	@rm -f *.o *.mod
 	@printf " DONE\n"
 
+.PHONY: clean-lib
+clean-lib:
+	$(MAKE) -C lib/liblbfgsb clean
+
 .PHONY: screenclear
 screenclear:
 	@clear
 
 # core ----------------------------------------------------
-$(OUT): allobjects
+$(OUT): lib allobjects
 	$(FC) $(LPATH) $(FLAGS) $(FFLAGS) $(COBJECTS) $(FOBJECTS) $(LIBS) -o $(OUT)
+
+.PHONY: lib
+lib:
+	$(MAKE) -C lib/liblbfgsb
 
 .PHONY: allobjects
 allobjects: $(COBJECTS) $(FOBJECTS)

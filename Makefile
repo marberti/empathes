@@ -58,7 +58,7 @@ debug0: FLAGS += -DDBG0
 debug0: serial
 
 .PHONY: serial
-serial: full-clean $(OUT)
+serial: clean $(OUT)
 
 .PHONY: parallel
 parallel: CC = $(MPICC)

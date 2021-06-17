@@ -788,7 +788,7 @@ subroutine write_image(n,fnumb,write_elabel)
     call error(my_name//": images not initialized")
   else if ((n<0).or.(n>(image_n+1))) then
     write(err_msg,'(A,I5)') my_name//": wrong argument ", n
-    call error(err_msg)
+    call error(trim(err_msg))
   end if
 
   ! write number of atoms and comment line ----------------

@@ -740,7 +740,7 @@ subroutine read_geometries_from_input(fnumb_in,point,atoms,elem,elab,found_elab)
   ! read geometry -----------------------------------------
   backspace(unit=fnumb_in,iostat=err_n,iomsg=err_msg)
   if (err_n/=0) then
-    call error(my_name//": "//err_msg)
+    call error(my_name//": "//trim(err_msg))
   end if
 
   select case (point)

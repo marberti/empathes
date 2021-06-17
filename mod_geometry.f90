@@ -597,8 +597,8 @@ subroutine mmpi_init_images()
       write(istr,'(I8)') proc_id
       istr    = adjustl(istr)
       err_msg = "mmpi_init_images: process "//trim(istr)//&
-        &": "//err_msg
-      call error(err_msg)
+        &": "//trim(err_msg)
+      call error(trim(err_msg))
     end if
 
     e_buff = element
@@ -639,8 +639,8 @@ subroutine mmpi_init_images()
       write(istr,'(I8)') proc_id
       istr    = adjustl(istr)
       err_msg = "mmpi_init_images: process "//trim(istr)//&
-        &": "//err_msg
-      call error(err_msg)
+        &": "//trim(err_msg)
+      call error(trim(err_msg))
     end if
 
 !DEBUG: used to check if message passing was successful
@@ -653,7 +653,7 @@ subroutine mmpi_init_images()
       istr    = adjustl(istr)
       err_msg = "mmpi_init_images: process "//trim(istr)//&
         &": module geometry already initialized"
-      call error(err_msg)
+      call error(trim(err_msg))
     end if
 
     ! mandatory variables ---------------------------------
@@ -672,8 +672,8 @@ subroutine mmpi_init_images()
       write(istr,'(I8)') proc_id
       istr    = adjustl(istr)
       err_msg = "mmpi_init_images: process "//trim(istr)//&
-        &": "//err_msg
-      call error(err_msg)
+        &": "//trim(err_msg)
+      call error(trim(err_msg))
     end if
 
     call mpi_bcast(e_buff,sz*len(e_buff),&
@@ -714,8 +714,8 @@ subroutine mmpi_init_images()
       write(istr,'(I8)') proc_id
       istr    = adjustl(istr)
       err_msg = "mmpi_init_images: process "//trim(istr)//&
-        &": "//err_msg
-      call error(err_msg)
+        &": "//trim(err_msg)
+      call error(trim(err_msg))
     end if
 
     flag_init_images = .true.

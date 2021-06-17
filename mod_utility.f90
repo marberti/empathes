@@ -600,7 +600,7 @@ subroutine get_maxima_neighbors(vals,flags)
   ! allocation section ------------------------------------
   allocate(maxima(n), stat=err_n, errmsg=err_msg)
   if (err_n /= 0) then
-    call error(my_name//": "//err_msg)
+    call error(my_name//": "//trim(err_msg))
   end if
 
   ! working section ---------------------------------------
@@ -617,7 +617,7 @@ subroutine get_maxima_neighbors(vals,flags)
   ! deallocation section ----------------------------------
   deallocate(maxima, stat=err_n, errmsg=err_msg)
   if (err_n /= 0) then
-    call error(my_name//": "//err_msg)
+    call error(my_name//": "//trim(err_msg))
   end if
 
 end subroutine get_maxima_neighbors

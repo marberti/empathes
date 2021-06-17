@@ -764,7 +764,7 @@ subroutine mmpi_init_pes_module()
       istr = adjustl(istr)
       err_msg = "mmpi_init_pes_module: process "//trim(istr)//&
         &": module pes already initialized"
-      call error(err_msg)
+      call error(trim(err_msg))
     end if
 
     if (flag_init_images.eqv..false.) then
@@ -772,7 +772,7 @@ subroutine mmpi_init_pes_module()
       istr = adjustl(istr)
       err_msg = "mmpi_init_pes_module: process "//trim(istr)//&
         &": module geometry not initialized"
-      call error(err_msg)
+      call error(trim(err_msg))
     end if
 
     ! mandatory variables ---------------------------------
@@ -922,7 +922,7 @@ subroutine mmpi_compute_pes_forces()
     istr = adjustl(istr)
     err_msg = "mmpi_compute_pes_forces: process "//trim(istr)//&
       &": module pes not initialized"
-    call error(err_msg)
+    call error(trim(err_msg))
   end if
 
   ! allocation section ------------------------------------

@@ -101,6 +101,7 @@ subroutine read_input(fname_in)
   logical                                 :: got_opt_cycle
   logical                                 :: got_opt_conv
   logical                                 :: got_springmode
+  logical                                 :: got_mpemode
   logical                                 :: got_scfvshift
   logical                                 :: got_intgrid
   logical                                 :: got_additional_cmd
@@ -145,6 +146,7 @@ subroutine read_input(fname_in)
   got_opt_cycle              = .false.
   got_opt_conv               = .false.
   got_springmode             = .false.
+  got_mpemode                = .false.
   got_scfvshift              = .false.
   got_intgrid                = .false.
   got_additional_cmd         = .false.
@@ -454,6 +456,19 @@ subroutine read_input(fname_in)
 
       call set_spring_mode(arg)
       got_springmode=.true.
+
+    case ("#MPEMODE")
+      if (got_mpemode) then
+        call error("read_input: #MPEMODE specified more than once")
+      end if
+
+      call get_field(cmd_str,arg,2,err_n,err_msg)
+      if (err_n/=0) then
+        call error("read_input: "//trim(err_msg))
+      end if
+
+      call set_mpe_mode(arg)
+      got_mpemode=.true.
 
     case ("#SCFCYCLE")
       if (got_scfcycle) then

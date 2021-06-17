@@ -46,6 +46,7 @@ module elastic
   ! pubic procedures --------------------------------------
   public    :: set_spring_k,                &
                set_spring_mode,             &
+               set_mpe_mode,                &
                init_elastic_module,         &
                compute_total_forces,        &
                arbitrary_geom_total_forces, &
@@ -58,6 +59,12 @@ module elastic
   integer, parameter                     :: DYNAMIC_SPRING           = 1
   integer, parameter                     :: HYBRID_SPRING            = 2
   integer                                :: spring_mode              = DYNAMIC_SPRING
+
+  ! ENUM
+  ! to set the minimum path estimator (mpe) mode
+  integer, parameter                     :: NEB_MPE                  = 0
+  integer, parameter                     :: EB_MPE                   = 1
+  integer                                :: mpe_mode                 = NEB_MPE
 
   logical                                :: flag_spring_k            = .false.
   logical                                :: flag_init_elastic_module = .false.
@@ -122,6 +129,34 @@ subroutine set_spring_mode(str)
   first_call = .false.
 
 end subroutine set_spring_mode
+
+!====================================================================
+
+subroutine set_mpe_mode(str)
+
+  character(*), intent(INOUT) :: str
+
+  character(*), parameter     :: my_name    = "set_mpe_mode"
+  logical, save               :: first_call = .true.
+
+  if (first_call.eqv..false.) then
+    call error(my_name//": subroutine called more than once")
+  end if
+
+  call tolower(str)
+
+  select case (str)
+  case ("neb")
+    mpe_mode = NEB_MPE
+  case ("eb")
+    mpe_mode = EB_MPE
+  case default
+    call error(my_name//": unknown MPE mode """//trim(str)//"""")
+  end select
+
+  first_call = .false.
+
+end subroutine set_mpe_mode
 
 !====================================================================
 

@@ -83,6 +83,7 @@ module utility
                allfalse,                   &
                get_minima,                 &
                get_maxima,                 &
+               get_maxima_neighbors,       &
                get_field,                  &
                get_lines,                  &
                triang_numb,                &
@@ -568,6 +569,58 @@ subroutine get_maxima(vals,flags)
   end do
 
 end subroutine get_maxima
+
+!====================================================================
+
+subroutine get_maxima_neighbors(vals,flags)
+
+  ! Given an array of numbers, it firstly gets the maxima,
+  ! then returns an array containing the neighbors of those maxima
+  ! Example:
+  !   Maxima  :   000100100010100
+  !   Neighbor:   001011010101010
+
+  real(DBL), dimension(:), intent(IN)  :: vals
+  logical,   dimension(:), intent(OUT) :: flags
+
+  character(*), parameter              :: my_name = "get_maxima_neighbors"
+  logical, dimension(:), allocatable   :: maxima
+  integer                              :: n
+  integer                              :: i
+  integer                              :: err_n
+  character(120)                       :: err_msg
+
+  n = size(vals,1)
+
+  ! preliminary checks ------------------------------------
+  if (n/=size(flags,1)) then
+    call error(my_name//": wrong arguments' size")
+  end if
+
+  ! allocation section ------------------------------------
+  allocate(maxima(n), stat=err_n, errmsg=err_msg)
+  if (err_n /= 0) then
+    call error(my_name//": "//err_msg)
+  end if
+
+  ! working section ---------------------------------------
+  flags = .false.
+  call get_maxima(vals, maxima)
+
+  do i = 2, n - 1
+    if (maxima(i).eqv..true.) then
+      flags(i-1) = .true.
+      flags(i+1) = .true.
+    end if
+  end do
+
+  ! deallocation section ----------------------------------
+  deallocate(maxima, stat=err_n, errmsg=err_msg)
+  if (err_n /= 0) then
+    call error(my_name//": "//err_msg)
+  end if
+
+end subroutine get_maxima_neighbors
 
 !====================================================================
 

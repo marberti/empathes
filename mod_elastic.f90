@@ -49,7 +49,6 @@ module elastic
                init_elastic_module,         &
                compute_total_forces,        &
                arbitrary_geom_total_forces, &
-               init_tangents,               &
                set_total_forces_on_i
 
   !--------------------------------------------------------

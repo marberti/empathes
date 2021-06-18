@@ -518,7 +518,7 @@ subroutine get_minima(vals,flags)
 
   ! preliminary checks ------------------------------------
   if (n/=size(flags,1)) then
-    call error("get_minima: wrong arguments' size")
+    call error("get_minima: arguments' size mismatch")
   end if
 
   ! working section ---------------------------------------
@@ -553,7 +553,7 @@ subroutine get_maxima(vals,flags)
 
   ! preliminary checks ------------------------------------
   if (n/=size(flags,1)) then
-    call error("get_maxima: wrong arguments' size")
+    call error("get_maxima: arguments' size mismatch")
   end if
 
   ! working section ---------------------------------------
@@ -591,7 +591,7 @@ subroutine get_n_maxima(n,vals,flags)
 
   ! preliminary checks ------------------------------------
   if (sz /= size(flags,1)) then
-    call error(my_name//": wrong arguments' size")
+    call error(my_name//": arguments' size mismatch")
   end if
 
   if (n <= 0) then
@@ -651,7 +651,7 @@ subroutine get_maxima_neighbors(vals,flags,n)
 
   ! preliminary checks ------------------------------------
   if (sz /= size(flags,1)) then
-    call error(my_name//": wrong arguments' size")
+    call error(my_name//": arguments' size mismatch")
   end if
 
   ! allocation section ------------------------------------

@@ -624,42 +624,51 @@ end subroutine get_n_maxima
 
 !====================================================================
 
-subroutine get_maxima_neighbors(vals,flags)
+subroutine get_maxima_neighbors(vals,flags,n)
 
   ! Given an array of numbers, it firstly gets the maxima,
-  ! then returns an array containing the neighbors of those maxima
+  ! then returns an array containing the neighbors of those maxima.
+  !
   ! Example:
   !   Maxima  :   000100100010100
   !   Neighbor:   001011010101010
+  !
+  ! If the argument n is provided, the subroutine returns
+  ! the neighbors of, at most, the highest n maxima.
 
   real(DBL), dimension(:), intent(IN)  :: vals
   logical,   dimension(:), intent(OUT) :: flags
+  integer, optional,       intent(IN)  :: n
 
   character(*), parameter              :: my_name = "get_maxima_neighbors"
   logical, dimension(:), allocatable   :: maxima
-  integer                              :: n
+  integer                              :: sz
   integer                              :: i
   integer                              :: err_n
   character(120)                       :: err_msg
 
-  n = size(vals,1)
+  sz = size(vals,1)
 
   ! preliminary checks ------------------------------------
-  if (n/=size(flags,1)) then
+  if (sz /= size(flags,1)) then
     call error(my_name//": wrong arguments' size")
   end if
 
   ! allocation section ------------------------------------
-  allocate(maxima(n), stat=err_n, errmsg=err_msg)
+  allocate(maxima(sz), stat=err_n, errmsg=err_msg)
   if (err_n /= 0) then
     call error(my_name//": "//trim(err_msg))
   end if
 
   ! working section ---------------------------------------
   flags = .false.
-  call get_maxima(vals, maxima)
+  if (present(n)) then
+    call get_n_maxima(n, vals, maxima)
+  else
+    call get_maxima(vals, maxima)
+  end if
 
-  do i = 2, n - 1
+  do i = 2, sz - 1
     if (maxima(i).eqv..true.) then
       flags(i-1) = .true.
       flags(i+1) = .true.

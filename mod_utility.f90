@@ -83,6 +83,7 @@ module utility
                allfalse,                   &
                get_minima,                 &
                get_maxima,                 &
+               get_n_maxima,               &
                get_maxima_neighbors,       &
                get_field,                  &
                get_lines,                  &
@@ -569,6 +570,57 @@ subroutine get_maxima(vals,flags)
   end do
 
 end subroutine get_maxima
+
+!====================================================================
+
+subroutine get_n_maxima(n,vals,flags)
+
+  ! Returns, at most, the highest n maxima
+
+  integer,                 intent(IN)  :: n
+  real(DBL), dimension(:), intent(IN)  :: vals
+  logical,   dimension(:), intent(OUT) :: flags
+
+  character(*), parameter              :: my_name = "get_n_maxima"
+  integer                              :: i
+  integer                              :: sz
+  integer                              :: maxima
+  integer                              :: min_index
+
+  sz = size(vals,1)
+
+  ! preliminary checks ------------------------------------
+  if (sz /= size(flags,1)) then
+    call error(my_name//": wrong arguments' size")
+  end if
+
+  if (n <= 0) then
+    call error(my_name//": argument n must be a non-zero positive integer")
+  end if
+
+  ! get maxima --------------------------------------------
+  call get_maxima(vals, flags)
+
+  ! count maxima ------------------------------------------
+  maxima = 0
+  do i = 2, sz - 1
+    if (flags(i).eqv..true.) then
+      maxima = maxima + 1
+    end if
+  end do
+
+  ! remove lower maxima -----------------------------------
+  do
+    if (maxima <= n) then
+      exit
+    end if
+
+    min_index = minloc(vals, 1, mask=flags)
+    flags(min_index) = .false.
+    maxima = maxima - 1
+  end do
+
+end subroutine get_n_maxima
 
 !====================================================================
 

@@ -251,13 +251,13 @@ subroutine compute_total_forces(mode,fixed)
   select case (mode)
   case (PES_MODE)
     call compute_pes_forces()
-    call init_tangents(mode)
+    call init_tangents(mode, mpe_mode)
     call compute_parall_elastic_forces()
     call compute_perpen_pes_forces()
     total_forces = parall_elastic_forces+perpen_pes_forces
   case (IDPP_MODE)
     call compute_idpp_enfo()
-    call init_tangents(mode)
+    call init_tangents(mode, NEB_MPE)
     call compute_parall_elastic_forces()
     call compute_perpen_idpp_forces()
     total_forces = parall_elastic_forces+perpen_idpp_forces
@@ -432,7 +432,7 @@ end subroutine arbitrary_geom_total_forces
 
 !====================================================================
 
-subroutine init_tangents(mode)
+subroutine init_tangents(mode,mpe_mode_arg)
 
   !--------------------------------------------------------
   ! WARNING: init_tangents *must* be called
@@ -442,13 +442,14 @@ subroutine init_tangents(mode)
   !--------------------------------------------------------
 
   integer, intent(IN) :: mode
+  integer, intent(IN) :: mpe_mode_arg
 
   if (flag_init_elastic_module.eqv..false.) then
     call error("init_tangents: module elastic not initialized")
   end if
 
   call compute_half_tangent()
-  call compute_tangent(mode)
+  call compute_tangent(mode, mpe_mode_arg)
   call normalize_tangent()
 
 end subroutine init_tangents
@@ -694,14 +695,16 @@ end subroutine compute_half_tangent
 
 !====================================================================
 
-subroutine compute_tangent(mode)
+subroutine compute_tangent(mode,mpe_mode_arg)
 
   !--------------------------------------------------------
   ! Do not call directly, use init_tangents instead
   !--------------------------------------------------------
 
   integer,                  intent(IN) :: mode
+  integer,                  intent(IN) :: mpe_mode_arg
 
+  character(*),              parameter :: my_name = "compute_tangent"
   integer                              :: i
   real(DBL)                            :: prev
   real(DBL)                            :: curr
@@ -716,7 +719,7 @@ subroutine compute_tangent(mode)
   ! allocation section ------------------------------------
   allocate(energy(0:image_n+1),stat=err_n,errmsg=err_msg)
   if (err_n/=0) then
-    call error("compute_tangent: "//trim(err_msg))
+    call error(my_name//": "//trim(err_msg))
   end if
 
   ! mode selection ----------------------------------------
@@ -724,40 +727,59 @@ subroutine compute_tangent(mode)
   case (PES_MODE)
     energy = pes_energy
   case (IDPP_MODE)
+    if (mpe_mode_arg /= NEB_MPE) then
+      call error(my_name//": IDPP_MODE used without NEB_MPE")
+    end if
     energy = idpp_energy
   case default
     write(istr,'(I8)') mode
     istr = adjustl(istr)
-    call error("compute_tangent: mode """//trim(istr)//""" not valid")
+    call error(my_name//": mode """//trim(istr)//""" not valid")
   end select
 
   ! working section ---------------------------------------
-  do i=1, image_n
-    prev = energy(i-1)
-    curr = energy(i)
-    next = energy(i+1)
+  select case (mpe_mode_arg)
+  case (NEB_MPE)
 
-    if (prev==next) then
-      tangent(i,:) = half_tangent(i,:)+half_tangent(i-1,:)
-    else if ((next>curr).and.(curr>prev)) then
-      tangent(i,:) = half_tangent(i,:)
-    else if ((next<curr).and.(curr<prev)) then
-      tangent(i,:) = half_tangent(i-1,:)
-    else
-      e_max = max(abs(next-curr),abs(prev-curr))
-      e_min = min(abs(next-curr),abs(prev-curr))
-      if (next>prev) then
-        tangent(i,:) = (half_tangent(i,:)*e_max)+(half_tangent(i-1,:)*e_min)
+    do i=1, image_n
+      prev = energy(i-1)
+      curr = energy(i)
+      next = energy(i+1)
+
+      if (prev==next) then
+        tangent(i,:) = half_tangent(i,:)+half_tangent(i-1,:)
+      else if ((next>curr).and.(curr>prev)) then
+        tangent(i,:) = half_tangent(i,:)
+      else if ((next<curr).and.(curr<prev)) then
+        tangent(i,:) = half_tangent(i-1,:)
       else
-        tangent(i,:) = (half_tangent(i,:)*e_min)+(half_tangent(i-1,:)*e_max)
+        e_max = max(abs(next-curr),abs(prev-curr))
+        e_min = min(abs(next-curr),abs(prev-curr))
+        if (next>prev) then
+          tangent(i,:) = (half_tangent(i,:)*e_max)+(half_tangent(i-1,:)*e_min)
+        else
+          tangent(i,:) = (half_tangent(i,:)*e_min)+(half_tangent(i-1,:)*e_max)
+        end if
       end if
-    end if
-  end do
+    end do
+
+  case (EB_MPE)
+
+    do i=1, image_n
+      tangent(i,:) = (half_tangent(i-1,:)/norm(half_tangent(i-1,:))) + &
+        &(half_tangent(i,:)/norm(half_tangent(i,:)))
+    end do
+
+  case default
+    write(istr,'(I8)') mpe_mode_arg
+    istr = adjustl(istr)
+    call error(my_name//": mpe_mode_arg """//trim(istr)//""" not valid")
+  end select
 
   ! deallocation section ----------------------------------
   deallocate(energy,stat=err_n,errmsg=err_msg)
   if (err_n/=0) then
-    call error("compute_tangent: "//trim(err_msg))
+    call error(my_name//": "//trim(err_msg))
   end if
 
 end subroutine compute_tangent

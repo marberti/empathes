@@ -538,6 +538,14 @@ end subroutine compute_dynamic_spring_k
 
 subroutine compute_parall_elastic_forces()
 
+
+
+end subroutine compute_parall_elastic_forces
+
+!====================================================================
+
+subroutine compute_parall_elastic_forces_neb()
+
   integer   :: i
   real(DBL) :: coeff
   real(DBL) :: c1
@@ -563,7 +571,7 @@ subroutine compute_parall_elastic_forces()
     call error("compute_parall_elastic_forces: unknown spring mode")
   end select
 
-end subroutine compute_parall_elastic_forces
+end subroutine compute_parall_elastic_forces_neb
 
 !====================================================================
 

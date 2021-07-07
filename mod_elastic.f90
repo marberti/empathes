@@ -252,13 +252,13 @@ subroutine compute_total_forces(mode,fixed)
   case (PES_MODE)
     call compute_pes_forces()
     call init_tangents(mode, mpe_mode)
-    call compute_parall_elastic_forces()
+    call compute_parall_elastic_forces(mpe_mode)
     call compute_perpen_pes_forces()
     total_forces = parall_elastic_forces+perpen_pes_forces
   case (IDPP_MODE)
     call compute_idpp_enfo()
     call init_tangents(mode, NEB_MPE)
-    call compute_parall_elastic_forces()
+    call compute_parall_elastic_forces(NEB_MPE)
     call compute_perpen_idpp_forces()
     total_forces = parall_elastic_forces+perpen_idpp_forces
   case default
@@ -536,9 +536,23 @@ end subroutine compute_dynamic_spring_k
 
 !====================================================================
 
-subroutine compute_parall_elastic_forces()
+subroutine compute_parall_elastic_forces(mpe_mode_arg)
 
+  integer,     intent(IN) :: mpe_mode_arg
 
+  character(*), parameter :: my_name = "compute_parall_elastic_forces"
+  character(8)            :: istr
+
+  select case (mpe_mode_arg)
+  case (NEB_MPE)
+    call compute_parall_elastic_forces_neb()
+  case (EB_MPE)
+    call compute_parall_elastic_forces_eb()
+  case default
+    write (istr,'(I8)') mpe_mode_arg
+    istr = adjustl(istr)
+    call error(my_name//": mpe_mode_arg """//trim(istr)//""" not valid")
+  end select
 
 end subroutine compute_parall_elastic_forces
 

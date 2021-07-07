@@ -566,6 +566,90 @@ end subroutine compute_parall_elastic_forces
 
 !====================================================================
 
+subroutine compute_parall_elastic_forces_eb()
+
+  ! Implementation of parallel elastic forces
+  ! as described in the Elastic Band method (EB).
+  ! Equations in appendix C.
+  !
+  ! source: kolsbjerg2016automated; doi: 10.1063/1.4961868
+
+  character(*),              parameter :: my_name = "compute_parall_elastic_forces_eb"
+  real(DBL)                            :: l_eq
+  real(DBL), dimension(:), allocatable :: c1
+  real(DBL), dimension(:), allocatable :: c2
+  real(DBL)                            :: vmax
+  real(DBL)                            :: vmin
+  integer                              :: i
+  logical, dimension(:), allocatable   :: neighbors
+  integer                              :: err_n
+  character(120)                       :: err_msg
+
+  ! allocation section ------------------------------------
+  allocate(c1(geom_len), stat=err_n, errmsg=err_msg)
+  if (err_n /= 0) then
+    call error(my_name//": "//trim(err_msg))
+  end if
+
+  allocate(c2(geom_len), stat=err_n, errmsg=err_msg)
+  if (err_n /= 0) then
+    call error(my_name//": "//trim(err_msg))
+  end if
+
+  allocate(neighbors(0:image_n+1), stat=err_n, errmsg=err_msg)
+  if (err_n /= 0) then
+    call error(my_name//": "//trim(err_msg))
+  end if
+
+  ! compute l_eq ------------------------------------------
+  l_eq = norm(image_geom(image_n+1,:) - image_geom(0,:)) / (image_n + 1)
+
+  ! locate the neighbors of the energy maximum ------------
+  call get_maxima_neighbors(pes_energy,neighbors,1)
+
+  ! compute parallel elastic forces -----------------------
+  do i=1, image_n
+    c1 = (norm(half_tangent(i,:))   - l_eq) * (half_tangent(i,:)/norm(half_tangent(i,:)))
+    c2 = (norm(half_tangent(i-1,:)) - l_eq) * (half_tangent(i-1,:)/norm(half_tangent(i-1,:)))
+
+    select case (spring_mode)
+    case (STATIC_SPRING)
+      parall_elastic_forces(i,:) = spring_k * (c1 - c2)
+    case (DYNAMIC_SPRING,HYBRID_SPRING)
+      call compute_dynamic_spring_k()
+      parall_elastic_forces(i,:) = dynamic_spring_k(i+1)*c1 - dynamic_spring_k(i)*c2
+    case default
+      call error(my_name//": unknown spring mode")
+    end select
+
+    if (neighbors(i).eqv..true.) then
+      vmax = max(abs(pes_energy(i+1)-pes_energy(i)), abs(pes_energy(i-1)-pes_energy(i)))
+      vmin = min(abs(pes_energy(i+1)-pes_energy(i)), abs(pes_energy(i-1)-pes_energy(i)))
+
+      parall_elastic_forces(i,:) = parall_elastic_forces(i,:) * (vmin/vmax)
+    end if
+  end do
+
+  ! deallocation section ----------------------------------
+  deallocate(c1, stat=err_n, errmsg=err_msg)
+  if (err_n /= 0) then
+    call error(my_name//": "//trim(err_msg))
+  end if
+
+  deallocate(c2, stat=err_n, errmsg=err_msg)
+  if (err_n /= 0) then
+    call error(my_name//": "//trim(err_msg))
+  end if
+
+  deallocate(neighbors, stat=err_n, errmsg=err_msg)
+  if (err_n /= 0) then
+    call error(my_name//": "//trim(err_msg))
+  end if
+
+end subroutine compute_parall_elastic_forces_eb
+
+!====================================================================
+
 subroutine compute_perpen_pes_forces()
 
   integer   :: i

@@ -556,7 +556,7 @@ subroutine get_pes_forces(i,tid,conv_threshold,flag_conv,ig,pesf,pesg)
     end if
   case ("siesta")
     call write_siesta_input(i,conv_threshold,fnumb_in,fname_in,fname_out)
-    call exec_siesta(fname_in,fname_out)
+    call exec_siesta(fnumb_in,fname_in,fname_out)
     call get_siesta_output(i,fnumb_out,fname_out,flag_conv)
   case default
     call error("get_pes_forces: unknown program """//trim(pes_program)//"""")
@@ -1647,42 +1647,71 @@ end subroutine write_siesta_input
 
 !====================================================================
 
-subroutine exec_siesta(fname_in,fname_out)
+subroutine exec_siesta(fnumb_in,fname_in,fname_out)
 
+  integer,      intent(IN) :: fnumb_in
   character(*), intent(IN) :: fname_in
   character(*), intent(IN) :: fname_out
 
+  character(*),  parameter :: my_name     = "exec_siesta"
+  character(*),  parameter :: script_name = "siesta_omp.sh"
   character(140)           :: cmd
   integer                  :: exit_n
   integer                  :: cmd_n
   character(8)             :: exit_n_str
   character(8)             :: i_str
+  integer                  :: err_n
+  character(120)           :: err_msg
 
-  ! Command section ---------------------------------------
-  ! generate cmd string
-  if (flag_pes_proc.and.(pes_proc>1)) then
-    write(i_str,'(I8)') pes_proc
-    i_str = adjustl(i_str)
-    cmd = "mpirun -n "//trim(i_str)//" "//trim(pes_exec)//&
-      &" < "//trim(fname_in)//" > "//trim(fname_out)
-  else
+  ! determine how to execute siesta -----------------------
+  if (pes_proc > 1) then ! -----------> ! run siesta in parallel
+    if (flag_pes_program_with_mpi) then ! run siesta via MPI
+      write(i_str,'(I8)') pes_proc
+      i_str = adjustl(i_str)
+      cmd = "mpirun -n "//trim(i_str)//" "//trim(pes_exec)//" < "//trim(fname_in)//" > "//trim(fname_out)
+    else ! ---------------------------> ! run siesta via openMP
+      ! open the script file
+      open(unit=fnumb_in,file=script_name,status='NEW',action='WRITE',&
+        &iostat=err_n,iomsg=err_msg,position='REWIND')
+      if (err_n/=0) then
+        call error(my_name//": "//trim(err_msg))
+      end if
+
+      ! write the script
+      write(i_str,'(I8)') pes_proc
+      i_str = adjustl(i_str)
+
+      write(fnumb_in,'(A)') "#!/bin/bash"
+      write(fnumb_in,'(A)') "export OMP_NUM_THREADS="//trim(i_str)
+      write(fnumb_in,'(A)') trim(pes_exec)//" < "//trim(fname_in)//" > "//trim(fname_out)
+      write(fnumb_in,'(A)') "exit_code=$?"
+      write(fnumb_in,'(A)') "exit $exit_code"
+
+      ! close the script file
+      close(unit=fnumb_in,iostat=err_n,iomsg=err_msg)
+      if (err_n/=0) then
+        call error(my_name//": "//trim(err_msg))
+      end if
+
+      ! compose cmd
+      cmd = "bash "//trim(script_name)
+    end if
+  else ! -----------------------------> ! run siesta in serial
     cmd = trim(pes_exec)//" < "//trim(fname_in)//" > "//trim(fname_out)
   end if
 
-  ! execute cmd
-  call execute_command_line(trim(cmd),&
-    &wait=.true.,exitstat=exit_n,cmdstat=cmd_n)
+  ! execute siesta ----------------------------------------
+  call execute_command_line(trim(cmd), wait=.true., exitstat=exit_n, cmdstat=cmd_n)
 
   if (cmd_n/=0) then
-    call error("exec_siesta: cannot execute command """//trim(cmd)//"""")
+    call error(my_name//": cannot execute command """//trim(cmd)//"""")
   end if
   
   ! on error, siesta returns an exit status /= 0
   if (exit_n/=0) then
     write(exit_n_str,'(I8)') exit_n
     exit_n_str = adjustl(exit_n_str)
-    call error("exec_siesta: "//trim(pes_exec)//&
-      &" terminated with exit code: "//trim(exit_n_str))
+    call error(my_name//": "//trim(pes_exec)//" terminated with exit code: "//trim(exit_n_str))
   end if
 
 end subroutine exec_siesta

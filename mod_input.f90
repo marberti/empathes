@@ -59,7 +59,7 @@ subroutine read_input(fname_in)
   character(SLEN+1)                       :: cmd_str
   character(SLEN)                         :: keyword
   character(SLEN)                         :: arg
-  character(SLEN)                         :: ri_pes_program
+  character(SLEN)                         :: ri_pes_program = "null"
   character(3), allocatable, dimension(:) :: ri_start_elem
   character(3), allocatable, dimension(:) :: ri_end_elem
   character(3), allocatable, dimension(:) :: ri_start_elab

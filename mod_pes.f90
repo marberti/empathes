@@ -86,7 +86,7 @@ module pes
   logical                                   :: flag_pes_mem               = .false.
   logical                                   :: flag_start_energy          = .false.
   logical                                   :: flag_end_energy            = .false.
-  character(30)                             :: pes_program                = "NULL"
+  character(30)                             :: pes_program                = "null"
   character(120)                            :: pes_exec
   integer                                   :: pes_proc                   = 1
   integer                                   :: pes_mem
@@ -187,6 +187,8 @@ subroutine set_pes_program(str)
 
   ! check that pes_program is valid -----------------------
   select case (pes_program)
+  case ("null")
+    call error("set_pes_program: pes program not specified, use #PESPROGRAM")
   case ("gaussian")
   case ("siesta")
 #ifdef USE_MPI

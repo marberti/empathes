@@ -783,7 +783,7 @@ subroutine check_neb_kw(got_new_pes_program,got_pes_program,got_pes_program_with
 
   if (got_pes_program_with_mpi) then
     if (pes_program == "gaussian") then
-      write(FILEOUT,*) "WAR"//my_name//": #PESPROGRAMWITHMPI can not be used with the gaussian program"
+      write(FILEOUT,*) "WAR "//my_name//": #PESPROGRAMWITHMPI can not be used with the gaussian program"
       got_error = .true.
     end if
   end if

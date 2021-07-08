@@ -79,6 +79,7 @@ subroutine read_input(fname_in)
   logical                                 :: got_end_energy
   logical                                 :: got_new_pes_program
   logical                                 :: got_pes_program
+  logical                                 :: got_pes_program_with_mpi
   logical                                 :: got_pes_exec
   logical                                 :: got_geometries_file
   logical                                 :: got_start_elabel
@@ -123,6 +124,7 @@ subroutine read_input(fname_in)
   got_end_energy             = .false.
   got_new_pes_program        = .false.
   got_pes_program            = .false.
+  got_pes_program_with_mpi   = .false.
   got_pes_exec               = .false.
   got_geometries_file        = .false.
   got_start_elabel           = .false.
@@ -339,6 +341,14 @@ subroutine read_input(fname_in)
  
       ri_pes_program  = arg
       got_pes_program = .true.
+
+    case ("#PESPROGRAMWITHMPI")
+      if (got_pes_program_with_mpi) then
+        call error("read_input: #PESPROGRAMWITHMPI specified more than once")
+      end if
+
+      call set_pes_program_with_mpi(.true.)
+      got_pes_program_with_mpi = .true.
 
     case ("#PESEXEC")
       if (got_pes_exec) then
@@ -606,7 +616,7 @@ subroutine read_input(fname_in)
   call set_pes_program(ri_pes_program)
 
   ! input checks ------------------------------------------
-  call check_neb_kw(got_new_pes_program,got_pes_program,&
+  call check_neb_kw(got_new_pes_program,got_pes_program,got_pes_program_with_mpi,&
     &got_pes_exec,got_geometries_file,got_start,got_start_energy,got_end,&
     &got_end_energy,got_images,got_scfcycle,got_scfconv,got_idpp)
 
@@ -743,12 +753,13 @@ end subroutine read_geometries_from_input
 ! Subroutines that check
 !====================================================================
 
-subroutine check_neb_kw(got_new_pes_program,got_pes_program,&
+subroutine check_neb_kw(got_new_pes_program,got_pes_program,got_pes_program_with_mpi,&
     &got_pes_exec,got_geometries_file,got_start,got_start_energy,got_end,&
     &got_end_energy,got_images,got_scfcycle,got_scfconv,got_idpp)
 
   logical,     intent(IN) :: got_new_pes_program
   logical,     intent(IN) :: got_pes_program
+  logical,     intent(IN) :: got_pes_program_with_mpi
   logical,     intent(IN) :: got_pes_exec
   logical,     intent(IN) :: got_geometries_file
   logical,     intent(IN) :: got_start
@@ -768,6 +779,13 @@ subroutine check_neb_kw(got_new_pes_program,got_pes_program,&
   if (.not.got_pes_program) then
     write(FILEOUT,* )"WAR "//my_name//": #PESPROGRAM was not specified"
     got_error = .true.
+  end if
+
+  if (got_pes_program_with_mpi) then
+    if (pes_program == "gaussian") then
+      write(FILEOUT,*) "WAR"//my_name//": #PESPROGRAMWITHMPI can not be used with the gaussian program"
+      got_error = .true.
+    end if
   end if
 
   if (.not.got_pes_exec) then

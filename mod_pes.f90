@@ -60,6 +60,7 @@ module pes
                set_start_energy,          &
                set_end_energy,            &
                set_pes_program,           &
+               set_pes_program_with_mpi,  &
                set_pes_exec,              &
                set_pes_proc,              &
                set_pes_mem,               &
@@ -77,12 +78,13 @@ module pes
   logical                                   :: flag_init_pes_module       = .false.
   logical                                   :: flag_new_pes_program       = .false.
   logical                                   :: flag_pes_program           = .false.
+  logical                                   :: flag_pes_program_with_mpi  = .false.
   logical                                   :: flag_pes_exec              = .false.
   logical                                   :: flag_pes_proc              = .false.
   logical                                   :: flag_pes_mem               = .false.
   logical                                   :: flag_start_energy          = .false.
   logical                                   :: flag_end_energy            = .false.
-  character(30)                             :: pes_program
+  character(30)                             :: pes_program                = "NULL"
   character(120)                            :: pes_exec
   integer                                   :: pes_proc
   integer                                   :: pes_mem
@@ -208,6 +210,25 @@ subroutine set_pes_program(str)
   flag_pes_program = .true.
 
 end subroutine set_pes_program
+
+!====================================================================
+
+subroutine set_pes_program_with_mpi(flag)
+
+  logical,     intent(IN) :: flag
+
+  character(*), parameter :: my_name = "set_pes_program_with_mpi"
+  logical, save           :: first_call = .true.
+
+  if (first_call.eqv..false.) then
+    call error(my_name//": subroutine called more than once")
+  end if
+
+  flag_pes_program_with_mpi = flag
+
+  first_call = .false.
+
+end subroutine set_pes_program_with_mpi
 
 !====================================================================
 

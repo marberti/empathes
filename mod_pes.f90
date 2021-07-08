@@ -86,7 +86,7 @@ module pes
   logical                                   :: flag_end_energy            = .false.
   character(30)                             :: pes_program                = "NULL"
   character(120)                            :: pes_exec
-  integer                                   :: pes_proc
+  integer                                   :: pes_proc                   = 1
   integer                                   :: pes_mem
   character                                 :: pes_mem_scale
   real(DBL), allocatable, dimension(:)      :: pes_energy

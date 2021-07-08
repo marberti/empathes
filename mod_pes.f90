@@ -40,6 +40,7 @@ module pes
   ! protected variables -----------------------------------
   public    :: pes_program,               &
                pes_exec,                  &
+               pes_proc,                  &
                pes_forces,                &
                pes_energy,                &
                start_energy,              &
@@ -48,6 +49,7 @@ module pes
                flag_new_pes_program
   protected :: pes_program,               &
                pes_exec,                  &
+               pes_proc,                  &
                pes_forces,                &
                pes_energy,                &
                start_energy,              &

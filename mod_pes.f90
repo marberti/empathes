@@ -192,7 +192,9 @@ subroutine set_pes_program(str)
   case ("gaussian")
   case ("siesta")
 #ifdef USE_MPI
-    flag_warning = .true.
+    if (flag_pes_program_with_mpi) then
+      flag_warning = .true.
+    end if
 #endif
   case default
     if (flag_new_pes_program.eqv..false.) then
@@ -205,8 +207,8 @@ subroutine set_pes_program(str)
   if ((flag_warning).and.(comm_sz>1)) then
     write(istr,'(I8)') comm_sz
     istr=adjustl(istr)
-    call error("set_pes_program: if program """//trim(pes_program)//&
-      &""" is specified, "//trim(main_program_name)//&
+    call error("set_pes_program: if you want to run the program """//trim(pes_program)//&
+      &""" with MPI, "//trim(main_program_name)//&
       &" must be executed with 1 process (executed with "//trim(istr)//" processes)")
   end if
 #endif

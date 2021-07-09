@@ -689,6 +689,7 @@ subroutine mmpi_init_pes_module()
   ! Init all slave processes
   !--------------------------------------------------------
 
+  integer        :: i
   character(8)   :: istr
   integer        :: cmd
   character(30)  :: str30
@@ -778,6 +779,36 @@ subroutine mmpi_init_pes_module()
       call mpi_bcast(str120,len(str120),MPI_CHARACTER,0,MPI_COMM_WORLD,err_n)
     end if
 
+    ! bcast auxiliary_input_files
+    flag = flag_pesd_auxiliary_input_files
+    call mpi_bcast(flag,1,MPI_LOGICAL,0,MPI_COMM_WORLD,err_n)
+    if (flag) then
+      write(istr,'(I8)') pesd_auxiliary_input_files_n
+      istr = adjustl(istr)
+      str120 = "# "//trim(istr)
+
+      do i=1, pesd_auxiliary_input_files_n
+        str120 = trim(str120)//" "//trim(pesd_auxiliary_input_files(i))
+      end do
+
+      call mpi_bcast(str120,len(str120),MPI_CHARACTER,0,MPI_COMM_WORLD,err_n)
+    end if
+
+    ! bcast auxiliary_output_files
+    flag = flag_pesd_auxiliary_output_files
+    call mpi_bcast(flag,1,MPI_LOGICAL,0,MPI_COMM_WORLD,err_n)
+    if (flag) then
+      write(istr,'(I8)') pesd_auxiliary_output_files_n
+      istr = adjustl(istr)
+      str120 = "# "//trim(istr)
+
+      do i=1, pesd_auxiliary_output_files_n
+        str120 = trim(str120)//" "//trim(pesd_auxiliary_output_files(i))
+      end do
+
+      call mpi_bcast(str120,len(str120),MPI_CHARACTER,0,MPI_COMM_WORLD,err_n)
+    end if
+
     ! pes_input_template variables ------------------------
     call mmpi_sync_pes_it()
 
@@ -860,6 +891,20 @@ subroutine mmpi_init_pes_module()
     if (flag) then
       call mpi_bcast(str120,len(str120),MPI_CHARACTER,0,MPI_COMM_WORLD,err_n)
       call set_pesd_additional_cmd(str120)
+    end if
+
+    ! bcast auxiliary_input_files
+    call mpi_bcast(flag,1,MPI_LOGICAL,0,MPI_COMM_WORLD,err_n)
+    if (flag) then
+      call mpi_bcast(str120,len(str120),MPI_CHARACTER,0,MPI_COMM_WORLD,err_n)
+      call set_pesd_auxiliary_files(PESD_AUX_INPUT_FILES,str120)
+    end if
+
+    ! bcast auxiliary_output_files
+    call mpi_bcast(flag,1,MPI_LOGICAL,0,MPI_COMM_WORLD,err_n)
+    if (flag) then
+      call mpi_bcast(str120,len(str120),MPI_CHARACTER,0,MPI_COMM_WORLD,err_n)
+      call set_pesd_auxiliary_files(PESD_AUX_OUTPUT_FILES,str120)
     end if
 
     ! pes_input_template variables ------------------------

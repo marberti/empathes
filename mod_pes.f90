@@ -1182,7 +1182,9 @@ subroutine set_dir(i,dirname,auxdirname)
   character(*), intent(INOUT) :: dirname
   character(*), intent(INOUT) :: auxdirname
 
+  logical, save               :: first_call    = .true.
   integer, save               :: calling_count = 0
+  integer, save               :: calling_limit = 0
   character(8)                :: i_str
   character(8)                :: exit_n_str
   character(300)              :: cmd
@@ -1191,8 +1193,24 @@ subroutine set_dir(i,dirname,auxdirname)
   integer                     :: cmd_n
 
   ! preliminary settings ----------------------------------
-  if (calling_count<=image_n) then
-    calling_count = calling_count+1
+  if (first_call) then
+#ifdef USE_MPI
+    calling_limit = image_n / comm_sz
+    if (proc_id /= 0) then ! the master has always less work
+      if (proc_id <= mod(image_n, comm_sz)) then
+        calling_limit = calling_limit + 1
+      end if
+    end if
+    !write(*,*) "id: ", proc_id, "; cl: ", calling_limit
+#else
+    calling_limit = image_n
+#endif
+
+    first_call = .false.
+  end if
+
+  if (calling_count <= calling_limit) then
+    calling_count = calling_count + 1
   end if
 
   write(i_str,'(I8)') i
@@ -1201,7 +1219,7 @@ subroutine set_dir(i,dirname,auxdirname)
   auxdirname = base_auxdirname//trim(i_str)
 
   ! make directories for storing auxiliary output files ---
-  if ((flag_pesd_auxiliary_output_files).and.(calling_count<=image_n)) then
+  if ((flag_pesd_auxiliary_output_files).and.(calling_count <= calling_limit)) then
     cmd = "mkdir "//trim(auxdirname)
     call execute_command_line(trim(cmd),&
       &wait=.true.,exitstat=exit_n,cmdstat=cmd_n)
@@ -1258,7 +1276,7 @@ subroutine set_dir(i,dirname,auxdirname)
   end if
 
   ! copy the auxiliary output files ------------------------
-  if ((flag_pesd_auxiliary_output_files).and.(calling_count>image_n)) then
+  if ((flag_pesd_auxiliary_output_files).and.(calling_count > calling_limit)) then
     cmd = "cp"
     do j=1, pesd_auxiliary_output_files_n
       cmd = trim(cmd)//" "//trim(auxdirname)//&

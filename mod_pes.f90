@@ -40,7 +40,6 @@ module pes
   ! protected variables -----------------------------------
   public    :: pes_program,               &
                pes_exec,                  &
-               pes_proc,                  &
                pes_forces,                &
                pes_energy,                &
                start_energy,              &
@@ -49,7 +48,6 @@ module pes
                flag_new_pes_program
   protected :: pes_program,               &
                pes_exec,                  &
-               pes_proc,                  &
                pes_forces,                &
                pes_energy,                &
                start_energy,              &
@@ -165,11 +163,6 @@ subroutine set_pes_program(str)
 
   character(*), intent(INOUT) :: str
 
-#ifdef USE_MPI
-  character(8)                :: istr
-  logical                     :: flag_warning
-#endif
-
   ! preliminary checks ------------------------------------
   if (flag_pes_program) then
     call error("set_pes_program: pes program already setted")
@@ -179,9 +172,6 @@ subroutine set_pes_program(str)
     call error("set_pes_program: pes program not specified")
   end if
 
-#ifdef USE_MPI
-  flag_warning = .false.
-#endif
   call tolower(str)
   pes_program=str
 
@@ -192,8 +182,10 @@ subroutine set_pes_program(str)
   case ("gaussian")
   case ("siesta")
 #ifdef USE_MPI
+    ! TODO: remove when implementing execution of siesta with MPI_Comm_spawn()
     if (flag_pes_program_with_mpi) then
-      flag_warning = .true.
+      write(FILEOUT,*) "WAR set_pes_program: to avoid crashes, ",&
+        &"if #PESPROGRAMWITHMPI is used then run "//trim(main_program_name)//" without mpirun"
     end if
 #endif
   case default
@@ -201,17 +193,6 @@ subroutine set_pes_program(str)
       call error("set_pes_program: invalid option """//trim(pes_program)//"""")
     end if
   end select
-
-  ! final checks ------------------------------------------
-#ifdef USE_MPI
-  if ((flag_warning).and.(comm_sz>1)) then
-    write(istr,'(I8)') comm_sz
-    istr=adjustl(istr)
-    call error("set_pes_program: if you want to run the program """//trim(pes_program)//&
-      &""" with MPI, "//trim(main_program_name)//&
-      &" must be executed with 1 process (executed with "//trim(istr)//" processes)")
-  end if
-#endif
 
   flag_pes_program = .true.
 

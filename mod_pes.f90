@@ -1729,40 +1729,36 @@ subroutine exec_siesta(fnumb_in,fname_in,fname_out)
   character(120)           :: err_msg
 
   ! determine how to execute siesta -----------------------
-  if (pes_proc > 1) then ! -----------> ! run siesta in parallel
-    if (flag_pes_program_with_mpi) then ! run siesta via MPI
-      write(i_str,'(I8)') pes_proc
-      i_str = adjustl(i_str)
-      cmd = "mpirun -n "//trim(i_str)//" "//trim(pes_exec)//" < "//trim(fname_in)//" > "//trim(fname_out)
-    else ! ---------------------------> ! run siesta via openMP
-      ! open the script file
-      open(unit=fnumb_in,file=script_name,status='NEW',action='WRITE',&
-        &iostat=err_n,iomsg=err_msg,position='REWIND')
-      if (err_n/=0) then
-        call error(my_name//": "//trim(err_msg))
-      end if
-
-      ! write the script
-      write(i_str,'(I8)') pes_proc
-      i_str = adjustl(i_str)
-
-      write(fnumb_in,'(A)') "#!/bin/bash"
-      write(fnumb_in,'(A)') "export OMP_NUM_THREADS="//trim(i_str)
-      write(fnumb_in,'(A)') trim(pes_exec)//" < "//trim(fname_in)//" > "//trim(fname_out)
-      write(fnumb_in,'(A)') "exit_code=$?"
-      write(fnumb_in,'(A)') "exit $exit_code"
-
-      ! close the script file
-      close(unit=fnumb_in,iostat=err_n,iomsg=err_msg)
-      if (err_n/=0) then
-        call error(my_name//": "//trim(err_msg))
-      end if
-
-      ! compose cmd
-      cmd = "bash "//trim(script_name)
+  if (flag_pes_program_with_mpi) then ! run siesta via MPI
+    write(i_str,'(I8)') pes_proc
+    i_str = adjustl(i_str)
+    cmd = "mpirun -n "//trim(i_str)//" "//trim(pes_exec)//" < "//trim(fname_in)//" > "//trim(fname_out)
+  else ! ---------------------------> ! run siesta via openMP
+    ! open the script file
+    open(unit=fnumb_in,file=script_name,status='NEW',action='WRITE',&
+      &iostat=err_n,iomsg=err_msg,position='REWIND')
+    if (err_n/=0) then
+      call error(my_name//": "//trim(err_msg))
     end if
-  else ! -----------------------------> ! run siesta in serial
-    cmd = trim(pes_exec)//" < "//trim(fname_in)//" > "//trim(fname_out)
+
+    ! write the script
+    write(i_str,'(I8)') pes_proc
+    i_str = adjustl(i_str)
+
+    write(fnumb_in,'(A)') "#!/bin/bash"
+    write(fnumb_in,'(A)') "export OMP_NUM_THREADS="//trim(i_str)
+    write(fnumb_in,'(A)') trim(pes_exec)//" < "//trim(fname_in)//" > "//trim(fname_out)
+    write(fnumb_in,'(A)') "exit_code=$?"
+    write(fnumb_in,'(A)') "exit $exit_code"
+
+    ! close the script file
+    close(unit=fnumb_in,iostat=err_n,iomsg=err_msg)
+    if (err_n/=0) then
+      call error(my_name//": "//trim(err_msg))
+    end if
+
+    ! compose cmd
+    cmd = "bash "//trim(script_name)
   end if
 
   ! execute siesta ----------------------------------------

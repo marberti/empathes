@@ -39,7 +39,8 @@ module output
             write_gnuplot_pes_energy,    &
             last_geom_bkp,               &
             write_transition_state,      &
-            write_neb_input_template,    &
+            write_input4gaussian,        &
+            write_input4siesta,          &
             write_procs_info
 
 contains
@@ -434,7 +435,7 @@ end subroutine write_transition_state
 
 !====================================================================
 
-subroutine write_neb_input_template(verbose)
+subroutine write_input4gaussian(verbose)
 
   logical,     intent(IN) :: verbose
 
@@ -730,9 +731,99 @@ subroutine write_neb_input_template(verbose)
   ! close template file -----------------------------------
   close(unit=tmplt_fnumb,iostat=err_n,iomsg=err_msg)
 
-  write(STDOUT,'(A)') "NEB input template has been written in "//tmplt_fname
+  write(STDOUT,'(A)') "Empathes input template for Gaussian has been written in "//tmplt_fname
 
-end subroutine write_neb_input_template
+end subroutine write_input4gaussian
+
+!====================================================================
+
+subroutine write_input4siesta()
+
+  integer, parameter      :: tmplt_fnumb = 620
+  character(*), parameter :: tmplt_fname = "data.in"
+  integer                 :: err_n
+  character(120)          :: err_msg
+
+  ! open template file ------------------------------------
+  open(unit=tmplt_fnumb,file=tmplt_fname,status='REPLACE',action='WRITE',&
+    &iostat=err_n,iomsg=err_msg,position='REWIND')
+
+  ! write template ----------------------------------------
+  write(tmplt_fnumb,'(A)') "! This is an automatically generated, fully functional input template"
+  write(tmplt_fnumb,'(A)') "! that performs a NEB computation by calling the external program Siesta."
+  write(tmplt_fnumb,'(A)') "! Feel free to modify this file for your own purposes."
+  write(tmplt_fnumb,'(A)')
+  write(tmplt_fnumb,'(A)') "!#ONLYINTERPOLATION"
+  write(tmplt_fnumb,'(A)') "!#IDPP"
+  write(tmplt_fnumb,'(A)')
+  write(tmplt_fnumb,'(A)') "#OPTCYCLE -1"
+  write(tmplt_fnumb,'(A)') "#OPTCONV  1.0E-3"
+  write(tmplt_fnumb,'(A)')
+  write(tmplt_fnumb,'(A)') "#AUXINPUTFILES 1 *.psml"
+  write(tmplt_fnumb,'(A)') "#AUXOUTPUTFILES 1 *.DM"
+  write(tmplt_fnumb,'(A)')
+  write(tmplt_fnumb,'(A)') "#START"
+  write(tmplt_fnumb,'(A)') "4"
+  write(tmplt_fnumb,'(A)') "C      -1.319072    0.000000   -0.000000 1"
+  write(tmplt_fnumb,'(A)') "O      -0.000625    0.000000   -0.000000 2"
+  write(tmplt_fnumb,'(A)') "H      -2.019907    1.036241    0.000000 3"
+  write(tmplt_fnumb,'(A)') "H      -2.019907   -1.036241    0.000000 3"
+  write(tmplt_fnumb,'(A)')
+  write(tmplt_fnumb,'(A)') "#END"
+  write(tmplt_fnumb,'(A)') "4"
+  write(tmplt_fnumb,'(A)') "C      -1.463327   -0.080426    0.000000 1"
+  write(tmplt_fnumb,'(A)') "O      -0.002215   -0.000879   -0.000000 2"
+  write(tmplt_fnumb,'(A)') "H      -1.663021    1.217131   -0.000000 3"
+  write(tmplt_fnumb,'(A)') "H       0.349106   -1.047807    0.000000 3"
+  write(tmplt_fnumb,'(A)')
+  write(tmplt_fnumb,'(A)') "#IMAGES 6"
+  write(tmplt_fnumb,'(A)') "#STARTENERGY -634.895365"
+  write(tmplt_fnumb,'(A)') "#ENDENERGY   -633.046812"
+  write(tmplt_fnumb,'(A)')
+  write(tmplt_fnumb,'(A)') "#CLIMBING 1"
+  write(tmplt_fnumb,'(A)') "!#CLIMBINGQUICKSTART"
+  write(tmplt_fnumb,'(A)')
+  write(tmplt_fnumb,'(A)') "#PESPROGRAM siesta"
+  write(tmplt_fnumb,'(A)') "#PESEXEC siesta_psml_omp"
+  write(tmplt_fnumb,'(A)') "#PESPROC 1"
+  write(tmplt_fnumb,'(A)') "#SCFCYCLE 500"
+  write(tmplt_fnumb,'(A)')
+  write(tmplt_fnumb,'(A)') "#PESINPUTTEMPLATE 1"
+  write(tmplt_fnumb,'(A)') "SystemName  lblneb"
+  write(tmplt_fnumb,'(A)') "SystemLabel lblneb"
+  write(tmplt_fnumb,'(A)')
+  write(tmplt_fnumb,'(A)') "NumberOfAtoms   4"
+  write(tmplt_fnumb,'(A)')
+  write(tmplt_fnumb,'(A)') "NumberOfSpecies        3"
+  write(tmplt_fnumb,'(A)') "%block ChemicalSpeciesLabel"
+  write(tmplt_fnumb,'(A)') "  1   6  C"
+  write(tmplt_fnumb,'(A)') "  2   8  O"
+  write(tmplt_fnumb,'(A)') "  3   1  H"
+  write(tmplt_fnumb,'(A)') "%endblock ChemicalSpeciesLabel"
+  write(tmplt_fnumb,'(A)')
+  write(tmplt_fnumb,'(A)') "AtomicCoordinatesFormat    Ang"
+  write(tmplt_fnumb,'(A)') "%block AtomicCoordinatesAndAtomicSpecies"
+  write(tmplt_fnumb,'(A)') "#ENDPESINPUTTEMPLATE"
+  write(tmplt_fnumb,'(A)')
+  write(tmplt_fnumb,'(A)') "#PESINPUTTEMPLATE 2"
+  write(tmplt_fnumb,'(A)') "%endblock AtomicCoordinatesAndAtomicSpecies"
+  write(tmplt_fnumb,'(A)')
+  write(tmplt_fnumb,'(A)') "# Basis"
+  write(tmplt_fnumb,'(A)') "PAO.BasisSize SZ"
+  write(tmplt_fnumb,'(A)')
+  write(tmplt_fnumb,'(A)') "MeshCutoff             50 Ry"
+  write(tmplt_fnumb,'(A)')
+  write(tmplt_fnumb,'(A)') "DM.UseSaveDM          true          # to use continuation files"
+  write(tmplt_fnumb,'(A)')
+  write(tmplt_fnumb,'(A)') "SolutionMethod        diagon        # OrderN or Diagon"
+  write(tmplt_fnumb,'(A)') "#ENDPESINPUTTEMPLATE"
+
+  ! close template file -----------------------------------
+  close(unit=tmplt_fnumb,iostat=err_n,iomsg=err_msg)
+
+  write(STDOUT,'(A)') "Empathes input template for Siesta has been written in "//tmplt_fname
+
+end subroutine write_input4siesta
 
 !====================================================================
 

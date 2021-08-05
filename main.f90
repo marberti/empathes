@@ -128,9 +128,13 @@ program main
   ! of compute_total_forces subroutine.
   !--------------------------------------------------------
 
-  write(FILEOUT,'(" *** main: ",A," Debug Version")') trim(cmd_name)
+  write(FILEOUT,*) "********************************************************************"
   call write_build_version()
-  write(FILEOUT,'(5X,"Intended to check the results of compute_total_forces")')
+  call write_procs_info()
+  write(FILEOUT,*) "DEBUG: to check the results of compute_total_forces"
+  write(FILEOUT,*) "********************************************************************"
+  write(FILEOUT,*)
+
 
   ! start time
   call set_start_clock()
@@ -153,9 +157,6 @@ program main
 
   write(FILEOUT,*) "*** main: init_elastic_module"
   call init_elastic_module()
-
-  write(FILEOUT,*) "*** main: write_parallelization_info"
-  call write_parallelization_info()
 
   write(FILEOUT,*) "*** main: write_pes_info"
   call write_pes_info()
@@ -208,8 +209,11 @@ program main
   ! Working Section
   !==================================================================
 
-  write(FILEOUT,'(" *** main: ",A," Standard Version")') trim(cmd_name)
+  write(FILEOUT,*) "********************************************************************"
   call write_build_version()
+  call write_procs_info()
+  write(FILEOUT,*) "********************************************************************"
+  write(FILEOUT,*)
 
   ! start time
   call set_start_clock()
@@ -232,9 +236,6 @@ program main
 
   write(FILEOUT,*) "*** main: init_elastic_module"
   call init_elastic_module()
-
-  write(FILEOUT,*) "*** main: write_parallelization_info"
-  call write_parallelization_info()
 
   write(FILEOUT,*) "*** main: write_pes_info"
   call write_pes_info()
@@ -318,10 +319,12 @@ end subroutine write_help
 
 subroutine write_build_version()
   
-  integer :: out_stream
+  character(*), parameter :: version_number = "v1.0-beta"
+
+  integer                 :: out_stream
 #ifdef USE_MPI
-  integer :: version
-  integer :: subversion
+  integer                 :: version
+  integer                 :: subversion
 #endif
 
   if (flag_fileout) then
@@ -330,12 +333,13 @@ subroutine write_build_version()
     out_stream=STDOUT
   end if
 
+  write(out_stream,*) "Empathes ", trim(version_number)
+
   if (flag_mpi) then
-    write(out_stream,'(" Parallel Version")')
+    write(out_stream,'(" Parallel Version: ")',advance="NO")
 #ifdef USE_MPI
     call mpi_get_version(version,subversion,err_n)
-    write(out_stream,'(" Distributed Memory via MPI (version ",&
-      &I1,".",I1,")")') version, subversion
+    write(out_stream,'("Distributed Memory via MPI (v",I1,".",I1,")")') version, subversion
 #endif
   else
     write(out_stream,'(" Serial Version")')

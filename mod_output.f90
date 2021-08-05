@@ -32,7 +32,6 @@ module output
             write_pes_energy,            &
             write_compare_pes_energy,    &
             write_pes_forces,            &
-            write_parallelization_info,  &
             write_pes_info,              &
             write_total_forces,          &
             write_parall_elastic_forces, &
@@ -40,7 +39,8 @@ module output
             write_gnuplot_pes_energy,    &
             last_geom_bkp,               &
             write_transition_state,      &
-            write_neb_input_template
+            write_neb_input_template,    &
+            write_procs_info
 
 contains
 
@@ -183,14 +183,6 @@ subroutine write_pes_forces()
   end do
 
 end subroutine write_pes_forces
-
-!====================================================================
-
-subroutine write_parallelization_info()
-
-  call write_procs_info()
-
-end subroutine write_parallelization_info
 
 !====================================================================
 
@@ -743,8 +735,6 @@ subroutine write_neb_input_template(verbose)
 end subroutine write_neb_input_template
 
 !====================================================================
-! Private
-!====================================================================
 
 subroutine write_procs_info()
 
@@ -760,16 +750,17 @@ subroutine write_procs_info()
   write(n,'(I8)') buff
   n = adjustl(n)
 
-  write(FILEOUT,*) "**  Procs Info:"
-  write(FILEOUT,'(5X,"Executed with: ",A)',advance="NO") trim(n)
+  write(FILEOUT,'(" Executed with ",A)',advance="NO") trim(n)
   if (buff==1) then
-    write(FILEOUT,'(" Process")')
+    write(FILEOUT,'(" process")')
   else
-    write(FILEOUT,'(" Processes")')
+    write(FILEOUT,'(" processes")')
   end if
 
 end subroutine write_procs_info
 
+!====================================================================
+! Private
 !====================================================================
 
 subroutine write_image(n,fnumb,write_elabel)

@@ -40,8 +40,9 @@ module optimization
   !--------------------------------------------------------
   ! ENUM
   integer, parameter :: ALGO_SD           = 0
-  integer, parameter :: ALGO_LBFGS        = 1
-  integer, parameter :: ALGO_FIRE         = 2
+  integer, parameter :: ALGO_BFGS         = 1
+  integer, parameter :: ALGO_LBFGS        = 2
+  integer, parameter :: ALGO_FIRE         = 3
   integer            :: optmz_algo        = ALGO_FIRE ! default algorithm
 
   logical            :: flag_optmz_nsteps = .false.
@@ -73,6 +74,8 @@ subroutine set_optmz_algo(str)
   select case (str)
   case ("sd","steepest_descent")
     optmz_algo = ALGO_SD
+  case ("bfgs")
+    optmz_algo = ALGO_BFGS
   case ("lbfgs")
     optmz_algo = ALGO_LBFGS
   case ("fire")
@@ -141,6 +144,8 @@ subroutine optmz_pes(flag_out)
   select case (optmz_algo)
   case (ALGO_SD)
     call optmz_steepest_descent(PES_MODE,flag_out)
+  case (ALGO_BFGS)
+    call optmz_bfgs(PES_MODE,flag_out)
   case (ALGO_LBFGS)
     call optmz_lbfgs(PES_MODE,flag_out)
   case (ALGO_FIRE)
@@ -345,6 +350,66 @@ subroutine optmz_steepest_descent(mode,flag_out,nsteps,stepsize,tol,&
   end if
 
 end subroutine optmz_steepest_descent
+
+!====================================================================
+
+subroutine optmz_bfgs(mode,flag_out,nsteps,fixed,savelastgeom)
+
+  integer,           intent(IN)  :: mode
+  logical,           intent(OUT) :: flag_out         ! true if convergent, false otherwise
+  integer, optional, intent(IN)  :: nsteps
+  logical, optional, intent(IN)  :: fixed
+  logical, optional, intent(IN)  :: savelastgeom
+
+  integer                        :: p_nsteps
+  logical                        :: p_fixed
+  logical                        :: p_savelastgeom
+
+  character(*), parameter        :: my_name = "optmz_bfgs"
+  character(8)                   :: istr
+
+  ! checking arguments ------------------------------------
+  if (present(nsteps)) then
+    if (nsteps>=0) then
+      p_nsteps = nsteps
+    else
+      p_nsteps = -1
+    end if
+  else if (flag_optmz_nsteps) then
+    p_nsteps = optmz_nsteps
+  else
+    p_nsteps = 50
+  end if
+
+  if (present(fixed)) then
+    p_fixed = fixed
+  else
+    p_fixed = .true.
+  end if
+
+  if (present(savelastgeom)) then
+    p_savelastgeom = savelastgeom
+  else
+    p_savelastgeom = .true.
+  end if
+
+  ! preliminary checks ------------------------------------
+  if (flag_init_images.eqv..false.) then
+    call error(my_name//": images not initialized")
+  end if
+
+  select case(mode)
+  case (PES_MODE)
+    write(FILEOUT,*) "**  Optimization BFGS -- PES Mode"
+  case (IDPP_MODE)
+    write(FILEOUT,*) "**  Optimization BFGS -- IDPP Mode"
+  case default
+    write(istr,'(I8)') mode
+    istr = adjustl(istr)
+    call error(my_name//": mode """//trim(istr)//""" not valid")
+  end select
+
+end subroutine optmz_bfgs
 
 !====================================================================
 

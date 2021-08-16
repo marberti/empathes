@@ -503,8 +503,8 @@ subroutine optmz_bfgs(mode,flag_out,nsteps,tol,fixed,savelastgeom)
     if (i == 1) then
       ! init h0 to identity matrix
       h0 = 0.0_DBL
-      do i = 1, geom_len
-        h0(:,i,i) = 1.0_DBL
+      do j = 1, geom_len
+        h0(:,j,j) = 1.0_DBL
       end do
 
       ! preliminary computation

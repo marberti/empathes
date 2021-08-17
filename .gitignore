@@ -5,4 +5,5 @@
 *.x
 *.ignore
 empathes
+test/driver_bfgs_rosenbrock/mod_*.f90
 

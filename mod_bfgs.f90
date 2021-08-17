@@ -26,6 +26,9 @@ module bfgs
   ! public procedures -------------------------------------
   public :: bfgs_internal
 
+  ! drivers -----------------------------------------------
+  public :: driver_bfgs_rosenbrock
+
 contains
 
 !====================================================================
@@ -238,6 +241,140 @@ subroutine strong_wolfe_conditions(cond1,cond2,alpha)
   ! dummy logic to suppress warnings
   if (cond1.eqv.cond2) alpha = 1.0_DBL
 
+  !TODO implement logic
+
 end subroutine strong_wolfe_conditions
+
+!====================================================================
+! Driver
+!====================================================================
+
+subroutine driver_bfgs_rosenbrock()
+
+  character(*), parameter   :: my_name = "driver_bfgs_rosenbrock"
+  character(*), parameter   :: header  = "(2X,""Iter"",3X,""x1"",14X,""x2"",14X,""f(x)"",12X, &
+                                          &""d/dx1 f(x)"",6X,""d/dx2 f(x)"",6X,""Norm ("",ES8.1,"")"")"
+  character(*), parameter   :: sep     = "(103(""-""))"
+  character(*), parameter   :: format1 = "(2X,I4,3X,5(ES13.6,3X))"
+  character(*), parameter   :: format2 = "(2X,I4,3X,6(ES13.6,3X))"
+  real(DBL), parameter      :: tol     = 1.0E-5_DBL
+  character(120)            :: cmdstr
+  real(DBL), dimension(2,1) :: old_x
+  real(DBL)                 :: old_f
+  real(DBL), dimension(2,1) :: old_d
+  real(DBL), dimension(2,2) :: old_h
+  real(DBL), dimension(2,1) :: new_x
+  real(DBL)                 :: new_f
+  real(DBL), dimension(2,1) :: new_d
+  real(DBL), dimension(2,2) :: new_h
+  logical                   :: wolfe_cond1
+  logical                   :: wolfe_cond2
+  real(DBL), dimension(2)   :: buff
+  real(DBL)                 :: nrm
+  integer                   :: i
+
+  write(*,sep)
+  write(*,*) my_name//": BFGS without Wolfe conditions"
+  write(*,header) tol
+
+  wolfe_cond1 = .false.
+  wolfe_cond2 = .false.
+  old_x(1,1) = -1.2_DBL
+  old_x(2,1) =  1.0_DBL
+
+  i = 1
+  do
+    if (i == 1) then
+      old_h      = 0.0_DBL
+      old_h(1,1) = 1.0_DBL
+      old_h(2,2) = 1.0_DBL
+
+      call rosenbrock_f(reshape(old_x,(/2/)),old_f)
+      call rosenbrock_d(reshape(old_x,(/2/)),buff)
+      old_d = reshape(buff,(/2,1/))
+      write(*,format1) i, old_x, old_f, old_d
+    end if
+
+    cmdstr = "START"
+    call bfgs_internal( &
+      cmdstr,           &
+      old_x,            &
+      new_x,            &
+      old_d,            &
+      new_d,            &
+      old_h,            &
+      new_h,            &
+      wolfe_cond1,      &
+      wolfe_cond2       &
+    )
+
+    if (cmdstr /= "EVALUATE_DF1") then
+      call error(my_name//": expected ""EVALUATE_DF1"", get """//trim(cmdstr)//"""")
+    end if
+
+    call rosenbrock_f(reshape(new_x,(/2/)),new_f)
+    call rosenbrock_d(reshape(new_x,(/2/)),buff)
+    new_d = reshape(buff,(/2,1/))
+
+    cmdstr = "EVALUATED"
+    call bfgs_internal( &
+      cmdstr,           &
+      old_x,            &
+      new_x,            &
+      old_d,            &
+      new_d,            &
+      old_h,            &
+      new_h,            &
+      wolfe_cond1,      &
+      wolfe_cond2       &
+    )
+
+    if (cmdstr /= "DONE") then
+      call error(my_name//": expected ""DONE"", get """//trim(cmdstr)//"""")
+    end if
+
+    nrm = sqrt(sum(matmul(transpose(new_d),new_d)))
+    write(*,format2) i, new_x, new_f, new_d, nrm
+
+    if (nrm < tol) then
+      exit
+    end if
+
+    old_x = new_x
+    old_f = new_f
+    old_d = new_d
+    old_h = new_h
+
+    i = i+1
+  end do
+
+  write(*,sep)
+
+end subroutine driver_bfgs_rosenbrock
+
+!====================================================================
+
+subroutine rosenbrock_f(x,f)
+
+  real(DBL), dimension(2), intent(IN)  :: x
+  real(DBL),               intent(OUT) :: f
+
+  f = 100.0_DBL*(x(2) - x(1)**2)**2 + (1.0_DBL - x(1))**2
+
+end subroutine rosenbrock_f
+
+!====================================================================
+
+subroutine rosenbrock_d(x,d)
+
+  real(DBL), dimension(2), intent(IN)  :: x
+  real(DBL), dimension(2), intent(OUT) :: d
+
+  d(1) = 400.0_DBL*x(1)**3 - 400.0_DBL*x(1)*x(2) - 2.0_DBL + 2.0_DBL*x(1)
+  d(2) = 200.0_DBL*x(2) - 200.0_DBL*x(1)**2
+
+end subroutine rosenbrock_d
+
+!====================================================================
 
 end module bfgs

@@ -86,6 +86,7 @@ module utility
                get_field,                  &
                get_lines,                  &
                triang_numb,                &
+               rms,                        &
                write_date,                 &
                set_start_clock,            &
                human_time,                 &
@@ -743,6 +744,16 @@ integer function triang_numb(i)
   triang_numb = (i*(i+1))/2
 
 end function triang_numb
+
+!====================================================================
+
+real(DBL) function rms(a)
+
+  real(DBL), dimension(:), intent(IN) :: a
+
+  rms = sqrt(sum(a**2)/size(a))
+
+end function rms
 
 !====================================================================
 

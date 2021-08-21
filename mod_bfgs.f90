@@ -35,7 +35,7 @@ contains
 ! Public
 !====================================================================
 
-subroutine bfgs_internal(cmdstr,x0,x1,df0,df1,h0,h1,wolfe_cond1,wolfe_cond2)
+subroutine bfgs_internal(cmdstr,x0,x1,df0,df1,h0,h1,fixed_alpha)
 
   ! BFSG method, based on:
   ! Nocedal - Numerical Optimization - 2nd edition
@@ -48,8 +48,7 @@ subroutine bfgs_internal(cmdstr,x0,x1,df0,df1,h0,h1,wolfe_cond1,wolfe_cond2)
   real(DBL), dimension(:,:), intent(IN)    :: df1
   real(DBL), dimension(:,:), intent(IN)    :: h0
   real(DBL), dimension(:,:), intent(OUT)   :: h1
-  logical,                   intent(IN)    :: wolfe_cond1
-  logical,                   intent(IN)    :: wolfe_cond2
+  logical, optional,         intent(IN)    :: fixed_alpha
 
   character(*), parameter                  :: my_name = "bfgs_internal"
   integer                                  :: sz1_x0
@@ -62,9 +61,18 @@ subroutine bfgs_internal(cmdstr,x0,x1,df0,df1,h0,h1,wolfe_cond1,wolfe_cond2)
   real(DBL), dimension(:,:), allocatable   :: idnt
   real(DBL), dimension(:,:), allocatable   :: m1
   real(DBL), dimension(:,:), allocatable   :: m2
+  logical                                  :: p_fixed_alpha
+  logical                                  :: flag_skip
   integer                                  :: i
   integer                                  :: err_n
   character(120)                           :: err_msg
+
+  ! check optional argument -------------------------------
+  if (present(fixed_alpha)) then
+    p_fixed_alpha = fixed_alpha
+  else
+    p_fixed_alpha = .false.
+  end if
 
   ! arguments' dimensions check ---------------------------
   sz1_x0 = size(x0,1)
@@ -157,11 +165,16 @@ subroutine bfgs_internal(cmdstr,x0,x1,df0,df1,h0,h1,wolfe_cond1,wolfe_cond2)
     ! compute search direction p0
     p0 = -matmul(h0,df0)
 
-    ! get step length alpha satisfying strong wolfe conditions
-    if ((wolfe_cond1.eqv..false.).and.(wolfe_cond2.eqv..false.)) then
+    ! set step length alpha
+    if (p_fixed_alpha.eqv..true.) then
       alpha = 1.0_DBL
     else
-      call strong_wolfe_conditions(wolfe_cond1,wolfe_cond2,alpha)
+      call accelerated_backtracking_line_search(       &
+        rms(reshape(df0,(/size(df0,1)*size(df0,2)/))), &
+        rms(reshape(df1,(/size(df1,1)*size(df1,2)/))), &
+        alpha,                                         &
+        flag_skip                                      &
+      )
     end if
 
     ! set x1
@@ -224,29 +237,6 @@ end subroutine bfgs_internal
 ! Private
 !====================================================================
 
-subroutine strong_wolfe_conditions(cond1,cond2,alpha)
-
-  ! Strong Wolfe conditions, based on:
-  ! Nocedal - Numerical Optimization - 2nd edition
-  ! Eq. (3.7a), (3.7b)
-
-  logical,    intent(IN)  :: cond1
-  logical,    intent(IN)  :: cond2
-  real(DBL),  intent(OUT) :: alpha
-
-  character(*), parameter :: my_name = "strong_wolfe_conditions"
-
-  call error(my_name//": subroutine not yet implemented")
-
-  ! dummy logic to suppress warnings
-  if (cond1.eqv.cond2) alpha = 1.0_DBL
-
-  !TODO implement logic
-
-end subroutine strong_wolfe_conditions
-
-!====================================================================
-
 subroutine accelerated_backtracking_line_search(df0_rms,df1_rms,alpha,flag_skip)
 
   real(DBL),  intent(IN)    :: df0_rms
@@ -306,18 +296,14 @@ subroutine driver_bfgs_rosenbrock()
   real(DBL)                 :: new_f
   real(DBL), dimension(2,1) :: new_d
   real(DBL), dimension(2,2) :: new_h
-  logical                   :: wolfe_cond1
-  logical                   :: wolfe_cond2
   real(DBL), dimension(2)   :: buff
   real(DBL)                 :: nrm
   integer                   :: i
 
   write(*,sep)
-  write(*,*) my_name//": BFGS without Wolfe conditions"
+  write(*,*) my_name//": BFGS with fixed alpha step"
   write(*,header) tol
 
-  wolfe_cond1 = .false.
-  wolfe_cond2 = .false.
   old_x(1,1) = -1.2_DBL
   old_x(2,1) =  1.0_DBL
 
@@ -335,16 +321,15 @@ subroutine driver_bfgs_rosenbrock()
     end if
 
     cmdstr = "START"
-    call bfgs_internal( &
-      cmdstr,           &
-      old_x,            &
-      new_x,            &
-      old_d,            &
-      new_d,            &
-      old_h,            &
-      new_h,            &
-      wolfe_cond1,      &
-      wolfe_cond2       &
+    call bfgs_internal(    &
+      cmdstr,              &
+      old_x,               &
+      new_x,               &
+      old_d,               &
+      new_d,               &
+      old_h,               &
+      new_h,               &
+      fixed_alpha = .true. &
     )
 
     if (cmdstr /= "EVALUATE_DF1") then
@@ -356,16 +341,15 @@ subroutine driver_bfgs_rosenbrock()
     new_d = reshape(buff,(/2,1/))
 
     cmdstr = "EVALUATED"
-    call bfgs_internal( &
-      cmdstr,           &
-      old_x,            &
-      new_x,            &
-      old_d,            &
-      new_d,            &
-      old_h,            &
-      new_h,            &
-      wolfe_cond1,      &
-      wolfe_cond2       &
+    call bfgs_internal(    &
+      cmdstr,              &
+      old_x,               &
+      new_x,               &
+      old_d,               &
+      new_d,               &
+      old_h,               &
+      new_h,               &
+      fixed_alpha = .true. &
     )
 
     if (cmdstr /= "DONE") then

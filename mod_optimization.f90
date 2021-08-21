@@ -369,8 +369,6 @@ subroutine optmz_bfgs(mode,flag_out,nsteps,tol,fixed,savelastgeom)
   logical                                  :: p_savelastgeom
 
   character(*), parameter                  :: my_name = "optmz_bfgs"
-  logical, parameter                       :: wolfe_cond1 = .false.
-  logical, parameter                       :: wolfe_cond2 = .false.
   character(8)                             :: istr
   character(120)                           :: cmdstr
   real(DBL), dimension(:,:),   allocatable :: x1  ! geom_len x 1
@@ -524,9 +522,7 @@ subroutine optmz_bfgs(mode,flag_out,nsteps,tol,fixed,savelastgeom)
         -reshape(old_total_forces(j,:),(/geom_len, 1/)), &
         -reshape(new_total_forces(j,:),(/geom_len, 1/)), & ! not used
         h0(j,:,:),                                       &
-        h1(j,:,:),                                       &
-        wolfe_cond1,                                     &
-        wolfe_cond2                                      &
+        h1(j,:,:)                                        &
       )
 
       if (.not.(cmdstr == "EVALUATE_DF1")) then
@@ -551,9 +547,7 @@ subroutine optmz_bfgs(mode,flag_out,nsteps,tol,fixed,savelastgeom)
         -reshape(old_total_forces(j,:),(/geom_len, 1/)), &
         -reshape(new_total_forces(j,:),(/geom_len, 1/)), & ! used as input
         h0(j,:,:),                                       &
-        h1(j,:,:),                                       &
-        wolfe_cond1,                                     &
-        wolfe_cond2                                      &
+        h1(j,:,:)                                        &
       )
 
       if (.not.(cmdstr == "DONE")) then

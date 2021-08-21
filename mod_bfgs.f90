@@ -35,11 +35,16 @@ contains
 ! Public
 !====================================================================
 
-subroutine bfgs_internal(cmdstr,x0,x1,df0,df1,h0,h1,fixed_alpha)
+subroutine bfgs_internal(cmdstr,x0,x1,df0,df1,h0,h1,fixed_alpha,reset_alpha)
 
   ! BFSG method, based on:
+  !
   ! Nocedal - Numerical Optimization - 2nd edition
   ! Algorithm 6.1 (only the statements inside the loop)
+  !
+  ! Herbol2017computational (DOI: 10.1021/acs.jctc.7b00360)
+  ! Algorithm 9
+
 
   character(120),            intent(INOUT) :: cmdstr
   real(DBL), dimension(:,:), intent(IN)    :: x0
@@ -49,11 +54,14 @@ subroutine bfgs_internal(cmdstr,x0,x1,df0,df1,h0,h1,fixed_alpha)
   real(DBL), dimension(:,:), intent(IN)    :: h0
   real(DBL), dimension(:,:), intent(OUT)   :: h1
   logical, optional,         intent(IN)    :: fixed_alpha
+  logical, optional,         intent(IN)    :: reset_alpha
 
   character(*), parameter                  :: my_name = "bfgs_internal"
+  real(DBL), parameter                     :: alpha0  = 1.0_DBL
+  real(DBL), save                          :: alpha   = alpha0
+  real(DBL)                                :: h0_scaling
   integer                                  :: sz1_x0
   integer                                  :: sz2
-  real(DBL), save                          :: alpha
   real(DBL), dimension(:,:), allocatable   :: p0
   real(DBL), dimension(:,:), allocatable   :: s0
   real(DBL), dimension(:,:), allocatable   :: y0
@@ -72,6 +80,12 @@ subroutine bfgs_internal(cmdstr,x0,x1,df0,df1,h0,h1,fixed_alpha)
     p_fixed_alpha = fixed_alpha
   else
     p_fixed_alpha = .false.
+  end if
+
+  if (present(reset_alpha)) then
+    if (reset_alpha.eqv..true.) then
+      alpha = alpha0
+    end if
   end if
 
   ! arguments' dimensions check ---------------------------
@@ -159,23 +173,11 @@ subroutine bfgs_internal(cmdstr,x0,x1,df0,df1,h0,h1,fixed_alpha)
   end do
 
   ! cmdstr parsing ----------------------------------------
-  ! cmdstr = {START, EVALUATE_DF1, EVALUATED, DONE, ERROR}
+  ! cmdstr = {START, EVALUATE_DF1, EVALUATED, SKIPPED, DONE, ERROR}
   select case (cmdstr)
   case ("START")
     ! compute search direction p0
     p0 = -matmul(h0,df0)
-
-    ! set step length alpha
-    if (p_fixed_alpha.eqv..true.) then
-      alpha = 1.0_DBL
-    else
-      call accelerated_backtracking_line_search(       &
-        rms(reshape(df0,(/size(df0,1)*size(df0,2)/))), &
-        rms(reshape(df1,(/size(df1,1)*size(df1,2)/))), &
-        alpha,                                         &
-        flag_skip                                      &
-      )
-    end if
 
     ! set x1
     x1 = x0 + alpha*p0
@@ -183,18 +185,40 @@ subroutine bfgs_internal(cmdstr,x0,x1,df0,df1,h0,h1,fixed_alpha)
     ! need df1 to proceed
     cmdstr = "EVALUATE_DF1"
   case ("EVALUATED")
-    ! set s0, y0 and r0
-    s0 = x1 - x0
-    y0 = df1 - df0
-    r0 = sum((matmul(transpose(y0),s0))**(-1))
+    if (p_fixed_alpha.eqv..false.) then
+      call accelerated_backtracking_line_search(       &
+        rms(reshape(df0,(/size(df0,1)*size(df0,2)/))), &
+        rms(reshape(df1,(/size(df1,1)*size(df1,2)/))), &
+        alpha,                                         &
+        flag_skip                                      &
+      )
+    else
+      flag_skip = .false.
+    end if
 
-    ! compute h1
-    m1 = idnt - r0*matmul(s0,transpose(y0))
-    m2 = idnt - r0*matmul(y0,transpose(s0))
-    h1 = matmul(matmul(m1,h0),m2) + r0*matmul(s0,transpose(s0))
+    if (flag_skip) then
+      cmdstr = "SKIPPED"
+    else
+      ! set s0, y0 and r0
+      s0 = x1 - x0
+      y0 = df1 - df0
+      r0 = 1.0_DBL / sum(matmul(transpose(y0),s0))
 
-    ! done
-    cmdstr = "DONE"
+      ! scale h0
+      if (isidentity(h0)) then
+        h0_scaling = sum(matmul(transpose(y0),s0)/matmul(transpose(y0),y0))
+      else
+        h0_scaling = 1.0_DBL
+      end if
+
+      ! compute h1
+      m1 = idnt - r0*matmul(s0,transpose(y0))
+      m2 = idnt - r0*matmul(y0,transpose(s0))
+      h1 = matmul(matmul(m1,h0*h0_scaling),m2) + r0*matmul(s0,transpose(s0))
+
+      ! done
+      cmdstr = "DONE"
+    end if
   case default
     cmdstr = "ERROR"
     call error(my_name//": unknown cmdstr "//trim(cmdstr))
@@ -238,6 +262,11 @@ end subroutine bfgs_internal
 !====================================================================
 
 subroutine accelerated_backtracking_line_search(df0_rms,df1_rms,alpha,flag_skip)
+
+  ! Based on:
+  !
+  ! Herbol2017computational (DOI: 10.1021/acs.jctc.7b00360)
+  ! Algorithm 4
 
   real(DBL),  intent(IN)    :: df0_rms
   real(DBL),  intent(IN)    :: df1_rms

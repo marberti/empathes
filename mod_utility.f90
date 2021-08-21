@@ -77,6 +77,7 @@ module utility
                isalpha,                    &
                isinteger,                  &
                isreal,                     &
+               isidentity,                 &
                tolower,                    &
                norm,                       &
                alltrue,                    &
@@ -411,6 +412,43 @@ logical function isreal(str)
   end if
 
 end function isreal
+
+!====================================================================
+
+logical function isidentity(a)
+
+  real(DBL), dimension(:,:), intent(IN) :: a
+
+  character(*), parameter               :: my_name = "isidentity"
+  integer                               :: sz
+  integer                               :: i
+  integer                               :: j
+
+  ! check argument sizes ----------------------------------
+  sz = size(a,1)
+  if (size(a,2) /= sz) then
+    call error(my_name//": argument must be a square matrix (n x n)")
+  end if
+
+  ! working section ---------------------------------------
+  isidentity = .true.
+  do i = 1, sz
+    do j = 1, sz
+      if (i == j) then
+        if (a(i,j) /= 1.0_DBL) then
+          isidentity = .false.
+          return
+        end if
+      else
+        if (a(i,j) /= 0.0_DBL) then
+          isidentity = .false.
+          return
+        end if
+      end if
+    end do
+  end do
+
+end function isidentity
 
 !====================================================================
 

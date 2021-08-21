@@ -246,6 +246,45 @@ subroutine strong_wolfe_conditions(cond1,cond2,alpha)
 end subroutine strong_wolfe_conditions
 
 !====================================================================
+
+subroutine accelerated_backtracking_line_search(df0_rms,df1_rms,alpha,flag_skip)
+
+  real(DBL),  intent(IN)    :: df0_rms
+  real(DBL),  intent(IN)    :: df1_rms
+  real(DBL),  intent(INOUT) :: alpha
+  logical,    intent(OUT)   :: flag_skip
+
+  character(*), parameter   :: my_name   = "accelerated_backtracking_line_search"
+  real(DBL),    parameter   :: threshold = 1.0E-3_DBL
+  real(DBL),    parameter   :: alpha0    = 1.0_DBL
+  real(DBL),    parameter   :: gam       = 0.5_DBL
+  integer,      parameter   :: n0        = 3  ! accelerate alpha after n0 successful iterations
+  real(DBL)                 :: chk
+  integer, save             :: n_back    = n0
+
+  chk = abs(df1_rms - df0_rms) / abs(df1_rms + df0_rms)
+  flag_skip = .false.
+
+  if (chk > threshold) then
+    alpha = alpha * gam  ! slow alpha
+    flag_skip = .true.
+    n_back = n0
+  else
+    n_back = n_back - 1
+    if (n_back < 1) then
+      n_back = n0
+      if (alpha < alpha0) then
+        alpha = alpha0  ! reset alpha
+        flag_skip = .true.
+      else
+        alpha = alpha / gam  ! accelerate alpha
+      end if
+    end if
+  end if
+
+end subroutine accelerated_backtracking_line_search
+
+!====================================================================
 ! Driver
 !====================================================================
 

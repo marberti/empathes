@@ -290,7 +290,7 @@ subroutine accelerated_backtracking_line_search(df0_rms,df1_rms,alpha,flag_skip,
     n_back = n0
   end if
 
-  chk = abs(df1_rms - df0_rms) / abs(df1_rms + df0_rms)
+  chk = (df1_rms - df0_rms) / abs(df1_rms + df0_rms)
   flag_skip = .false.
 
   if (chk > threshold) then

@@ -71,6 +71,7 @@ subroutine bfgs_internal(cmdstr,x0,x1,df0,df1,h0,h1,fixed_alpha,reset_alpha)
   real(DBL), dimension(:,:), allocatable   :: m2
   logical                                  :: p_fixed_alpha
   logical                                  :: flag_skip
+  logical                                  :: flag_reset_n
   integer                                  :: i
   integer                                  :: err_n
   character(120)                           :: err_msg
@@ -82,9 +83,11 @@ subroutine bfgs_internal(cmdstr,x0,x1,df0,df1,h0,h1,fixed_alpha,reset_alpha)
     p_fixed_alpha = .false.
   end if
 
+  flag_reset_n = .false.
   if (present(reset_alpha)) then
     if (reset_alpha.eqv..true.) then
       alpha = alpha0
+      flag_reset_n = .true.
     end if
   end if
 
@@ -190,7 +193,8 @@ subroutine bfgs_internal(cmdstr,x0,x1,df0,df1,h0,h1,fixed_alpha,reset_alpha)
         rms(reshape(df0,(/size(df0,1)*size(df0,2)/))), &
         rms(reshape(df1,(/size(df1,1)*size(df1,2)/))), &
         alpha,                                         &
-        flag_skip                                      &
+        flag_skip,                                     &
+        flag_reset_n                                   &
       )
     else
       flag_skip = .false.
@@ -261,7 +265,7 @@ end subroutine bfgs_internal
 ! Private
 !====================================================================
 
-subroutine accelerated_backtracking_line_search(df0_rms,df1_rms,alpha,flag_skip)
+subroutine accelerated_backtracking_line_search(df0_rms,df1_rms,alpha,flag_skip,flag_reset_n)
 
   ! Based on:
   !
@@ -272,14 +276,19 @@ subroutine accelerated_backtracking_line_search(df0_rms,df1_rms,alpha,flag_skip)
   real(DBL),  intent(IN)    :: df1_rms
   real(DBL),  intent(INOUT) :: alpha
   logical,    intent(OUT)   :: flag_skip
+  logical,    intent(IN)    :: flag_reset_n
 
   character(*), parameter   :: my_name   = "accelerated_backtracking_line_search"
   real(DBL),    parameter   :: threshold = 1.0E-3_DBL
   real(DBL),    parameter   :: alpha0    = 1.0_DBL
   real(DBL),    parameter   :: gam       = 0.5_DBL
-  integer,      parameter   :: n0        = 3  ! accelerate alpha after n0 successful iterations
+  integer,      parameter   :: n0        = 100  ! accelerate alpha after n0 successful iterations
   real(DBL)                 :: chk
   integer, save             :: n_back    = n0
+
+  if (flag_reset_n.eqv..true.) then
+    n_back = n0
+  end if
 
   chk = abs(df1_rms - df0_rms) / abs(df1_rms + df0_rms)
   flag_skip = .false.
@@ -310,11 +319,12 @@ end subroutine accelerated_backtracking_line_search
 subroutine driver_bfgs_rosenbrock()
 
   character(*), parameter   :: my_name = "driver_bfgs_rosenbrock"
-  character(*), parameter   :: header  = "(2X,""Iter"",3X,""x1"",14X,""x2"",14X,""f(x)"",12X, &
+  character(*), parameter   :: header  = "(2X,""Iter"",5X,""x1"",14X,""x2"",14X,""f(x)"",12X, &
                                           &""d/dx1 f(x)"",6X,""d/dx2 f(x)"",6X,""Norm ("",ES8.1,"")"")"
-  character(*), parameter   :: sep     = "(103(""-""))"
-  character(*), parameter   :: format1 = "(2X,I4,3X,5(ES13.6,3X))"
-  character(*), parameter   :: format2 = "(2X,I4,3X,6(ES13.6,3X))"
+  character(*), parameter   :: sep     = "(105(""-""))"
+  character(*), parameter   :: format1 = "(2X,I6,3X,5(ES13.6,3X))"
+  character(*), parameter   :: format2 = "(2X,I6,3X,6(ES13.6,3X))"
+  character(*), parameter   :: format3 = "(2X,I6,3X,""skipped"")"
   real(DBL), parameter      :: tol     = 1.0E-5_DBL
   character(120)            :: cmdstr
   real(DBL), dimension(2,1) :: old_x
@@ -327,12 +337,14 @@ subroutine driver_bfgs_rosenbrock()
   real(DBL), dimension(2,2) :: new_h
   real(DBL), dimension(2)   :: buff
   real(DBL)                 :: nrm
+  integer                   :: rosenbrock_calls
   integer                   :: i
 
   write(*,sep)
   write(*,*) my_name//": BFGS with fixed alpha step"
   write(*,header) tol
 
+  rosenbrock_calls = 0
   old_x(1,1) = -1.2_DBL
   old_x(2,1) =  1.0_DBL
 
@@ -344,28 +356,43 @@ subroutine driver_bfgs_rosenbrock()
       old_h(2,2) = 1.0_DBL
 
       call rosenbrock_f(reshape(old_x,(/2/)),old_f)
+      rosenbrock_calls = rosenbrock_calls + 1
       call rosenbrock_d(reshape(old_x,(/2/)),buff)
       old_d = reshape(buff,(/2,1/))
       write(*,format1) i, old_x, old_f, old_d
-    end if
 
-    cmdstr = "START"
-    call bfgs_internal(    &
-      cmdstr,              &
-      old_x,               &
-      new_x,               &
-      old_d,               &
-      new_d,               &
-      old_h,               &
-      new_h,               &
-      fixed_alpha = .true. &
-    )
+      cmdstr = "START"
+      call bfgs_internal(     &
+        cmdstr,               &
+        old_x,                &
+        new_x,                &
+        old_d,                &
+        new_d,                &
+        old_h,                &
+        new_h,                &
+        fixed_alpha = .true., &
+        reset_alpha = .true.  &
+      )
+    else
+      cmdstr = "START"
+      call bfgs_internal(    &
+        cmdstr,              &
+        old_x,               &
+        new_x,               &
+        old_d,               &
+        new_d,               &
+        old_h,               &
+        new_h,               &
+        fixed_alpha = .true. &
+      )
+    end if
 
     if (cmdstr /= "EVALUATE_DF1") then
       call error(my_name//": expected ""EVALUATE_DF1"", get """//trim(cmdstr)//"""")
     end if
 
     call rosenbrock_f(reshape(new_x,(/2/)),new_f)
+    rosenbrock_calls = rosenbrock_calls + 1
     call rosenbrock_d(reshape(new_x,(/2/)),buff)
     new_d = reshape(buff,(/2,1/))
 
@@ -399,6 +426,102 @@ subroutine driver_bfgs_rosenbrock()
 
     i = i+1
   end do
+
+  write(*,*) "total rosenbrock_f calls: ", rosenbrock_calls
+
+  write(*,sep)
+  write(*,*) my_name//": BFGS with accelerated_backtracking_line_search()"
+  write(*,header) tol
+
+  rosenbrock_calls = 0
+  old_x(1,1) = -1.2_DBL
+  old_x(2,1) =  1.0_DBL
+
+  i = 1
+  do
+    if (i == 1) then
+      old_h      = 0.0_DBL
+      old_h(1,1) = 1.0_DBL
+      old_h(2,2) = 1.0_DBL
+
+      call rosenbrock_f(reshape(old_x,(/2/)),old_f)
+      rosenbrock_calls = rosenbrock_calls + 1
+      call rosenbrock_d(reshape(old_x,(/2/)),buff)
+      old_d = reshape(buff,(/2,1/))
+      write(*,format1) i, old_x, old_f, old_d
+
+      cmdstr = "START"
+      call bfgs_internal(     &
+        cmdstr,               &
+        old_x,                &
+        new_x,                &
+        old_d,                &
+        new_d,                &
+        old_h,                &
+        new_h,                &
+        reset_alpha = .true.  &
+      )
+    else
+      cmdstr = "START"
+      call bfgs_internal(    &
+        cmdstr,              &
+        old_x,               &
+        new_x,               &
+        old_d,               &
+        new_d,               &
+        old_h,               &
+        new_h                &
+      )
+    end if
+
+    if (cmdstr /= "EVALUATE_DF1") then
+      call error(my_name//": expected ""EVALUATE_DF1"", get """//trim(cmdstr)//"""")
+    end if
+
+    call rosenbrock_f(reshape(new_x,(/2/)),new_f)
+    rosenbrock_calls = rosenbrock_calls + 1
+    call rosenbrock_d(reshape(new_x,(/2/)),buff)
+    new_d = reshape(buff,(/2,1/))
+
+    cmdstr = "EVALUATED"
+    call bfgs_internal(    &
+      cmdstr,              &
+      old_x,               &
+      new_x,               &
+      old_d,               &
+      new_d,               &
+      old_h,               &
+      new_h                &
+    )
+
+    select case (cmdstr)
+    case ("DONE")
+      nrm = sqrt(sum(matmul(transpose(new_d),new_d)))
+      write(*,format2) i, new_x, new_f, new_d, nrm
+
+      if (nrm < tol) then
+        exit
+      end if
+
+      old_x = new_x
+      old_f = new_f
+      old_d = new_d
+      old_h = new_h
+    case ("SKIPPED")
+      write(*,format3) i
+
+!      ! reset old_h to identity matrix
+!      old_h      = 0.0_DBL
+!      old_h(1,1) = 1.0_DBL
+!      old_h(2,2) = 1.0_DBL
+    case default
+      call error(my_name//": expected ""DONE"" or ""SKIPPED"", get """//trim(cmdstr)//"""")
+    end select
+
+    i = i+1
+  end do
+
+  write(*,*) "total rosenbrock_f calls: ", rosenbrock_calls
 
   write(*,sep)
 

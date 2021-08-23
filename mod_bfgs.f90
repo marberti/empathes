@@ -337,14 +337,15 @@ subroutine driver_bfgs_rosenbrock()
   real(DBL), dimension(2,2) :: new_h
   real(DBL), dimension(2)   :: buff
   real(DBL)                 :: nrm
-  integer                   :: rosenbrock_calls
+  integer, dimension(2)     :: rosenbrock_calls
   integer                   :: i
+
+  rosenbrock_calls = 0
 
   write(*,sep)
   write(*,*) my_name//": BFGS with fixed alpha step"
   write(*,header) tol
 
-  rosenbrock_calls = 0
   old_x(1,1) = -1.2_DBL
   old_x(2,1) =  1.0_DBL
 
@@ -356,7 +357,7 @@ subroutine driver_bfgs_rosenbrock()
       old_h(2,2) = 1.0_DBL
 
       call rosenbrock_f(reshape(old_x,(/2/)),old_f)
-      rosenbrock_calls = rosenbrock_calls + 1
+      rosenbrock_calls(1) = rosenbrock_calls(1) + 1
       call rosenbrock_d(reshape(old_x,(/2/)),buff)
       old_d = reshape(buff,(/2,1/))
       write(*,format1) i, old_x, old_f, old_d
@@ -392,7 +393,7 @@ subroutine driver_bfgs_rosenbrock()
     end if
 
     call rosenbrock_f(reshape(new_x,(/2/)),new_f)
-    rosenbrock_calls = rosenbrock_calls + 1
+    rosenbrock_calls(1) = rosenbrock_calls(1) + 1
     call rosenbrock_d(reshape(new_x,(/2/)),buff)
     new_d = reshape(buff,(/2,1/))
 
@@ -427,13 +428,12 @@ subroutine driver_bfgs_rosenbrock()
     i = i+1
   end do
 
-  write(*,*) "total rosenbrock_f calls: ", rosenbrock_calls
+  write(*,*) "total rosenbrock_f calls: ", rosenbrock_calls(1)
 
   write(*,sep)
   write(*,*) my_name//": BFGS with accelerated_backtracking_line_search()"
   write(*,header) tol
 
-  rosenbrock_calls = 0
   old_x(1,1) = -1.2_DBL
   old_x(2,1) =  1.0_DBL
 
@@ -445,7 +445,7 @@ subroutine driver_bfgs_rosenbrock()
       old_h(2,2) = 1.0_DBL
 
       call rosenbrock_f(reshape(old_x,(/2/)),old_f)
-      rosenbrock_calls = rosenbrock_calls + 1
+      rosenbrock_calls(2) = rosenbrock_calls(2) + 1
       call rosenbrock_d(reshape(old_x,(/2/)),buff)
       old_d = reshape(buff,(/2,1/))
       write(*,format1) i, old_x, old_f, old_d
@@ -479,7 +479,7 @@ subroutine driver_bfgs_rosenbrock()
     end if
 
     call rosenbrock_f(reshape(new_x,(/2/)),new_f)
-    rosenbrock_calls = rosenbrock_calls + 1
+    rosenbrock_calls(2) = rosenbrock_calls(2) + 1
     call rosenbrock_d(reshape(new_x,(/2/)),buff)
     new_d = reshape(buff,(/2,1/))
 
@@ -521,7 +521,12 @@ subroutine driver_bfgs_rosenbrock()
     i = i+1
   end do
 
-  write(*,*) "total rosenbrock_f calls: ", rosenbrock_calls
+  write(*,*) "total rosenbrock_f calls: ", rosenbrock_calls(2)
+
+  write(*,sep)
+  write(*,*) "Results, total rosenbrock_f calls:"
+  write(*,*) "    Fixed alpha                          : ", rosenbrock_calls(1)
+  write(*,*) "    Accelerated backtracking line search : ", rosenbrock_calls(2)
 
   write(*,sep)
 

@@ -443,6 +443,7 @@ subroutine get_pes_forces(i,tid,conv_threshold,flag_conv,ig,pesf,pesg)
   real(DBL),               optional, intent(OUT)   :: pesf
   real(DBL), dimension(:), optional, intent(OUT)   :: pesg
 
+  character(*), parameter                          :: my_name = "get_pes_forces"
   ! @end_user: add a new real(DBL) "max_programname_threshold" parameter
   real(DBL), parameter                             :: max_gaussian_threshold = 1.0E-5
   real(DBL), parameter                             :: max_siesta_threshold   = 1.0E-1
@@ -477,17 +478,17 @@ subroutine get_pes_forces(i,tid,conv_threshold,flag_conv,ig,pesf,pesg)
 
   if (alltrue(arg_presence)) then
     if (flag_init_pes_module.eqv..false.) then
-      call error("get_pes_forces: module pes not initialized")
+      call error(my_name//": module pes not initialized")
     end if
   else if (.not.allfalse(arg_presence)) then
-    call error("get_pes_forces: optional arguments were only partially supplied")
+    call error(my_name//": optional arguments were only partially supplied")
   end if
 
   ! check tid ---------------------------------------------
   if (tid>tid_lim) then
     write(tid_lim_str,'(I8)') tid_lim
     tid_lim_str=adjustl(tid_lim_str)
-    call error("get_pes_forces: max processes allowed: "//trim(tid_lim_str))
+    call error(my_name//": max processes allowed: "//trim(tid_lim_str))
   end if
 
   ! SCF Convergence threshold check -----------------------
@@ -499,18 +500,18 @@ subroutine get_pes_forces(i,tid,conv_threshold,flag_conv,ig,pesf,pesg)
     if (nint(log10(conv_threshold))>nint(log10(max_gaussian_threshold))) then
       write(real_str,'(ES8.1)') max_gaussian_threshold
       real_str=adjustl(real_str)
-      call error("get_pes_forces: convergence threshold above"//&
+      call error(my_name//": convergence threshold above"//&
         &" the default value of "//trim(real_str))
     end if
   case ("siesta")
     if (conv_threshold>max_siesta_threshold) then
       write(real_str,'(ES8.1)') max_siesta_threshold
       real_str = adjustl(real_str)
-      call error("get_pes_forces: convergence threshold above"//&
+      call error(my_name//": convergence threshold above"//&
         &" the default value of "//trim(real_str))
     end if
   case default
-    call error("get_pes_forces: unknown program """//trim(pes_program)//"""")
+    call error(my_name//": unknown program """//trim(pes_program)//"""")
   end select
 
   ! Preparing and executing the external program ----------
@@ -542,7 +543,7 @@ subroutine get_pes_forces(i,tid,conv_threshold,flag_conv,ig,pesf,pesg)
     call exec_siesta(fnumb_in,fname_in,fname_out)
     call get_siesta_output(i,fnumb_out,fname_out,flag_conv)
   case default
-    call error("get_pes_forces: unknown program """//trim(pes_program)//"""")
+    call error(my_name//": unknown program """//trim(pes_program)//"""")
   end select
 
   call f_chdir("..")

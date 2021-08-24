@@ -547,6 +547,7 @@ subroutine get_pes_forces(i,tid,conv_threshold,flag_conv,ig,pesf,pesg)
   end select
 
   call f_chdir("..")
+  call store_nonconvergent_result(flag_conv,i,dirname,fname_in,fname_out)
   call get_auxiliary_files(dirname,auxdirname)
   call remove_dir(dirname)
 
@@ -1282,6 +1283,102 @@ subroutine set_dir(i,dirname,auxdirname)
   end if
 
 end subroutine set_dir
+
+!====================================================================
+
+subroutine store_nonconvergent_result(flag_conv,img,dirname,fname_in,fname_out)
+
+  logical,                      intent(IN) :: flag_conv
+  integer,                      intent(IN) :: img
+  character(*),                 intent(IN) :: dirname
+  character(*),                 intent(IN) :: fname_in
+  character(*),                 intent(IN) :: fname_out
+
+  character(*), parameter                  :: my_name     = "store_nonconvergent_result"
+  character(*), parameter                  :: nonconv_dir = "non-convergent"
+  logical, save                            :: first_call  = .true.
+  integer, dimension(:), allocatable, save :: counter
+  character(8)                             :: i_str
+  character(8)                             :: i_str2
+  character(200)                           :: fin
+  character(200)                           :: fout
+  character(200)                           :: dir
+  character(200)                           :: cmd
+  integer                                  :: cmd_n
+  integer                                  :: exit_n
+  integer                                  :: err_n
+  character(120)                           :: err_msg
+
+  ! there is nothing to do if the previous computation is convergent
+  if (flag_conv.eqv..true.) then
+    return
+  end if
+
+  ! make the master directory for non-convergent computations
+  if (first_call.eqv..true.) then
+    cmd = "mkdir -p "//trim(nonconv_dir)
+    call execute_command_line(trim(cmd),wait=.true.,exitstat=exit_n,cmdstat=cmd_n)
+
+    if (cmd_n /= 0) then
+      call error(my_name//": cannot execute command """//trim(cmd)//"""")
+    end if
+
+    if (exit_n /= 0) then
+      write(i_str,'(I8)') exit_n
+      i_str = adjustl(i_str)
+      call error(my_name//": """//trim(cmd)//""" terminated with exit code: "//trim(i_str))
+    end if
+
+    allocate(counter(image_n),stat=err_n,errmsg=err_msg)
+    if (err_n /= 0) then
+      call error(my_name//": "//trim(err_msg))
+    end if
+
+    counter = 0
+
+    first_call = .false.
+  end if
+
+  ! set directory name ------------------------------------
+  counter(img) = counter(img) + 1
+
+  write(i_str,'(I8)') img
+  i_str = adjustl(i_str)
+  write(i_str2,'(I8)') counter(img)
+  i_str2 = adjustl(i_str2)
+  dir = trim(nonconv_dir)//"/"//"img"//trim(i_str)//"_"//trim(i_str2)
+
+  ! make a directory for the specific non-convergent computation
+  cmd = "mkdir "//trim(dir)
+  call execute_command_line(trim(cmd),wait=.true.,exitstat=exit_n,cmdstat=cmd_n)
+
+  if (cmd_n /= 0) then
+    call error(my_name//": cannot execute command """//trim(cmd)//"""")
+  end if
+
+  if (exit_n /= 0) then
+    write(i_str,'(I8)') exit_n
+    i_str = adjustl(i_str)
+    call error(my_name//": """//trim(cmd)//""" terminated with exit code: "//trim(i_str))
+  end if
+
+  ! copy the guilty files ---------------------------------
+  fin  = trim(dirname)//"/"//trim(fname_in)
+  fout = trim(dirname)//"/"//trim(fname_out)
+  cmd  = "cp "//trim(fin)//" "//trim(fout)//" "//trim(dir)
+  call execute_command_line(trim(cmd),wait=.true.,exitstat=exit_n,cmdstat=cmd_n)
+
+  if (cmd_n /= 0) then
+    call error(my_name//": cannot execute command """//trim(cmd)//"""")
+  end if
+
+  if (exit_n /= 0) then
+    write(i_str,'(I8)') exit_n
+    i_str = adjustl(i_str)
+    call error(my_name//": """//trim(cmd)//""" terminated with exit code: "//trim(i_str))
+  end if
+
+end subroutine store_nonconvergent_result
 
 !====================================================================
 

@@ -58,10 +58,12 @@ subroutine bfgs_internal(cmdstr,mode,x0,x1,df0,df1,h0,h1,reset_alpha)
   real(DBL), dimension(:,:), intent(OUT)   :: h1
   logical, optional,         intent(IN)    :: reset_alpha
 
-  character(*), parameter                  :: my_name = "bfgs_internal"
-  real(DBL), parameter                     :: alpha0  = 1.0_DBL
-  real(DBL), save                          :: alpha   = alpha0
+  character(*), parameter                  :: my_name          = "bfgs_internal"
+  real(DBL), parameter                     :: max_displacement = 0.2_DBL
+  real(DBL), parameter                     :: alpha0           = 1.0_DBL
+  real(DBL), save                          :: alpha            = alpha0
   real(DBL)                                :: h0_scaling
+  real(DBL)                                :: p0_max
   integer                                  :: sz1_x0
   integer                                  :: sz2
   real(DBL), dimension(:,:), allocatable   :: p0
@@ -195,6 +197,14 @@ subroutine bfgs_internal(cmdstr,mode,x0,x1,df0,df1,h0,h1,reset_alpha)
   case ("START")
     ! compute search direction p0
     p0 = -matmul(h0,df0)
+
+    if (flag_max_displacement) then
+      alpha  = alpha0
+      p0_max = maxval(p0)
+      if (alpha*p0_max > max_displacement) then
+        alpha = max_displacement / p0_max
+      end if
+    end if
 
     ! set x1
     x1 = x0 + alpha*p0
@@ -352,7 +362,7 @@ subroutine driver_bfgs_rosenbrock()
   real(DBL), dimension(2,2) :: new_h
   real(DBL), dimension(2)   :: buff
   real(DBL)                 :: nrm
-  integer, dimension(2)     :: rosenbrock_calls
+  integer, dimension(3)     :: rosenbrock_calls
   integer                   :: i
 
   rosenbrock_calls = 0
@@ -544,9 +554,99 @@ subroutine driver_bfgs_rosenbrock()
   write(*,*) "total rosenbrock_f calls: ", rosenbrock_calls(2)
 
   write(*,sep)
+  write(*,*) my_name//": BFGS with max displacement"
+  write(*,header) tol
+
+  mode = "max_displacement"
+  old_x(1,1) = -1.2_DBL
+  old_x(2,1) =  1.0_DBL
+
+  i = 1
+  do
+    if (i == 1) then
+      old_h      = 0.0_DBL
+      old_h(1,1) = 1.0_DBL
+      old_h(2,2) = 1.0_DBL
+
+      call rosenbrock_f(reshape(old_x,(/2/)),old_f)
+      rosenbrock_calls(3) = rosenbrock_calls(3) + 1
+      call rosenbrock_d(reshape(old_x,(/2/)),buff)
+      old_d = reshape(buff,(/2,1/))
+      write(*,format1) i, old_x, old_f, old_d
+
+      cmdstr = "START"
+      call bfgs_internal(    &
+        cmdstr,              &
+        mode,                &
+        old_x,               &
+        new_x,               &
+        old_d,               &
+        new_d,               &
+        old_h,               &
+        new_h,               &
+        reset_alpha = .true. &
+      )
+    else
+      cmdstr = "START"
+      call bfgs_internal( &
+        cmdstr,           &
+        mode,             &
+        old_x,            &
+        new_x,            &
+        old_d,            &
+        new_d,            &
+        old_h,            &
+        new_h             &
+      )
+    end if
+
+    if (cmdstr /= "EVALUATE_DF1") then
+      call error(my_name//": expected ""EVALUATE_DF1"", get """//trim(cmdstr)//"""")
+    end if
+
+    call rosenbrock_f(reshape(new_x,(/2/)),new_f)
+    rosenbrock_calls(3) = rosenbrock_calls(3) + 1
+    call rosenbrock_d(reshape(new_x,(/2/)),buff)
+    new_d = reshape(buff,(/2,1/))
+
+    cmdstr = "EVALUATED"
+    call bfgs_internal( &
+      cmdstr,           &
+      mode,             &
+      old_x,            &
+      new_x,            &
+      old_d,            &
+      new_d,            &
+      old_h,            &
+      new_h             &
+    )
+
+    if (cmdstr /= "DONE") then
+      call error(my_name//": expected ""DONE"", get """//trim(cmdstr)//"""")
+    end if
+
+    nrm = sqrt(sum(matmul(transpose(new_d),new_d)))
+    write(*,format2) i, new_x, new_f, new_d, nrm
+
+    if (nrm < tol) then
+      exit
+    end if
+
+    old_x = new_x
+    old_f = new_f
+    old_d = new_d
+    old_h = new_h
+
+    i = i+1
+  end do
+
+  write(*,*) "total rosenbrock_f calls: ", rosenbrock_calls(3)
+
+  write(*,sep)
   write(*,*) "Results, total rosenbrock_f calls:"
   write(*,*) "    Fixed alpha                          : ", rosenbrock_calls(1)
   write(*,*) "    Accelerated backtracking line search : ", rosenbrock_calls(2)
+  write(*,*) "    Max displacement                     : ", rosenbrock_calls(3)
 
   write(*,sep)
 

@@ -430,7 +430,7 @@ subroutine optmz_bfgs(mode,flag_out,nsteps,tol,fixed,savelastgeom)
   end if
 
   ! init bfgs_mode ----------------------------------------
-  bfgs_mode = "fixed_alpha"
+  bfgs_mode = "max_displacement"
 
   ! init sz_imggeom ---------------------------------------
   sz_imggeom = image_n * geom_len

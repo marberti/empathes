@@ -35,7 +35,7 @@ contains
 ! Public
 !====================================================================
 
-subroutine bfgs_internal(cmdstr,x0,x1,df0,df1,h0,h1,fixed_alpha,reset_alpha)
+subroutine bfgs_internal(cmdstr,mode,x0,x1,df0,df1,h0,h1,reset_alpha)
 
   ! BFSG method, based on:
   !
@@ -49,13 +49,13 @@ subroutine bfgs_internal(cmdstr,x0,x1,df0,df1,h0,h1,fixed_alpha,reset_alpha)
 
 
   character(120),            intent(INOUT) :: cmdstr
+  character(*),              intent(IN)    :: mode
   real(DBL), dimension(:,:), intent(IN)    :: x0
   real(DBL), dimension(:,:), intent(INOUT) :: x1
   real(DBL), dimension(:,:), intent(IN)    :: df0
   real(DBL), dimension(:,:), intent(IN)    :: df1
   real(DBL), dimension(:,:), intent(IN)    :: h0
   real(DBL), dimension(:,:), intent(OUT)   :: h1
-  logical, optional,         intent(IN)    :: fixed_alpha
   logical, optional,         intent(IN)    :: reset_alpha
 
   character(*), parameter                  :: my_name = "bfgs_internal"
@@ -71,7 +71,9 @@ subroutine bfgs_internal(cmdstr,x0,x1,df0,df1,h0,h1,fixed_alpha,reset_alpha)
   real(DBL), dimension(:,:), allocatable   :: idnt
   real(DBL), dimension(:,:), allocatable   :: m1
   real(DBL), dimension(:,:), allocatable   :: m2
-  logical                                  :: p_fixed_alpha
+  logical                                  :: flag_fixed_alpha
+  logical                                  :: flag_accelerated_bt
+  logical                                  :: flag_max_displacement
   logical                                  :: flag_skip
   logical                                  :: flag_reset_n
   integer                                  :: i
@@ -79,12 +81,6 @@ subroutine bfgs_internal(cmdstr,x0,x1,df0,df1,h0,h1,fixed_alpha,reset_alpha)
   character(120)                           :: err_msg
 
   ! check optional argument -------------------------------
-  if (present(fixed_alpha)) then
-    p_fixed_alpha = fixed_alpha
-  else
-    p_fixed_alpha = .false.
-  end if
-
   flag_reset_n = .false.
   if (present(reset_alpha)) then
     if (reset_alpha.eqv..true.) then
@@ -92,6 +88,22 @@ subroutine bfgs_internal(cmdstr,x0,x1,df0,df1,h0,h1,fixed_alpha,reset_alpha)
       flag_reset_n = .true.
     end if
   end if
+
+  ! mode check --------------------------------------------
+  flag_fixed_alpha      = .false.
+  flag_accelerated_bt   = .false.
+  flag_max_displacement = .false.
+
+  select case (mode)
+  case ("fixed_alpha")
+    flag_fixed_alpha      = .true.
+  case ("accelerated_bt")
+    flag_accelerated_bt   = .true.
+  case ("max_displacement")
+    flag_max_displacement = .true.
+  case default
+    call error(my_name//": unknown mode """//trim(mode)//"""")
+  end select
 
   ! arguments' dimensions check ---------------------------
   sz1_x0 = size(x0,1)
@@ -190,7 +202,7 @@ subroutine bfgs_internal(cmdstr,x0,x1,df0,df1,h0,h1,fixed_alpha,reset_alpha)
     ! need df1 to proceed
     cmdstr = "EVALUATE_DF1"
   case ("EVALUATED")
-    if (p_fixed_alpha.eqv..false.) then
+    if (flag_accelerated_bt) then
       call accelerated_backtracking_line_search(       &
         rms(reshape(df0,(/size(df0,1)*size(df0,2)/))), &
         rms(reshape(df1,(/size(df1,1)*size(df1,2)/))), &
@@ -329,6 +341,7 @@ subroutine driver_bfgs_rosenbrock()
   character(*), parameter   :: format3 = "(2X,I6,3X,""skipped"")"
   real(DBL), parameter      :: tol     = 1.0E-5_DBL
   character(120)            :: cmdstr
+  character(120)            :: mode
   real(DBL), dimension(2,1) :: old_x
   real(DBL)                 :: old_f
   real(DBL), dimension(2,1) :: old_d
@@ -348,6 +361,7 @@ subroutine driver_bfgs_rosenbrock()
   write(*,*) my_name//": BFGS with fixed alpha step"
   write(*,header) tol
 
+  mode = "fixed_alpha"
   old_x(1,1) = -1.2_DBL
   old_x(2,1) =  1.0_DBL
 
@@ -365,28 +379,28 @@ subroutine driver_bfgs_rosenbrock()
       write(*,format1) i, old_x, old_f, old_d
 
       cmdstr = "START"
-      call bfgs_internal(     &
-        cmdstr,               &
-        old_x,                &
-        new_x,                &
-        old_d,                &
-        new_d,                &
-        old_h,                &
-        new_h,                &
-        fixed_alpha = .true., &
-        reset_alpha = .true.  &
-      )
-    else
-      cmdstr = "START"
       call bfgs_internal(    &
         cmdstr,              &
+        mode,                &
         old_x,               &
         new_x,               &
         old_d,               &
         new_d,               &
         old_h,               &
         new_h,               &
-        fixed_alpha = .true. &
+        reset_alpha = .true. &
+      )
+    else
+      cmdstr = "START"
+      call bfgs_internal( &
+        cmdstr,           &
+        mode,             &
+        old_x,            &
+        new_x,            &
+        old_d,            &
+        new_d,            &
+        old_h,            &
+        new_h             &
       )
     end if
 
@@ -400,15 +414,15 @@ subroutine driver_bfgs_rosenbrock()
     new_d = reshape(buff,(/2,1/))
 
     cmdstr = "EVALUATED"
-    call bfgs_internal(    &
-      cmdstr,              &
-      old_x,               &
-      new_x,               &
-      old_d,               &
-      new_d,               &
-      old_h,               &
-      new_h,               &
-      fixed_alpha = .true. &
+    call bfgs_internal( &
+      cmdstr,           &
+      mode,             &
+      old_x,            &
+      new_x,            &
+      old_d,            &
+      new_d,            &
+      old_h,            &
+      new_h             &
     )
 
     if (cmdstr /= "DONE") then
@@ -436,6 +450,7 @@ subroutine driver_bfgs_rosenbrock()
   write(*,*) my_name//": BFGS with accelerated_backtracking_line_search()"
   write(*,header) tol
 
+  mode = "accelerated_bt"
   old_x(1,1) = -1.2_DBL
   old_x(2,1) =  1.0_DBL
 
@@ -453,26 +468,28 @@ subroutine driver_bfgs_rosenbrock()
       write(*,format1) i, old_x, old_f, old_d
 
       cmdstr = "START"
-      call bfgs_internal(     &
-        cmdstr,               &
-        old_x,                &
-        new_x,                &
-        old_d,                &
-        new_d,                &
-        old_h,                &
-        new_h,                &
-        reset_alpha = .true.  &
-      )
-    else
-      cmdstr = "START"
       call bfgs_internal(    &
         cmdstr,              &
+        mode,                &
         old_x,               &
         new_x,               &
         old_d,               &
         new_d,               &
         old_h,               &
-        new_h                &
+        new_h,               &
+        reset_alpha = .true. &
+      )
+    else
+      cmdstr = "START"
+      call bfgs_internal( &
+        cmdstr,           &
+        mode,             &
+        old_x,            &
+        new_x,            &
+        old_d,            &
+        new_d,            &
+        old_h,            &
+        new_h             &
       )
     end if
 
@@ -486,14 +503,15 @@ subroutine driver_bfgs_rosenbrock()
     new_d = reshape(buff,(/2,1/))
 
     cmdstr = "EVALUATED"
-    call bfgs_internal(    &
-      cmdstr,              &
-      old_x,               &
-      new_x,               &
-      old_d,               &
-      new_d,               &
-      old_h,               &
-      new_h                &
+    call bfgs_internal( &
+      cmdstr,           &
+      mode,             &
+      old_x,            &
+      new_x,            &
+      old_d,            &
+      new_d,            &
+      old_h,            &
+      new_h             &
     )
 
     select case (cmdstr)

@@ -516,7 +516,7 @@ subroutine optmz_bfgs(mode,flag_out,nsteps,tol,fixed,savelastgeom)
       ! preliminary computation
       call compute_total_forces(mode,p_fixed)
       call total_forces_modifiers(mode,p_nsteps,i,p_fixed)
-      old_image_geom   = image_geom
+      old_image_geom   = image_geom(1:image_n,:)
       old_total_forces = total_forces
 
       cmdstr = "START"

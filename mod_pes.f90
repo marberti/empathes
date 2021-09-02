@@ -384,10 +384,11 @@ subroutine compute_pes_forces()
   !          before init_tangents
   !--------------------------------------------------------
 
-  integer   :: i
-  integer   :: tid
-  real(DBL) :: conv_threshold
-  logical   :: converged
+  character(*), parameter :: my_name = "compute_pes_forces"
+  integer                 :: i
+  integer                 :: tid
+  real(DBL)               :: conv_threshold
+  logical                 :: converged
 
   ! use MPI variant? --------------------------------------
 #ifdef USE_MPI
@@ -399,7 +400,7 @@ subroutine compute_pes_forces()
 
   ! preliminary checks ------------------------------------
   if (flag_init_pes_module.eqv..false.) then
-    call error("compute_pes_forces: module pes not initialized")
+    call error(my_name//": module pes not initialized")
   end if
 
   ! working section ---------------------------------------
@@ -414,9 +415,9 @@ subroutine compute_pes_forces()
         exit
       else
         conv_threshold = conv_threshold*10.0_DBL
-        write(FILEOUT,'(5X,"compute_pes_forces: process ",I3,&
+        write(FILEOUT,'(5X,A,": process ",I3,&
           &": convergence threshold on image ",I3,&
-          &" reduced to ",ES8.1)') tid,i,conv_threshold
+          &" reduced to ",ES8.1)') my_name,tid,i,conv_threshold
       end if
     end do
   end do
@@ -946,6 +947,7 @@ subroutine mmpi_compute_pes_forces()
   ! and executing processes are more than one.
   !--------------------------------------------------------
 
+  character(*), parameter                :: my_name = "mmpi_compute_pes_forces"
   character(8)                           :: istr
   integer                                :: i
   integer                                :: total_computations
@@ -975,8 +977,7 @@ subroutine mmpi_compute_pes_forces()
   if (flag_init_pes_module.eqv..false.) then
     write(istr,'(I8)') proc_id
     istr = adjustl(istr)
-    err_msg = "mmpi_compute_pes_forces: process "//trim(istr)//&
-      &": module pes not initialized"
+    err_msg = my_name//": process "//trim(istr)//": module pes not initialized"
     call error(err_msg)
   end if
 
@@ -985,16 +986,14 @@ subroutine mmpi_compute_pes_forces()
   if (err_n/=0) then
     write(istr,'(I8)') proc_id
     istr = adjustl(istr)
-    call error("mmpi_compute_pes_forces: process "//&
-      &trim(istr)//": "//trim(err_msg))
+    call error(my_name//": process "//trim(istr)//": "//trim(err_msg))
   end if
 
   allocate (real_r1_buff(geom_len),stat=err_n,errmsg=err_msg)
   if (err_n/=0) then
     write(istr,'(I8)') proc_id
     istr = adjustl(istr)
-    call error("mmpi_compute_pes_forces: process "//&
-      &trim(istr)//": "//trim(err_msg))
+    call error(my_name//": process "//trim(istr)//": "//trim(err_msg))
   end if
 
   if (proc_id==0) then
@@ -1002,16 +1001,14 @@ subroutine mmpi_compute_pes_forces()
     if (err_n/=0) then
       write(istr,'(I8)') proc_id
       istr = adjustl(istr)
-      call error("mmpi_compute_pes_forces: process "//&
-        &trim(istr)//": "//trim(err_msg))
+      call error(my_name//": process "//trim(istr)//": "//trim(err_msg))
     end if
 
     allocate (forces_buff(image_n,geom_len),stat=err_n,errmsg=err_msg)
     if (err_n/=0) then
       write(istr,'(I8)') proc_id
       istr = adjustl(istr)
-      call error("mmpi_compute_pes_forces: process "//&
-        &trim(istr)//": "//trim(err_msg))
+      call error(my_name//": process "//trim(istr)//": "//trim(err_msg))
     end if
   end if
 
@@ -1039,9 +1036,9 @@ subroutine mmpi_compute_pes_forces()
           exit
         else
           conv_threshold = conv_threshold*10.0_DBL
-          write(FILEOUT,'(5X,"compute_pes_forces: process ",I3,&
+          write(FILEOUT,'(5X,A,": process ",I3,&
             &": convergence threshold on image ",I3,&
-            &" reduced to ",ES8.1)') proc_id,i,conv_threshold
+            &" reduced to ",ES8.1)') my_name,proc_id,i,conv_threshold
         end if
       end do
     end if
@@ -1113,16 +1110,14 @@ subroutine mmpi_compute_pes_forces()
   if (err_n/=0) then
     write(istr,'(I8)') proc_id
     istr = adjustl(istr)
-    call error("mmpi_compute_pes_forces: process "//&
-      &trim(istr)//": "//trim(err_msg))
+    call error(my_name//": process "//trim(istr)//": "//trim(err_msg))
   end if
 
   deallocate (real_r1_buff,stat=err_n,errmsg=err_msg)
   if (err_n/=0) then
     write(istr,'(I8)') proc_id
     istr = adjustl(istr)
-    call error("mmpi_compute_pes_forces: process "//&
-      &trim(istr)//": "//trim(err_msg))
+    call error(my_name//": process "//trim(istr)//": "//trim(err_msg))
   end if
 
   if (proc_id==0) then
@@ -1130,16 +1125,14 @@ subroutine mmpi_compute_pes_forces()
     if (err_n/=0) then
       write(istr,'(I8)') proc_id
       istr = adjustl(istr)
-      call error("mmpi_compute_pes_forces: process "//&
-        &trim(istr)//": "//trim(err_msg))
+      call error(my_name//": process "//trim(istr)//": "//trim(err_msg))
     end if
 
     deallocate (forces_buff,stat=err_n,errmsg=err_msg)
     if (err_n/=0) then
       write(istr,'(I8)') proc_id
       istr = adjustl(istr)
-      call error("mmpi_compute_pes_forces: process "//&
-        &trim(istr)//": "//trim(err_msg))
+      call error(my_name//": process "//trim(istr)//": "//trim(err_msg))
     end if
   end if
 

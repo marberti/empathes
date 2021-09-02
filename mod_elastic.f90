@@ -397,6 +397,27 @@ end subroutine arbitrary_geom_total_forces
 
 !====================================================================
 
+subroutine set_total_forces_on_i(i,forces)
+
+  integer,                 intent(IN) :: i
+  real(DBL), dimension(:), intent(IN) :: forces
+
+  if ((i<1).or.(i>image_n)) then
+    call error("set_total_forces_on_i: image i out of bounds")
+  end if
+
+  if (size(forces,1)/=geom_len) then
+    call error("set_total_forces_on_i: wrong forces argument size")
+  end if
+
+  total_forces(i,:) = forces
+
+end subroutine set_total_forces_on_i
+
+!====================================================================
+! Private
+!====================================================================
+
 subroutine init_tangents(mode)
 
   !--------------------------------------------------------
@@ -418,27 +439,6 @@ subroutine init_tangents(mode)
 
 end subroutine init_tangents
 
-!====================================================================
-
-subroutine set_total_forces_on_i(i,forces)
-
-  integer,                 intent(IN) :: i
-  real(DBL), dimension(:), intent(IN) :: forces
-
-  if ((i<1).or.(i>image_n)) then
-    call error("set_total_forces_on_i: image i out of bounds")
-  end if
-
-  if (size(forces,1)/=geom_len) then
-    call error("set_total_forces_on_i: wrong forces argument size")
-  end if
-
-  total_forces(i,:) = forces
-
-end subroutine set_total_forces_on_i
-
-!====================================================================
-! Private
 !====================================================================
 
 subroutine compute_dynamic_spring_k()

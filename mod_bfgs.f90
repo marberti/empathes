@@ -42,6 +42,8 @@ subroutine bfgs_internal(cmdstr,x0,x1,df0,df1,h0,h1,fixed_alpha,reset_alpha)
   ! Nocedal - Numerical Optimization - 2nd edition
   ! Algorithm 6.1 (only the statements inside the loop)
   !
+  ! Call to accelerated_backtracking_line_search() based on:
+  !
   ! Herbol2017computational (DOI: 10.1021/acs.jctc.7b00360)
   ! Algorithm 9
 

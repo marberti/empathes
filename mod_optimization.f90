@@ -354,7 +354,7 @@ end subroutine optmz_steepest_descent
 
 !====================================================================
 
-subroutine optmz_bfgs(mode,flag_out,nsteps,tol,fixed,savelastgeom)
+subroutine optmz_bfgs(mode,flag_out,nsteps,tol,fixed,savelastgeom,fixed_alpha)
 
   ! This is the "global" version of bfgs algorithm applied to NEB.
   ! It means that the images' geometries are passed all at once (globally)
@@ -366,11 +366,13 @@ subroutine optmz_bfgs(mode,flag_out,nsteps,tol,fixed,savelastgeom)
   real(DBL), optional,         intent(IN)  :: tol
   logical, optional,           intent(IN)  :: fixed
   logical, optional,           intent(IN)  :: savelastgeom
+  logical, optional,           intent(IN)  :: fixed_alpha
 
   integer                                  :: p_nsteps
   real(DBL)                                :: p_tol
   logical                                  :: p_fixed
   logical                                  :: p_savelastgeom
+  logical                                  :: p_fixed_alpha
 
   character(*), parameter                  :: my_name = "optmz_bfgs"
   character(8)                             :: istr
@@ -421,6 +423,12 @@ subroutine optmz_bfgs(mode,flag_out,nsteps,tol,fixed,savelastgeom)
     p_savelastgeom = savelastgeom
   else
     p_savelastgeom = .true.
+  end if
+
+  if (present(fixed_alpha)) then
+    p_fixed_alpha = fixed_alpha
+  else
+    p_fixed_alpha = .true.
   end if
 
   ! preliminary checks ------------------------------------
@@ -528,7 +536,7 @@ subroutine optmz_bfgs(mode,flag_out,nsteps,tol,fixed,savelastgeom)
         -reshape(new_total_forces,(/sz_imggeom, 1/)), & ! not used
         h0,                                           &
         h1,                                           &
-        fixed_alpha = .true.,                         &
+        fixed_alpha = p_fixed_alpha,                  &
         reset_alpha = .true.                          &
       )
     else
@@ -541,7 +549,7 @@ subroutine optmz_bfgs(mode,flag_out,nsteps,tol,fixed,savelastgeom)
         -reshape(new_total_forces,(/sz_imggeom, 1/)), & ! not used
         h0,                                           &
         h1,                                           &
-        fixed_alpha = .true.                          &
+        fixed_alpha = p_fixed_alpha                   &
       )
     end if
 
@@ -565,7 +573,7 @@ subroutine optmz_bfgs(mode,flag_out,nsteps,tol,fixed,savelastgeom)
       -reshape(new_total_forces,(/sz_imggeom, 1/)), & ! used as input
       h0,                                           &
       h1,                                           &
-      fixed_alpha = .true.                          &
+      fixed_alpha = p_fixed_alpha                   &
     )
 
     select case (cmdstr)

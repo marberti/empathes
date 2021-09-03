@@ -145,8 +145,6 @@ subroutine lbfgs_get_direction(df,h0,r)
   end if
 
   ! working section ---------------------------------------
-  call compute_rho()
-
   q = df
 
   do j = 1, min(store_vectors_counter,lbfgs_memory)
@@ -182,6 +180,9 @@ end subroutine lbfgs_get_direction
 
 subroutine store_vectors(s_vec,y_vec)
 
+  ! in addition to storing the two input argument vectors,
+  ! this subroutine computes the corresponding rho value and sorts the indexes
+
   real(DBL), dimension(:), intent(IN) :: s_vec
   real(DBL), dimension(:), intent(IN) :: y_vec
 
@@ -192,6 +193,7 @@ subroutine store_vectors(s_vec,y_vec)
 
   s_vectors(i,:) = s_vec
   y_vectors(i,:) = y_vec
+  rho(i)         = 1.0_DBL / dot_product(s_vec,y_vec)
 
   call sort_indexes()
 
@@ -220,12 +222,6 @@ subroutine sort_indexes()
   end do
 
 end subroutine sort_indexes
-
-!====================================================================
-
-subroutine compute_rho()
-
-end subroutine compute_rho
 
 !====================================================================
 

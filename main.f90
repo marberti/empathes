@@ -323,7 +323,7 @@ end subroutine write_help
 
 subroutine write_build_version()
   
-  character(*), parameter :: version_number = "v1.1"
+  character(*), parameter :: version_number = "v1.1_l-bfgs_branch"
 
   integer                 :: out_stream
 #ifdef USE_MPI

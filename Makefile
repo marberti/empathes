@@ -22,15 +22,12 @@ MPIFC    = mpif90.openmpi
 FLAGS    = -g -cpp -O2 -Wall -Wunused -Wpedantic -Wno-maybe-uninitialized
 CFLAGS   = -std=c11  
 FFLAGS   = -std=f2008
-LPATH    = -Llib/liblbfgsb
-LIBS     = -llbfgsb
 
 CSOURCES = c_utility.c
 
 FSOURCES = mod_utility.f90            \
 	   mod_c_utility_wrapper.f90  \
 	   mod_bfgs.f90               \
-	   mod_bfgs_wrapper.f90       \
 	   mod_rotation.f90           \
 	   mod_geometry.f90           \
 	   mod_idpp.f90               \
@@ -75,30 +72,19 @@ help:
 	@echo "  make serial          Serial compilation"
 	@echo "  make parallel        Parallel compilation (MPI)"
 
-.PHONY: full-clean
-full-clean: clean-lib clean
-
 .PHONY: clean
 clean:
 	@printf "Cleaning..."
 	@rm -f *.o *.mod
 	@printf " DONE\n"
 
-.PHONY: clean-lib
-clean-lib:
-	$(MAKE) -C lib/liblbfgsb clean
-
 .PHONY: screenclear
 screenclear:
 	@clear
 
 # core ----------------------------------------------------
-$(OUT): lib allobjects
-	$(FC) $(LPATH) $(FLAGS) $(FFLAGS) $(COBJECTS) $(FOBJECTS) $(LIBS) -o $(OUT)
-
-.PHONY: lib
-lib:
-	$(MAKE) -C lib/liblbfgsb
+$(OUT): allobjects
+	$(FC) $(FLAGS) $(FFLAGS) $(COBJECTS) $(FOBJECTS) -o $(OUT)
 
 .PHONY: allobjects
 allobjects: $(COBJECTS) $(FOBJECTS)

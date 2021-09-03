@@ -34,6 +34,7 @@ module lbfgs
   integer                                :: store_vectors_counter
   real(DBL), dimension(:,:), allocatable :: s_vectors
   real(DBL), dimension(:,:), allocatable :: y_vectors
+  integer,   dimension(:),   allocatable :: sorted_indexes
 
 contains
 
@@ -80,6 +81,11 @@ subroutine init_lbfgs(mem,sz)
     call error(my_name//": "//trim(err_msg))
   end if
 
+  allocate(sorted_indexes(lbfgs_memory),stat=err_n,errmsg=err_msg)
+  if (err_n /= 0) then
+    call error(my_name//": "//trim(err_msg))
+  end if
+
   flag_init_lbfgs = .true.
 
 end subroutine init_lbfgs
@@ -120,7 +126,33 @@ subroutine store_vectors(s_vec,y_vec)
   s_vectors(i,:) = s_vec
   y_vectors(i,:) = y_vec
 
+  call sort_indexes()
+
 end subroutine store_vectors
+
+!====================================================================
+
+subroutine sort_indexes()
+
+  ! This subroutine updates the sorted_indexes array,
+  ! that contains the indexes of s_vectors and y_vectors
+  ! from the newest to the oldest.
+
+  integer :: indx
+  integer :: i
+
+  indx = mod(store_vectors_counter,lbfgs_memory)
+
+  do i = 1, lbfgs_memory
+    sorted_indexes(i) = indx
+
+    indx = indx - 1
+    if (indx == 0) then
+      indx = lbfgs_memory
+    end if
+  end do
+
+end subroutine sort_indexes
 
 !====================================================================
 

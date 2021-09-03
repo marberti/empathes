@@ -27,6 +27,9 @@ module lbfgs
   public :: init_lbfgs,    &
             lbfgs_internal
 
+  !--------------------------------------------------------
+  logical :: flag_init_lbfgs = .false.
+
 contains
 
 !====================================================================
@@ -35,11 +38,22 @@ contains
 
 subroutine init_lbfgs()
 
+  character(*), parameter :: my_name = "init_lbfgs"
+
+  flag_init_lbfgs = .true.
+
 end subroutine init_lbfgs
 
 !====================================================================
 
 subroutine lbfgs_internal()
+
+  character(*), parameter :: my_name = "lbfgs_internal"
+
+  ! preliminary check -------------------------------------
+  if (flag_init_lbfgs.eqv..false.) then
+    call error(my_name//": module not initialized")
+  end if
 
 end subroutine lbfgs_internal
 

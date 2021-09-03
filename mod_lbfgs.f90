@@ -28,7 +28,12 @@ module lbfgs
             lbfgs_internal
 
   !--------------------------------------------------------
-  logical :: flag_init_lbfgs = .false.
+  logical                                :: flag_init_lbfgs = .false.
+  integer                                :: lbfgs_memory
+  integer                                :: lbfgs_vectors_size
+  integer                                :: store_vectors_counter
+  real(DBL), dimension(:,:), allocatable :: s_vectors
+  real(DBL), dimension(:,:), allocatable :: y_vectors
 
 contains
 
@@ -36,9 +41,44 @@ contains
 ! Public
 !====================================================================
 
-subroutine init_lbfgs()
+subroutine init_lbfgs(mem,sz)
+
+  integer,     intent(IN) :: mem
+  integer,     intent(IN) :: sz
 
   character(*), parameter :: my_name = "init_lbfgs"
+  integer                 :: err_n
+  character(120)          :: err_msg
+
+  ! preliminary check -------------------------------------
+  if (flag_init_lbfgs) then
+    call error(my_name//": module already initialized")
+  end if
+
+  ! arguments checks --------------------------------------
+  if (mem <= 0) then
+    call error(my_name//": argument mem must be a non-zero positive integer")
+  end if
+
+  if (sz <= 0) then
+    call error(my_name//": argument sz must be a non-zero positive integer")
+  end if
+
+  ! init global variables ---------------------------------
+  lbfgs_memory         = mem
+  lbfgs_vectors_size   = sz
+  store_vectors_counter = 0
+
+  ! allocation section ------------------------------------
+  allocate(s_vectors(lbfgs_memory,lbfgs_vectors_size),stat=err_n,errmsg=err_msg)
+  if (err_n /= 0) then
+    call error(my_name//": "//trim(err_msg))
+  end if
+
+  allocate(y_vectors(lbfgs_memory,lbfgs_vectors_size),stat=err_n,errmsg=err_msg)
+  if (err_n /= 0) then
+    call error(my_name//": "//trim(err_msg))
+  end if
 
   flag_init_lbfgs = .true.
 
@@ -64,6 +104,17 @@ end subroutine lbfgs_internal
 subroutine lbfgs_get_direction()
 
 end subroutine lbfgs_get_direction
+
+!====================================================================
+
+subroutine store_vectors(s_vec,y_vec)
+
+  real(DBL), dimension(:), intent(IN) :: s_vec
+  real(DBL), dimension(:), intent(IN) :: y_vec
+
+  store_vectors_counter = store_vectors_counter + 1
+
+end subroutine store_vectors
 
 !====================================================================
 

@@ -19,6 +19,7 @@ module optimization
 
   use utility
   use bfgs
+  use lbfgs
   use idpp
   use geometry
   use pes

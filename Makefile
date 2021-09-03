@@ -28,6 +28,7 @@ CSOURCES = c_utility.c
 FSOURCES = mod_utility.f90            \
 	   mod_c_utility_wrapper.f90  \
 	   mod_bfgs.f90               \
+	   mod_lbfgs.f90              \
 	   mod_rotation.f90           \
 	   mod_geometry.f90           \
 	   mod_idpp.f90               \

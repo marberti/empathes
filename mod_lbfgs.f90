@@ -34,6 +34,7 @@ module lbfgs
   integer                                :: store_vectors_counter
   real(DBL), dimension(:,:), allocatable :: s_vectors
   real(DBL), dimension(:,:), allocatable :: y_vectors
+  real(DBL), dimension(:),   allocatable :: rho
   integer,   dimension(:),   allocatable :: sorted_indexes
 
 contains
@@ -81,6 +82,11 @@ subroutine init_lbfgs(mem,sz)
     call error(my_name//": "//trim(err_msg))
   end if
 
+  allocate(rho(lbfgs_memory),stat=err_n,errmsg=err_msg)
+  if (err_n /= 0) then
+    call error(my_name//": "//trim(err_msg))
+  end if
+
   allocate(sorted_indexes(lbfgs_memory),stat=err_n,errmsg=err_msg)
   if (err_n /= 0) then
     call error(my_name//": "//trim(err_msg))
@@ -107,7 +113,68 @@ end subroutine lbfgs_internal
 ! Private
 !====================================================================
 
-subroutine lbfgs_get_direction()
+subroutine lbfgs_get_direction(df,h0,r)
+
+  ! Based on:
+  !
+  ! Nocedal - Numerical Optimization - 2nd edition
+  ! Algorithm 7.4
+
+  real(DBL), dimension(:),   intent(IN)    :: df
+  real(DBL), dimension(:,:), intent(IN)    :: h0
+  real(DBL), dimension(:),   intent(INOUT) :: r
+
+  character(*), parameter                  :: my_name = "lbfgs_get_direction"
+  real(DBL), dimension(:), allocatable     :: q
+  real(DBL), dimension(:), allocatable     :: a
+  real(DBL)                                :: b
+  integer                                  :: i
+  integer                                  :: j
+  integer                                  :: err_n
+  character(120)                           :: err_msg
+
+  ! allocation section ------------------------------------
+  allocate(q(lbfgs_vectors_size),stat=err_n,errmsg=err_msg)
+  if (err_n /= 0) then
+    call error(my_name//": "//trim(err_msg))
+  end if
+
+  allocate(a(lbfgs_memory),stat=err_n,errmsg=err_msg)
+  if (err_n /= 0) then
+    call error(my_name//": "//trim(err_msg))
+  end if
+
+  ! working section ---------------------------------------
+  call compute_rho()
+
+  q = df
+
+  do j = 1, min(store_vectors_counter,lbfgs_memory)
+    i = sorted_indexes(j)
+
+    a(i) = rho(i) * dot_product(s_vectors(i,:),q)
+    q    = q - a(i)*y_vectors(i,:)
+  end do
+
+  r = reshape(matmul(h0,reshape(q,(/size(q), 1/))), (/size(r)/))
+
+  do j = min(store_vectors_counter,lbfgs_memory), 1, -1
+    i = sorted_indexes(j)
+
+    b = rho(i) * dot_product(y_vectors(i,:), r)
+    r = r + (a(i) - b)*s_vectors(i,:)
+  end do
+
+  ! deallocation section ----------------------------------
+  deallocate(q,stat=err_n,errmsg=err_msg)
+  if (err_n /= 0) then
+    call error(my_name//": "//trim(err_msg))
+  end if
+
+  deallocate(a,stat=err_n,errmsg=err_msg)
+  if (err_n /= 0) then
+    call error(my_name//": "//trim(err_msg))
+  end if
 
 end subroutine lbfgs_get_direction
 
@@ -153,6 +220,12 @@ subroutine sort_indexes()
   end do
 
 end subroutine sort_indexes
+
+!====================================================================
+
+subroutine compute_rho()
+
+end subroutine compute_rho
 
 !====================================================================
 

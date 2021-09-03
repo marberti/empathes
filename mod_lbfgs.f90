@@ -65,8 +65,8 @@ subroutine init_lbfgs(mem,sz)
   end if
 
   ! init global variables ---------------------------------
-  lbfgs_memory         = mem
-  lbfgs_vectors_size   = sz
+  lbfgs_memory          = mem
+  lbfgs_vectors_size    = sz
   store_vectors_counter = 0
 
   ! allocation section ------------------------------------
@@ -112,7 +112,13 @@ subroutine store_vectors(s_vec,y_vec)
   real(DBL), dimension(:), intent(IN) :: s_vec
   real(DBL), dimension(:), intent(IN) :: y_vec
 
+  integer                             :: i
+
   store_vectors_counter = store_vectors_counter + 1
+  i = mod(store_vectors_counter,lbfgs_memory)
+
+  s_vectors(i,:) = s_vec
+  y_vectors(i,:) = y_vec
 
 end subroutine store_vectors
 

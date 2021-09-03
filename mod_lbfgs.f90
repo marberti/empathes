@@ -98,13 +98,112 @@ end subroutine init_lbfgs
 
 !====================================================================
 
-subroutine lbfgs_internal()
+subroutine lbfgs_internal(cmdstr,x0,x1,df0,df1,reset_alpha)
 
-  character(*), parameter :: my_name = "lbfgs_internal"
+  ! BFSG method, based on:
+  !
+  ! Nocedal - Numerical Optimization - 2nd edition
+  ! Algorithm 7.5 (only the statements inside the loop)
 
-  ! preliminary check -------------------------------------
+  character(120),          intent(INOUT) :: cmdstr
+  real(DBL), dimension(:), intent(IN)    :: x0
+  real(DBL), dimension(:), intent(INOUT) :: x1
+  real(DBL), dimension(:), intent(IN)    :: df0
+  real(DBL), dimension(:), intent(IN)    :: df1
+  logical, optional,       intent(IN)    :: reset_alpha
+
+  character(*), parameter                :: my_name = "lbfgs_internal"
+  logical, parameter                     :: flag_max_displacement = .true.
+  real(DBL), parameter                   :: max_displacement = 0.2_DBL
+  real(DBL), parameter                   :: alpha0           = 1.0_DBL
+  real(DBL), save                        :: alpha            = alpha0
+  real(DBL)                              :: p_max
+  real(DBL), dimension(:),   allocatable :: p
+  real(DBL), dimension(:,:), allocatable :: h0
+  integer                                :: err_n
+  character(120)                         :: err_msg
+
+  ! initialization check ----------------------------------
   if (flag_init_lbfgs.eqv..false.) then
     call error(my_name//": module not initialized")
+  end if
+
+  ! check optional argument -------------------------------
+  if (present(reset_alpha)) then
+    if (reset_alpha.eqv..true.) then
+      alpha = alpha0
+    end if
+  end if
+
+  ! arguments' dimensions check ---------------------------
+  if (size(x0) /= lbfgs_vectors_size) then
+    call error(my_name//": size of argument x0 differs from initialization size")
+  end if
+
+  if (size(x1) /= lbfgs_vectors_size) then
+    call error(my_name//": size of argument x1 differs from initialization size")
+  end if
+
+  if (size(df0) /= lbfgs_vectors_size) then
+    call error(my_name//": size of argument df0 differs from initialization size")
+  end if
+
+  if (size(df1) /= lbfgs_vectors_size) then
+    call error(my_name//": size of argument df1 differs from initialization size")
+  end if
+
+  ! allocation section ------------------------------------
+  allocate(p(lbfgs_vectors_size),stat=err_n,errmsg=err_msg)
+  if (err_n /= 0) then
+    call error(my_name//": "//trim(err_msg))
+  end if
+
+  allocate(h0(lbfgs_vectors_size,lbfgs_vectors_size),stat=err_n,errmsg=err_msg)
+  if (err_n /= 0) then
+    call error(my_name//": "//trim(err_msg))
+  end if
+
+  ! cmdstr parsing ----------------------------------------
+  ! cmdstr = {START, EVALUATE_DF1, EVALUATED, DONE, ERROR}
+  select case (cmdstr)
+  case ("START")
+    !TODO set h0
+
+    ! get direction
+    call lbfgs_get_direction(df0,h0,p)
+    p = -p
+
+    if (flag_max_displacement) then
+      alpha = alpha0
+      p_max = maxval(abs(p))
+      if (alpha*p_max > max_displacement) then
+        alpha = max_displacement / p_max
+      end if
+    end if
+
+    ! new coordinates
+    x1 = x0 + alpha*p
+
+    ! need df1 to proceed
+    cmdstr = "EVALUATE_DF1"
+  case ("EVALUATED")
+    ! save the new s and y vectors
+    call store_vectors(x1 - x0, df1 - df0)
+    cmdstr = "DONE"
+  case default
+    cmdstr = "ERROR"
+    call error(my_name//": unknown cmdstr "//trim(cmdstr))
+  end select
+
+  ! deallocation section ----------------------------------
+  deallocate(p,stat=err_n,errmsg=err_msg)
+  if (err_n /= 0) then
+    call error(my_name//": "//trim(err_msg))
+  end if
+
+  deallocate(h0,stat=err_n,errmsg=err_msg)
+  if (err_n /= 0) then
+    call error(my_name//": "//trim(err_msg))
   end if
 
 end subroutine lbfgs_internal

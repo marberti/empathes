@@ -200,7 +200,7 @@ subroutine bfgs_internal(cmdstr,mode,x0,x1,df0,df1,h0,h1,reset_alpha)
 
     if (flag_max_displacement) then
       alpha  = alpha0
-      p0_max = maxval(p0)
+      p0_max = maxval(abs(p0))
       if (alpha*p0_max > max_displacement) then
         alpha = max_displacement / p0_max
       end if

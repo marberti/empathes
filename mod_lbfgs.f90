@@ -168,7 +168,7 @@ subroutine lbfgs_internal(cmdstr,x0,x1,df0,df1,reset_alpha)
   real(DBL), save                        :: alpha            = alpha0
   real(DBL)                              :: p_max
   real(DBL), dimension(:),   allocatable :: p
-  real(DBL), dimension(:,:), allocatable :: h0
+  real(DBL)                              :: h0
   integer                                :: i
   integer                                :: err_n
   character(120)                         :: err_msg
@@ -208,24 +208,16 @@ subroutine lbfgs_internal(cmdstr,x0,x1,df0,df1,reset_alpha)
     call error(my_name//": "//trim(err_msg))
   end if
 
-  allocate(h0(lbfgs_vectors_size,lbfgs_vectors_size),stat=err_n,errmsg=err_msg)
-  if (err_n /= 0) then
-    call error(my_name//": "//trim(err_msg))
-  end if
-
   ! cmdstr parsing ----------------------------------------
   ! cmdstr = {START, EVALUATE_DF1, EVALUATED, DONE, ERROR}
   select case (cmdstr)
   case ("START")
     ! set h0
-    h0 = 0.0_DBL
-    do i = 1, lbfgs_vectors_size
-      h0(i,i) = 1.0_DBL
-    end do
-
     if (stored_vectors_counter > 0) then
       i  = sorted_indexes(1)
-      h0 = h0 * (dot_product(s_vectors(i,:),y_vectors(i,:)) / dot_product(y_vectors(i,:),y_vectors(i,:)))
+      h0 = dot_product(s_vectors(i,:),y_vectors(i,:)) / dot_product(y_vectors(i,:),y_vectors(i,:))
+    else
+      h0 = 1.0_DBL
     end if
 
     ! get direction
@@ -260,11 +252,6 @@ subroutine lbfgs_internal(cmdstr,x0,x1,df0,df1,reset_alpha)
     call error(my_name//": "//trim(err_msg))
   end if
 
-  deallocate(h0,stat=err_n,errmsg=err_msg)
-  if (err_n /= 0) then
-    call error(my_name//": "//trim(err_msg))
-  end if
-
 end subroutine lbfgs_internal
 
 !====================================================================
@@ -279,7 +266,7 @@ subroutine lbfgs_get_direction(df,h0,r)
   ! Algorithm 7.4
 
   real(DBL), dimension(:),   intent(IN)    :: df
-  real(DBL), dimension(:,:), intent(IN)    :: h0
+  real(DBL),                 intent(IN)    :: h0
   real(DBL), dimension(:),   intent(INOUT) :: r
 
   character(*), parameter                  :: my_name = "lbfgs_get_direction"
@@ -312,7 +299,7 @@ subroutine lbfgs_get_direction(df,h0,r)
     q    = q - a(i)*y_vectors(i,:)
   end do
 
-  r = reshape(matmul(h0,reshape(q,(/size(q), 1/))), (/size(r)/))
+  r = h0 * q
 
   do j = min(stored_vectors_counter,lbfgs_memory), 1, -1
     i = sorted_indexes(j)

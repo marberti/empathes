@@ -120,6 +120,7 @@ subroutine lbfgs_internal(cmdstr,x0,x1,df0,df1,reset_alpha)
   real(DBL)                              :: p_max
   real(DBL), dimension(:),   allocatable :: p
   real(DBL), dimension(:,:), allocatable :: h0
+  integer                                :: i
   integer                                :: err_n
   character(120)                         :: err_msg
 
@@ -167,7 +168,16 @@ subroutine lbfgs_internal(cmdstr,x0,x1,df0,df1,reset_alpha)
   ! cmdstr = {START, EVALUATE_DF1, EVALUATED, DONE, ERROR}
   select case (cmdstr)
   case ("START")
-    !TODO set h0
+    ! set h0
+    h0 = 0.0_DBL
+    do i = 1, lbfgs_vectors_size
+      h0(i,i) = 1.0_DBL
+    end do
+
+    if (stored_vectors_counter > 0) then
+      i  = sorted_indexes(1)
+      h0 = h0 * (dot_product(s_vectors(i,:),y_vectors(i,:)) / dot_product(y_vectors(i,:),y_vectors(i,:)))
+    end if
 
     ! get direction
     call lbfgs_get_direction(df0,h0,p)

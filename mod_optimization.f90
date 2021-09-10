@@ -356,7 +356,7 @@ end subroutine optmz_steepest_descent
 
 subroutine optmz_bfgs(mode,flag_out,nsteps,tol,fixed,savelastgeom)
 
-  ! This is the "global" version of bfgs algorithm applied to NEB.
+  ! This is the "global" version of the BFGS algorithm applied to NEB.
   ! It means that the images' geometries are passed all at once (globally)
   ! using a single large array.
 
@@ -658,12 +658,253 @@ end subroutine optmz_bfgs
 
 !====================================================================
 
-subroutine optmz_lbfgs(mode,flag_out)
+subroutine optmz_lbfgs(mode,flag_out,nsteps,tol,fixed,savelastgeom)
 
-  integer,    intent(IN)  :: mode
-  logical,    intent(OUT) :: flag_out  ! true if convergent, false otherwise
+  ! This is the "global" version of the L-BFGS algorithm applied to NEB.
+  ! It means that the images' geometries are passed all at once (globally)
+  ! using a single large array.
 
-  character(*), parameter :: my_name = "optmz_lbfgs"
+  integer,                 intent(IN)  :: mode
+  logical,                 intent(OUT) :: flag_out  ! true if convergent, false otherwise
+  integer,   optional,     intent(IN)  :: nsteps
+  real(DBL), optional,     intent(IN)  :: tol
+  logical,   optional,     intent(IN)  :: fixed
+  logical,   optional,     intent(IN)  :: savelastgeom
+
+  integer                              :: p_nsteps
+  real(DBL)                            :: p_tol
+  logical                              :: p_fixed
+  logical                              :: p_savelastgeom
+
+  character(*), parameter              :: my_name = "optmz_lbfgs"
+  integer, parameter                   :: memory  = 17
+  character(8)                         :: istr
+  character(120)                       :: cmdstr
+  integer                              :: sz_imggeom ! image_n * geom_len
+  real(DBL), dimension(:), allocatable :: old_image_geom
+  real(DBL), dimension(:), allocatable :: new_image_geom
+  real(DBL), dimension(:), allocatable :: old_total_forces
+  real(DBL), dimension(:), allocatable :: new_total_forces
+  logical,   dimension(:), allocatable :: total_conv
+  logical                              :: flag_converged
+  integer                              :: i
+  integer                              :: err_n
+  character(120)                       :: err_msg
+
+  ! checking arguments ------------------------------------
+  if (present(nsteps)) then
+    if (nsteps>=0) then
+      p_nsteps = nsteps
+    else
+      p_nsteps = -1
+    end if
+  else if (flag_optmz_nsteps) then
+    p_nsteps = optmz_nsteps
+  else
+    p_nsteps = 50
+  end if
+
+  if (present(tol).and.((tol>0.0_DBL).and.(tol<=1.0_DBL))) then
+    p_tol = tol
+  else if (flag_optmz_tol) then
+    p_tol = optmz_tol
+  else
+    p_tol = 3.5E-4_DBL
+  end if
+
+  if (present(fixed)) then
+    p_fixed = fixed
+  else
+    p_fixed = .true.
+  end if
+
+  if (present(savelastgeom)) then
+    p_savelastgeom = savelastgeom
+  else
+    p_savelastgeom = .true.
+  end if
+
+  ! preliminary checks ------------------------------------
+  if (flag_init_images.eqv..false.) then
+    call error(my_name//": images not initialized")
+  end if
+
+  ! init sz_imggeom ---------------------------------------
+  sz_imggeom = image_n * geom_len
+
+  ! allocation section ------------------------------------
+  allocate(old_image_geom(sz_imggeom),stat=err_n,errmsg=err_msg)
+  if (err_n/=0) then
+    call error(my_name//": "//trim(err_msg))
+  end if
+
+  allocate(new_image_geom(sz_imggeom),stat=err_n,errmsg=err_msg)
+  if (err_n/=0) then
+    call error(my_name//": "//trim(err_msg))
+  end if
+
+  allocate(old_total_forces(sz_imggeom),stat=err_n,errmsg=err_msg)
+  if (err_n/=0) then
+    call error(my_name//": "//trim(err_msg))
+  end if
+
+  allocate(new_total_forces(sz_imggeom),stat=err_n,errmsg=err_msg)
+  if (err_n/=0) then
+    call error(my_name//": "//trim(err_msg))
+  end if
+
+  allocate(total_conv(image_n),stat=err_n,errmsg=err_msg)
+  if (err_n/=0) then
+    call error(my_name//": "//trim(err_msg))
+  end if
+
+  ! write optimization parameters -------------------------
+  select case(mode)
+  case (PES_MODE)
+    write(FILEOUT,*) "**  Optimization L-BFGS -- PES Mode"
+  case (IDPP_MODE)
+    write(FILEOUT,*) "**  Optimization L-BFGS -- IDPP Mode"
+  case default
+    write(istr,'(I8)') mode
+    istr = adjustl(istr)
+    call error(my_name//": mode """//trim(istr)//""" not valid")
+  end select
+
+  if (p_nsteps==-1) then
+    write(FILEOUT,'(5X,"Max optimization iterations: infinite")')
+  else
+    write(FILEOUT,'(5X,"Max optimization iterations: ",I10)') p_nsteps
+  end if
+
+  write(FILEOUT,'(5X,"Convergence threshold      : ",ES8.1)') p_tol
+
+  ! init L-BFGS -------------------------------------------
+  call init_lbfgs(memory,sz_imggeom)
+
+  ! working section ---------------------------------------
+  flag_converged = .false.
+
+  i = 1
+  do
+    ! check loop index ------------------------------------
+    if ((p_nsteps/=-1).and.(i>p_nsteps)) then
+      exit
+    end if
+
+    ! start -----------------------------------------------
+    write(FILEOUT,'(1X,A,I8,A)') "**  Optimization L-BFGS -- Iteration ",i,":"
+
+    ! main body -------------------------------------------
+    if (i == 1) then
+      ! preliminary computation
+      call compute_total_forces(mode,p_fixed)
+      call total_forces_modifiers(mode,p_nsteps,i,p_fixed)
+      old_image_geom   = reshape(image_geom(1:image_n,:),(/sz_imggeom/))
+      old_total_forces = reshape(total_forces,(/sz_imggeom/))
+
+      cmdstr = "START"
+      call lbfgs_internal(   &
+        cmdstr,              &
+        old_image_geom,      &
+        new_image_geom,      & ! used as output
+        -old_total_forces,   &
+        -new_total_forces,   & ! not used
+        reset_alpha = .true. &
+      )
+    else
+      cmdstr = "START"
+      call lbfgs_internal( &
+        cmdstr,            &
+        old_image_geom,    &
+        new_image_geom,    & ! used as output
+        -old_total_forces, &
+        -new_total_forces  & ! not used
+      )
+    end if
+
+    if (cmdstr /= "EVALUATE_DF1") then
+      call error(my_name//": expected ""EVALUATE_DF1"", get """//trim(cmdstr)//"""")
+    end if
+
+    call update_images(reshape(new_image_geom,(/image_n, geom_len/)))
+    call compute_total_forces(mode,p_fixed)
+    call total_forces_modifiers(mode,p_nsteps,i,p_fixed)
+    new_total_forces = reshape(total_forces,(/sz_imggeom/))
+
+    cmdstr = "EVALUATED"
+    call lbfgs_internal( &
+      cmdstr,            &
+      old_image_geom,    &
+      new_image_geom,    & ! this time used as input
+      -old_total_forces, &
+      -new_total_forces  & ! used as input
+    )
+
+    if (cmdstr /= "DONE") then
+      call error(my_name//": expected ""DONE"", get """//trim(cmdstr)//"""")
+    end if
+
+    old_image_geom   = new_image_geom
+    old_total_forces = new_total_forces
+
+    ! write the results ---------------------------------
+    call write_opt_results(mode,total_conv,p_tol)
+
+    ! write geometry file -------------------------------
+    if (p_savelastgeom) then
+      call last_geom_bkp(.true.)
+    end if
+
+    ! check exit condition ------------------------------
+    if (alltrue(total_conv)) then
+      flag_converged = .true.
+    end if
+
+    if (flag_converged) then
+      exit
+    end if
+
+    ! update loop index -----------------------------------
+    i = i+1
+  end do
+
+  ! deallocation section ----------------------------------
+  deallocate(old_image_geom,stat=err_n,errmsg=err_msg)
+  if (err_n/=0) then
+    call error(my_name//": "//trim(err_msg))
+  end if
+
+  deallocate(new_image_geom,stat=err_n,errmsg=err_msg)
+  if (err_n/=0) then
+    call error(my_name//": "//trim(err_msg))
+  end if
+
+  deallocate(old_total_forces,stat=err_n,errmsg=err_msg)
+  if (err_n/=0) then
+    call error(my_name//": "//trim(err_msg))
+  end if
+
+  deallocate(new_total_forces,stat=err_n,errmsg=err_msg)
+  if (err_n/=0) then
+    call error(my_name//": "//trim(err_msg))
+  end if
+
+  deallocate(total_conv,stat=err_n,errmsg=err_msg)
+  if (err_n/=0) then
+    call error(my_name//": "//trim(err_msg))
+  end if
+
+  ! finalize L-BFGS ---------------------------------------
+  call finalize_lbfgs()
+
+  ! write optimization result, set output flag ------------
+  if (flag_converged) then
+    write(FILEOUT,*) "**  Optimization L-BFGS -> Convergence Achieved"
+    flag_out = .true.
+  else
+    write(FILEOUT,*) "**  Optimization L-BFGS -> Convergence NOT Achieved"
+    flag_out = .false.
+  end if
 
 end subroutine optmz_lbfgs
 

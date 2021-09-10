@@ -27,6 +27,9 @@ module lbfgs
   public :: init_lbfgs,    &
             lbfgs_internal
 
+  ! drivers -----------------------------------------------
+  public :: driver_lbfgs
+
   !--------------------------------------------------------
   logical                                :: flag_init_lbfgs = .false.
   integer                                :: lbfgs_memory
@@ -91,6 +94,12 @@ subroutine init_lbfgs(mem,sz)
   if (err_n /= 0) then
     call error(my_name//": "//trim(err_msg))
   end if
+
+  ! init global variables ---------------------------------
+  s_vectors       = 0.0_DBL
+  y_vectors       = 0.0_DBL
+  rho             = 0.0_DBL
+  sorted_indexes  = 0
 
   flag_init_lbfgs = .true.
 
@@ -299,6 +308,9 @@ subroutine store_vectors(s_vec,y_vec)
 
   stored_vectors_counter = stored_vectors_counter + 1
   i = mod(stored_vectors_counter,lbfgs_memory)
+  if (i == 0) then
+    i = lbfgs_memory
+  end if
 
   s_vectors(i,:) = s_vec
   y_vectors(i,:) = y_vec
@@ -320,6 +332,9 @@ subroutine sort_indexes()
   integer :: i
 
   indx = mod(stored_vectors_counter,lbfgs_memory)
+  if (indx == 0) then
+    indx = lbfgs_memory
+  end if
 
   do i = 1, lbfgs_memory
     sorted_indexes(i) = indx
@@ -331,6 +346,112 @@ subroutine sort_indexes()
   end do
 
 end subroutine sort_indexes
+
+!====================================================================
+! Drivers
+!====================================================================
+
+subroutine driver_lbfgs()
+
+  character(*), parameter          :: my_name    = "driver_lbfgs"
+  character(*), parameter          :: sep        = '(80("-"))'
+  character(*), parameter          :: vecform    = '(1X,I3,2(3X,F5.2))'  ! length -> vector_len
+  character(*), parameter          :: vecform2   = '(1X,A3,2(3X,F5.2))'  ! length -> vector_len
+  character(*), parameter          :: indxform   = '(1X,"ind",3(3X,I5))' ! length -> memory
+  integer, parameter               :: memory     = 3
+  integer, parameter               :: vector_len = 2
+  integer, parameter               :: max_cyc_n  = 5
+  character(120)                   :: cmdstr
+  integer                          :: i
+  integer                          :: cyc_n
+  character(8)                     :: istr
+  real(DBL), dimension(vector_len) :: x0
+  real(DBL), dimension(vector_len) :: x1
+  real(DBL), dimension(vector_len) :: df0
+  real(DBL), dimension(vector_len) :: df1
+
+  write(*,sep)
+  write(*,*) my_name//": call inti_lbfgs()"
+  call init_lbfgs(memory,vector_len)
+
+  write(istr,'(I8)') memory
+  istr = adjustl(istr)
+  write(*,*) my_name//": lbfgs_memory       -> ", lbfgs_memory,       "(", trim(istr), ")"
+  write(istr,'(I8)') vector_len
+  istr = adjustl(istr)
+  write(*,*) my_name//": lbfgs_vectors_size -> ", lbfgs_vectors_size, "(", trim(istr), ")"
+
+  x0  = 2.0_DBL
+  df0 = 3.0_DBL
+
+  do cyc_n = 1, max_cyc_n
+    write(*,sep)
+    write(*,*) my_name//": cycle                  -> ", cyc_n
+
+    write(*,*) my_name//": stored_vectors_counter -> ", stored_vectors_counter
+
+    write(*,*) my_name//": s_vectors"
+    do i = 1, lbfgs_memory
+      write(*,vecform) i, s_vectors(i,:)
+    end do
+
+    write(*,*) my_name//": y_vectors"
+    do i = 1, lbfgs_memory
+      write(*,vecform) i, y_vectors(i,:)
+    end do
+
+    write(*,*) my_name//": sorted_indexes"
+    write(*,indxform) sorted_indexes
+
+    write(*,*) my_name//":"
+    write(*,vecform2) "x0",  x0
+    write(*,vecform2) "df0", df0
+
+    write(*,*) my_name//": call lbfgs_internal(), START"
+    cmdstr = "START"
+    if (cyc_n == 1) then
+      call lbfgs_internal(cmdstr,x0,x1,df0,df1,reset_alpha=.true.)
+    else
+      call lbfgs_internal(cmdstr,x0,x1,df0,df1)
+    end if
+    if (cmdstr /= "EVALUATE_DF1") then
+      call error(my_name//": received command string """//trim(cmdstr)//""", expected ""EVALUATE_DF1""")
+    end if
+    write(*,*) my_name//": stored_vectors_counter -> ", stored_vectors_counter
+
+    df1 = 0.95_DBL * df0
+    write(*,*) my_name//":"
+    write(*,vecform2) "x1",  x1
+    write(*,vecform2) "df1", df1
+
+    write(*,*) my_name//": call lbfgs_internal(), EVALUATED"
+    cmdstr = "EVALUATED"
+    call lbfgs_internal(cmdstr,x0,x1,df0,df1)
+    if (cmdstr /= "DONE") then
+      call error(my_name//": received command string """//trim(cmdstr)//""", expected ""DONE""")
+    end if
+    write(*,*) my_name//": stored_vectors_counter -> ", stored_vectors_counter
+
+    write(*,*) my_name//": s_vectors"
+    do i = 1, lbfgs_memory
+      write(*,vecform) i, s_vectors(i,:)
+    end do
+
+    write(*,*) my_name//": y_vectors"
+    do i = 1, lbfgs_memory
+      write(*,vecform) i, y_vectors(i,:)
+    end do
+
+    write(*,*) my_name//": sorted_indexes"
+    write(*,indxform) sorted_indexes
+
+    x0  = x1
+    df0 = df1
+  end do
+
+  write(*,sep)
+
+end subroutine driver_lbfgs
 
 !====================================================================
 

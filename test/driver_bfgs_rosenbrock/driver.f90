@@ -19,6 +19,7 @@ program driver
 
   use utility
   use bfgs
+  use lbfgs
 
   implicit none
 
@@ -40,6 +41,8 @@ subroutine driver_bfgs_rosenbrock()
   real(DBL), parameter      :: tol     = 1.0E-5_DBL
   character(120)            :: cmdstr
   character(120)            :: mode
+
+  ! for BFGS
   real(DBL), dimension(2,1) :: old_x
   real(DBL)                 :: old_f
   real(DBL), dimension(2,1) :: old_d
@@ -49,11 +52,22 @@ subroutine driver_bfgs_rosenbrock()
   real(DBL), dimension(2,1) :: new_d
   real(DBL), dimension(2,2) :: new_h
   real(DBL), dimension(2)   :: buff
+
+  ! for L-BFGS
+  real(DBL), dimension(2)   :: vold_x
+  real(DBL)                 :: vold_f
+  real(DBL), dimension(2)   :: vold_d
+  real(DBL), dimension(2)   :: vnew_x
+  real(DBL)                 :: vnew_f
+  real(DBL), dimension(2)   :: vnew_d
+
   real(DBL)                 :: nrm
-  integer, dimension(3)     :: rosenbrock_calls
+  integer, dimension(6)     :: rosenbrock_calls
   integer                   :: i
 
   rosenbrock_calls = 0
+
+  !--------------------------------------------------------
 
   write(*,sep)
   write(*,*) my_name//": BFGS with fixed alpha step"
@@ -143,6 +157,8 @@ subroutine driver_bfgs_rosenbrock()
   end do
 
   write(*,*) "total rosenbrock_f calls: ", rosenbrock_calls(1)
+
+  !--------------------------------------------------------
 
   write(*,sep)
   write(*,*) my_name//": BFGS with accelerated_backtracking_line_search()"
@@ -241,6 +257,8 @@ subroutine driver_bfgs_rosenbrock()
 
   write(*,*) "total rosenbrock_f calls: ", rosenbrock_calls(2)
 
+  !--------------------------------------------------------
+
   write(*,sep)
   write(*,*) my_name//": BFGS with max displacement"
   write(*,header) tol
@@ -330,11 +348,250 @@ subroutine driver_bfgs_rosenbrock()
 
   write(*,*) "total rosenbrock_f calls: ", rosenbrock_calls(3)
 
+  !--------------------------------------------------------
+
+  write(*,sep)
+  write(*,*) my_name//": L-BFGS, memory = 3"
+  write(*,header) tol
+
+  vold_x(1) = -1.2_DBL
+  vold_x(2) =  1.0_DBL
+
+  call init_lbfgs(3,2)
+
+  i = 1
+  do
+    if (i == 1) then
+      call rosenbrock_f(vold_x,vold_f)
+      rosenbrock_calls(4) = rosenbrock_calls(4) + 1
+      call rosenbrock_d(vold_x,vold_d)
+      write(*,format1) i, vold_x, vold_f, vold_d
+
+      cmdstr = "START"
+      call lbfgs_internal(   &
+        cmdstr,              &
+        vold_x,              &
+        vnew_x,              &
+        vold_d,              &
+        vnew_d,              &
+        reset_alpha = .true. &
+      )
+    else
+      cmdstr = "START"
+      call lbfgs_internal( &
+        cmdstr,            &
+        vold_x,            &
+        vnew_x,            &
+        vold_d,            &
+        vnew_d             &
+      )
+    end if
+
+    if (cmdstr /= "EVALUATE_DF1") then
+      call error(my_name//": expected ""EVALUATE_DF1"", get """//trim(cmdstr)//"""")
+    end if
+
+    call rosenbrock_f(vnew_x,vnew_f)
+    rosenbrock_calls(4) = rosenbrock_calls(4) + 1
+    call rosenbrock_d(vnew_x,vnew_d)
+
+    cmdstr = "EVALUATED"
+    call lbfgs_internal( &
+      cmdstr,            &
+      vold_x,            &
+      vnew_x,            &
+      vold_d,            &
+      vnew_d             &
+    )
+
+    if (cmdstr /= "DONE") then
+      call error(my_name//": expected ""DONE"", get """//trim(cmdstr)//"""")
+    end if
+
+    nrm = sqrt(dot_product(vnew_d,vnew_d))
+    write(*,format2) i, vnew_x, vnew_f, vnew_d, nrm
+
+    if (nrm < tol) then
+      exit
+    end if
+
+    vold_x = vnew_x
+    vold_f = vnew_f
+    vold_d = vnew_d
+
+    i = i+1
+  end do
+
+  write(*,*) "total rosenbrock_f calls: ", rosenbrock_calls(4)
+
+  call finalize_lbfgs()
+
+  !--------------------------------------------------------
+
+  write(*,sep)
+  write(*,*) my_name//": L-BFGS, memory = 5"
+  write(*,header) tol
+
+  vold_x(1) = -1.2_DBL
+  vold_x(2) =  1.0_DBL
+
+  call init_lbfgs(5,2)
+
+  i = 1
+  do
+    if (i == 1) then
+      call rosenbrock_f(vold_x,vold_f)
+      rosenbrock_calls(5) = rosenbrock_calls(5) + 1
+      call rosenbrock_d(vold_x,vold_d)
+      write(*,format1) i, vold_x, vold_f, vold_d
+
+      cmdstr = "START"
+      call lbfgs_internal(   &
+        cmdstr,              &
+        vold_x,              &
+        vnew_x,              &
+        vold_d,              &
+        vnew_d,              &
+        reset_alpha = .true. &
+      )
+    else
+      cmdstr = "START"
+      call lbfgs_internal( &
+        cmdstr,            &
+        vold_x,            &
+        vnew_x,            &
+        vold_d,            &
+        vnew_d             &
+      )
+    end if
+
+    if (cmdstr /= "EVALUATE_DF1") then
+      call error(my_name//": expected ""EVALUATE_DF1"", get """//trim(cmdstr)//"""")
+    end if
+
+    call rosenbrock_f(vnew_x,vnew_f)
+    rosenbrock_calls(5) = rosenbrock_calls(5) + 1
+    call rosenbrock_d(vnew_x,vnew_d)
+
+    cmdstr = "EVALUATED"
+    call lbfgs_internal( &
+      cmdstr,            &
+      vold_x,            &
+      vnew_x,            &
+      vold_d,            &
+      vnew_d             &
+    )
+
+    if (cmdstr /= "DONE") then
+      call error(my_name//": expected ""DONE"", get """//trim(cmdstr)//"""")
+    end if
+
+    nrm = sqrt(dot_product(vnew_d,vnew_d))
+    write(*,format2) i, vnew_x, vnew_f, vnew_d, nrm
+
+    if (nrm < tol) then
+      exit
+    end if
+
+    vold_x = vnew_x
+    vold_f = vnew_f
+    vold_d = vnew_d
+
+    i = i+1
+  end do
+
+  write(*,*) "total rosenbrock_f calls: ", rosenbrock_calls(5)
+
+  call finalize_lbfgs()
+
+  !--------------------------------------------------------
+
+  write(*,sep)
+  write(*,*) my_name//": L-BFGS, memory = 7"
+  write(*,header) tol
+
+  vold_x(1) = -1.2_DBL
+  vold_x(2) =  1.0_DBL
+
+  call init_lbfgs(7,2)
+
+  i = 1
+  do
+    if (i == 1) then
+      call rosenbrock_f(vold_x,vold_f)
+      rosenbrock_calls(6) = rosenbrock_calls(6) + 1
+      call rosenbrock_d(vold_x,vold_d)
+      write(*,format1) i, vold_x, vold_f, vold_d
+
+      cmdstr = "START"
+      call lbfgs_internal(   &
+        cmdstr,              &
+        vold_x,              &
+        vnew_x,              &
+        vold_d,              &
+        vnew_d,              &
+        reset_alpha = .true. &
+      )
+    else
+      cmdstr = "START"
+      call lbfgs_internal( &
+        cmdstr,            &
+        vold_x,            &
+        vnew_x,            &
+        vold_d,            &
+        vnew_d             &
+      )
+    end if
+
+    if (cmdstr /= "EVALUATE_DF1") then
+      call error(my_name//": expected ""EVALUATE_DF1"", get """//trim(cmdstr)//"""")
+    end if
+
+    call rosenbrock_f(vnew_x,vnew_f)
+    rosenbrock_calls(6) = rosenbrock_calls(6) + 1
+    call rosenbrock_d(vnew_x,vnew_d)
+
+    cmdstr = "EVALUATED"
+    call lbfgs_internal( &
+      cmdstr,            &
+      vold_x,            &
+      vnew_x,            &
+      vold_d,            &
+      vnew_d             &
+    )
+
+    if (cmdstr /= "DONE") then
+      call error(my_name//": expected ""DONE"", get """//trim(cmdstr)//"""")
+    end if
+
+    nrm = sqrt(dot_product(vnew_d,vnew_d))
+    write(*,format2) i, vnew_x, vnew_f, vnew_d, nrm
+
+    if (nrm < tol) then
+      exit
+    end if
+
+    vold_x = vnew_x
+    vold_f = vnew_f
+    vold_d = vnew_d
+
+    i = i+1
+  end do
+
+  write(*,*) "total rosenbrock_f calls: ", rosenbrock_calls(6)
+
+  call finalize_lbfgs()
+
+  !--------------------------------------------------------
+
   write(*,sep)
   write(*,*) "Results, total rosenbrock_f calls:"
   write(*,*) "    Fixed alpha                          : ", rosenbrock_calls(1)
   write(*,*) "    Accelerated backtracking line search : ", rosenbrock_calls(2)
   write(*,*) "    Max displacement                     : ", rosenbrock_calls(3)
+  write(*,*) "    L-BFGS (mem = 3)                     : ", rosenbrock_calls(4)
+  write(*,*) "    L-BFGS (mem = 5)                     : ", rosenbrock_calls(5)
+  write(*,*) "    L-BFGS (mem = 7)                     : ", rosenbrock_calls(6)
 
   write(*,sep)
 

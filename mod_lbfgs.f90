@@ -31,7 +31,7 @@ module lbfgs
   logical                                :: flag_init_lbfgs = .false.
   integer                                :: lbfgs_memory
   integer                                :: lbfgs_vectors_size
-  integer                                :: store_vectors_counter
+  integer                                :: stored_vectors_counter
   real(DBL), dimension(:,:), allocatable :: s_vectors
   real(DBL), dimension(:,:), allocatable :: y_vectors
   real(DBL), dimension(:),   allocatable :: rho
@@ -67,9 +67,9 @@ subroutine init_lbfgs(mem,sz)
   end if
 
   ! init global variables ---------------------------------
-  lbfgs_memory          = mem
-  lbfgs_vectors_size    = sz
-  store_vectors_counter = 0
+  lbfgs_memory           = mem
+  lbfgs_vectors_size     = sz
+  stored_vectors_counter = 0
 
   ! allocation section ------------------------------------
   allocate(s_vectors(lbfgs_memory,lbfgs_vectors_size),stat=err_n,errmsg=err_msg)
@@ -246,7 +246,7 @@ subroutine lbfgs_get_direction(df,h0,r)
   ! working section ---------------------------------------
   q = df
 
-  do j = 1, min(store_vectors_counter,lbfgs_memory)
+  do j = 1, min(stored_vectors_counter,lbfgs_memory)
     i = sorted_indexes(j)
 
     a(i) = rho(i) * dot_product(s_vectors(i,:),q)
@@ -255,7 +255,7 @@ subroutine lbfgs_get_direction(df,h0,r)
 
   r = reshape(matmul(h0,reshape(q,(/size(q), 1/))), (/size(r)/))
 
-  do j = min(store_vectors_counter,lbfgs_memory), 1, -1
+  do j = min(stored_vectors_counter,lbfgs_memory), 1, -1
     i = sorted_indexes(j)
 
     b = rho(i) * dot_product(y_vectors(i,:), r)
@@ -287,8 +287,8 @@ subroutine store_vectors(s_vec,y_vec)
 
   integer                             :: i
 
-  store_vectors_counter = store_vectors_counter + 1
-  i = mod(store_vectors_counter,lbfgs_memory)
+  stored_vectors_counter = stored_vectors_counter + 1
+  i = mod(stored_vectors_counter,lbfgs_memory)
 
   s_vectors(i,:) = s_vec
   y_vectors(i,:) = y_vec
@@ -309,7 +309,7 @@ subroutine sort_indexes()
   integer :: indx
   integer :: i
 
-  indx = mod(store_vectors_counter,lbfgs_memory)
+  indx = mod(stored_vectors_counter,lbfgs_memory)
 
   do i = 1, lbfgs_memory
     sorted_indexes(i) = indx

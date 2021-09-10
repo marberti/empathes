@@ -24,7 +24,8 @@ module lbfgs
   private
 
   ! public procedures -------------------------------------
-  public :: init_lbfgs,    &
+  public :: init_lbfgs,     &
+            finalize_lbfgs, &
             lbfgs_internal
 
   ! drivers -----------------------------------------------
@@ -104,6 +105,45 @@ subroutine init_lbfgs(mem,sz)
   flag_init_lbfgs = .true.
 
 end subroutine init_lbfgs
+
+!====================================================================
+
+subroutine finalize_lbfgs()
+
+  character(*), parameter :: my_name = "finalize_lbfgs"
+  integer                 :: err_n
+  character(120)          :: err_msg
+
+  ! preliminary check -------------------------------------
+  if (flag_init_lbfgs.eqv..false.) then
+    call error(my_name//": module not initialized")
+  end if
+
+  ! deallocation section ----------------------------------
+  deallocate(s_vectors,stat=err_n,errmsg=err_msg)
+  if (err_n /= 0) then
+    call error(my_name//": "//trim(err_msg))
+  end if
+
+  deallocate(y_vectors,stat=err_n,errmsg=err_msg)
+  if (err_n /= 0) then
+    call error(my_name//": "//trim(err_msg))
+  end if
+
+  deallocate(rho,stat=err_n,errmsg=err_msg)
+  if (err_n /= 0) then
+    call error(my_name//": "//trim(err_msg))
+  end if
+
+  deallocate(sorted_indexes,stat=err_n,errmsg=err_msg)
+  if (err_n /= 0) then
+    call error(my_name//": "//trim(err_msg))
+  end if
+
+  ! init global variables ---------------------------------
+  flag_init_lbfgs = .false.
+
+end subroutine finalize_lbfgs
 
 !====================================================================
 
@@ -448,6 +488,10 @@ subroutine driver_lbfgs()
     x0  = x1
     df0 = df1
   end do
+
+  write(*,sep)
+  write(*,*) my_name//": call finalize_lbfgs()"
+  call finalize_lbfgs()
 
   write(*,sep)
 

@@ -471,10 +471,14 @@ subroutine write_input4gaussian(verbose)
   write(tmplt_fnumb,'(A)') "! [Optional]"
   write(tmplt_fnumb,'(A)') "! The #OPTALGORITHM keyword, followed by a string,"
   write(tmplt_fnumb,'(A)') "! specifies what algorithm to use for the elastic band optimization."
-  write(tmplt_fnumb,'(A)') "! Accepted arguments are ""sd"" (for the steepest descent),"
-  write(tmplt_fnumb,'(A)') "! and ""fire"" (default, for the fast inertial relaxation engine)."
+  write(tmplt_fnumb,'(A)') "! Accepted arguments are:"
+  write(tmplt_fnumb,'(A)') "!     sd    -> Steepest Descent"
+  write(tmplt_fnumb,'(A)') "!     fire  -> Fast Inertial Relaxation Engine"
+  write(tmplt_fnumb,'(A)') "!     bfgs  -> Broyden–Fletcher–Goldfarb–Shanno (BFGS)"
+  write(tmplt_fnumb,'(A)') "!   * lbfgs -> Limited-Memory BFGS (L-BFGS)"
+  write(tmplt_fnumb,'(A)') "! Where the star * indicates the default"
   end if
-  write(tmplt_fnumb,'(A)') "!#OPTALGORITHM fire"
+  write(tmplt_fnumb,'(A)') "!#OPTALGORITHM lbfgs"
   write(tmplt_fnumb,'(A)')
   if (verbose.eqv..true.) then
   write(tmplt_fnumb,'(A)') "! [Optional]"
@@ -497,6 +501,14 @@ subroutine write_input4gaussian(verbose)
   write(tmplt_fnumb,'(A)') "! optimization algorithms and program versions."
   end if
   write(tmplt_fnumb,'(A)') "#OPTCONV 1.0E-3"
+  write(tmplt_fnumb,'(A)')
+  if (verbose.eqv..true.) then
+  write(tmplt_fnumb,'(A)') "! [Optional]"
+  write(tmplt_fnumb,'(A)') "! The #OPTMEMORY keyword, followed by an integer,"
+  write(tmplt_fnumb,'(A)') "! specifies how many steps the L-BFGS algorithm"
+  write(tmplt_fnumb,'(A)') "! will keep in memory."
+  end if
+  write(tmplt_fnumb,'(A)') "!#OPTMEMORY 17"
   write(tmplt_fnumb,'(A)')
   if (verbose.eqv..true.) then
   write(tmplt_fnumb,'(A)') "! [Optional]"

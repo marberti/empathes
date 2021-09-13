@@ -22,15 +22,13 @@ EXE   = driver.x
 .PHONY: default
 default: clean link
 	$(FC) $(FLAGS) -c mod_utility.f90
-	$(FC) $(FLAGS) -c mod_bfgs.f90
 	$(FC) $(FLAGS) -c mod_lbfgs.f90
 	$(FC) $(FLAGS) -c driver.f90
-	$(FC) $(FLAGS) -o $(EXE) mod_utility.o mod_bfgs.o mod_lbfgs.o driver.o
+	$(FC) $(FLAGS) -o $(EXE) mod_utility.o mod_lbfgs.o driver.o
 
 .PHONY: link
 link:
 	ln -s ../../mod_utility.f90 .
-	ln -s ../../mod_bfgs.f90 .
 	ln -s ../../mod_lbfgs.f90 .
 
 .PHONY: clean

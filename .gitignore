@@ -6,4 +6,5 @@
 *.ignore
 empathes
 test/driver_bfgs_rosenbrock/mod_*.f90
+test/driver_lbfgs/mod_*.f90
 

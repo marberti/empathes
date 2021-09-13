@@ -37,3 +37,4 @@ To confirm that the build process was successful, run Empathes with the -v argum
 2. Henkelman et al., A climbing image nudged elastic band method for finding saddle points and minimum energy paths (doi: 10.1063/1.1329672)
 3. Smidstrup et al., Improved initial guess for minimum energy path calculations (doi: 10.1063/1.4878664)
 4. Bitzek et al., Structural Relaxation Made Simple (doi: 10.1103/PhysRevLett.97.170201)
+5. Nocedal and Wright, Numerical Optimization, 2nd Edition (doi: 10.1007/978-0-387-40065-5)

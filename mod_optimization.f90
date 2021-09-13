@@ -155,6 +155,10 @@ subroutine set_optmz_memory(str)
     call error(my_name//": argument must be an integer")
   end if
 
+  if (optmz_memory <= 0) then
+    call error(my_name//": optimization memory must be a non-zero positive integer")
+  end if
+
   flag_optmz_memory = .true.
 
 end subroutine set_optmz_memory

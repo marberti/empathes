@@ -123,14 +123,20 @@ subroutine set_optmz_tol(str)
   
   character(*), intent(IN) :: str
 
+  character(*), parameter  :: my_name = "set_optmz_tol"
+
   if (flag_optmz_tol) then
-    call error("set_optmz_tol: optimization tolerance already setted")
+    call error(my_name//": optimization tolerance already setted")
   end if
 
   if (isreal(trim(adjustl(str)))) then
     read(str,*) optmz_tol
   else
-    call error("set_optmz_tol: argument must be a real")
+    call error(my_name//": argument must be a real")
+  end if
+
+  if (optmz_tol <= 0.0_DBL) then
+    call error(my_name//": optimization tolerance must be a non-zero positive real")
   end if
 
   flag_optmz_tol = .true.

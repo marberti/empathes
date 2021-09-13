@@ -45,7 +45,7 @@ module optimization
   integer, parameter :: ALGO_BFGS         = 1
   integer, parameter :: ALGO_LBFGS        = 2
   integer, parameter :: ALGO_FIRE         = 3
-  integer            :: optmz_algo        = ALGO_FIRE ! default algorithm
+  integer            :: optmz_algo        = ALGO_LBFGS ! default algorithm
 
   logical            :: flag_optmz_nsteps = .false.
   logical            :: flag_optmz_tol    = .false.

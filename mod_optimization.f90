@@ -702,7 +702,6 @@ subroutine optmz_lbfgs(mode,flag_out,nsteps,tol,fixed,savelastgeom)
   logical                              :: p_savelastgeom
 
   character(*), parameter              :: my_name = "optmz_lbfgs"
-  integer, parameter                   :: memory  = 17
   character(8)                         :: istr
   character(120)                       :: cmdstr
   integer                              :: sz_imggeom ! image_n * geom_len
@@ -802,9 +801,10 @@ subroutine optmz_lbfgs(mode,flag_out,nsteps,tol,fixed,savelastgeom)
   end if
 
   write(FILEOUT,'(5X,"Convergence threshold      : ",ES8.1)') p_tol
+  write(FILEOUT,'(5X,"L-BFGS memory              : ",I4)') optmz_memory
 
   ! init L-BFGS -------------------------------------------
-  call init_lbfgs(memory,sz_imggeom)
+  call init_lbfgs(optmz_memory,sz_imggeom)
 
   ! working section ---------------------------------------
   flag_converged = .false.

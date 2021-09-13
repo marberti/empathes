@@ -35,6 +35,7 @@ module optimization
   public :: set_optmz_algo,   &
             set_optmz_nsteps, &
             set_optmz_tol,    &
+            set_optmz_memory, &
             optmz_pes,        &
             optmz_idpp
 
@@ -48,8 +49,10 @@ module optimization
 
   logical            :: flag_optmz_nsteps = .false.
   logical            :: flag_optmz_tol    = .false.
+  logical            :: flag_optmz_memory = .false.
   integer            :: optmz_nsteps
   real(DBL)          :: optmz_tol
+  integer            :: optmz_memory      = 17
 
 contains
 
@@ -133,6 +136,28 @@ subroutine set_optmz_tol(str)
   flag_optmz_tol = .true.
 
 end subroutine set_optmz_tol
+
+!====================================================================
+
+subroutine set_optmz_memory(str)
+
+  character(*), intent(IN) :: str
+
+  character(*), parameter  :: my_name = "set_optmz_memory"
+
+  if (flag_optmz_memory) then
+    call error(my_name//": optimization memory already setted")
+  end if
+
+  if (isinteger(trim(adjustl(str)))) then
+    read(str,*) optmz_memory
+  else
+    call error(my_name//": argument must be an integer")
+  end if
+
+  flag_optmz_memory = .true.
+
+end subroutine set_optmz_memory
 
 !====================================================================
 

@@ -373,6 +373,9 @@ subroutine optmz_steepest_descent(mode,flag_out,nsteps,stepsize,tol,&
 
     if (p_savelastgeom) then
       call last_geom_bkp(.true.)
+      if (flag_store_all_geom) then
+        call all_geom_bkp(i)
+      end if
     end if
 
     if (p_verbose) then
@@ -649,6 +652,9 @@ subroutine optmz_bfgs(mode,flag_out,nsteps,tol,fixed,savelastgeom)
       ! write geometry file -------------------------------
       if (p_savelastgeom) then
         call last_geom_bkp(.true.)
+        if (flag_store_all_geom) then
+          call all_geom_bkp(i)
+        end if
       end if
 
       ! check exit condition ------------------------------
@@ -918,6 +924,9 @@ subroutine optmz_lbfgs(mode,flag_out,nsteps,tol,fixed,savelastgeom)
     ! write geometry file -------------------------------
     if (p_savelastgeom) then
       call last_geom_bkp(.true.)
+      if (flag_store_all_geom) then
+        call all_geom_bkp(i)
+      end if
     end if
 
     ! check exit condition ------------------------------
@@ -1150,6 +1159,9 @@ subroutine optmz_fire(mode,flag_out,nsteps,maxstepsize,tol,&
     ! write geometry file ---------------------------------
     if (p_savelastgeom) then
       call last_geom_bkp(.true.)
+      if (flag_store_all_geom) then
+        call all_geom_bkp(i)
+      end if
     end if
 
     ! check exit condition --------------------------------

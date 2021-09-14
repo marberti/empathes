@@ -323,7 +323,7 @@ subroutine optmz_steepest_descent(mode,flag_out,nsteps,stepsize,tol,&
     call error("optmz_steepest_descent: images not initialized")
   end if
 
-  select case(mode)
+  select case (mode)
   case (PES_MODE)
     write(FILEOUT,*) "**  Optimization Steepest Descent -- PES Mode"
   case (IDPP_MODE)
@@ -373,7 +373,7 @@ subroutine optmz_steepest_descent(mode,flag_out,nsteps,stepsize,tol,&
 
     if (p_savelastgeom) then
       call last_geom_bkp(.true.)
-      if (flag_store_all_geom) then
+      if (flag_store_all_geom.and.(mode == PES_MODE)) then
         call all_geom_bkp(i)
       end if
     end if
@@ -545,7 +545,7 @@ subroutine optmz_bfgs(mode,flag_out,nsteps,tol,fixed,savelastgeom)
   end if
 
   ! write optimization parameters -------------------------
-  select case(mode)
+  select case (mode)
   case (PES_MODE)
     write(FILEOUT,*) "**  Optimization BFGS -- PES Mode"
   case (IDPP_MODE)
@@ -652,7 +652,7 @@ subroutine optmz_bfgs(mode,flag_out,nsteps,tol,fixed,savelastgeom)
       ! write geometry file -------------------------------
       if (p_savelastgeom) then
         call last_geom_bkp(.true.)
-        if (flag_store_all_geom) then
+        if (flag_store_all_geom.and.(mode == PES_MODE)) then
           call all_geom_bkp(i)
         end if
       end if
@@ -829,7 +829,7 @@ subroutine optmz_lbfgs(mode,flag_out,nsteps,tol,fixed,savelastgeom)
   end if
 
   ! write optimization parameters -------------------------
-  select case(mode)
+  select case (mode)
   case (PES_MODE)
     write(FILEOUT,*) "**  Optimization L-BFGS -- PES Mode"
   case (IDPP_MODE)
@@ -924,7 +924,7 @@ subroutine optmz_lbfgs(mode,flag_out,nsteps,tol,fixed,savelastgeom)
     ! write geometry file -------------------------------
     if (p_savelastgeom) then
       call last_geom_bkp(.true.)
-      if (flag_store_all_geom) then
+      if (flag_store_all_geom.and.(mode == PES_MODE)) then
         call all_geom_bkp(i)
       end if
     end if
@@ -1086,7 +1086,7 @@ subroutine optmz_fire(mode,flag_out,nsteps,maxstepsize,tol,&
   end if
 
   ! write optimization parameters -------------------------
-  select case(mode)
+  select case (mode)
   case (PES_MODE)
     write(FILEOUT,*) "**  Optimization FIRE -- PES Mode"
   case (IDPP_MODE)
@@ -1159,7 +1159,7 @@ subroutine optmz_fire(mode,flag_out,nsteps,maxstepsize,tol,&
     ! write geometry file ---------------------------------
     if (p_savelastgeom) then
       call last_geom_bkp(.true.)
-      if (flag_store_all_geom) then
+      if (flag_store_all_geom.and.(mode == PES_MODE)) then
         call all_geom_bkp(i)
       end if
     end if

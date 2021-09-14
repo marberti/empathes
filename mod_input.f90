@@ -102,6 +102,7 @@ subroutine read_input(fname_in)
   logical                                 :: got_opt_cycle
   logical                                 :: got_opt_conv
   logical                                 :: got_opt_memory
+  logical                                 :: got_store_all_geom
   logical                                 :: got_springmode
   logical                                 :: got_scfvshift
   logical                                 :: got_intgrid
@@ -148,6 +149,7 @@ subroutine read_input(fname_in)
   got_opt_cycle              = .false.
   got_opt_conv               = .false.
   got_opt_memory             = .false.
+  got_store_all_geom         = .false.
   got_springmode             = .false.
   got_scfvshift              = .false.
   got_intgrid                = .false.
@@ -583,6 +585,19 @@ subroutine read_input(fname_in)
 
       call set_optmz_memory(arg)
       got_opt_memory = .true.
+
+    case ("#STOREALLGEOM")
+      if (got_store_all_geom) then
+        call error("read_input: #STOREALLGEOM specified more than once")
+      end if
+
+      call get_field(cmd_str,arg,2,err_n,err_msg)
+      if (err_n/=0) then
+        call error("read_input: "//trim(err_msg))
+      end if
+
+      call set_store_all_geom(arg)
+      got_store_all_geom = .true.
 
     case ("#IDPPCONV")
       if (got_idpp_conv) then

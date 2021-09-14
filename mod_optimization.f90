@@ -32,27 +32,29 @@ module optimization
   private
 
   ! public procedures -------------------------------------
-  public :: set_optmz_algo,   &
-            set_optmz_nsteps, &
-            set_optmz_tol,    &
-            set_optmz_memory, &
-            optmz_pes,        &
+  public :: set_optmz_algo,     &
+            set_optmz_nsteps,   &
+            set_optmz_tol,      &
+            set_optmz_memory,   &
+            set_store_all_geom, &
+            optmz_pes,          &
             optmz_idpp
 
   !--------------------------------------------------------
   ! ENUM
-  integer, parameter :: ALGO_SD           = 0
-  integer, parameter :: ALGO_BFGS         = 1
-  integer, parameter :: ALGO_LBFGS        = 2
-  integer, parameter :: ALGO_FIRE         = 3
-  integer            :: optmz_algo        = ALGO_LBFGS ! default algorithm
+  integer, parameter :: ALGO_SD             = 0
+  integer, parameter :: ALGO_BFGS           = 1
+  integer, parameter :: ALGO_LBFGS          = 2
+  integer, parameter :: ALGO_FIRE           = 3
+  integer            :: optmz_algo          = ALGO_LBFGS ! default algorithm
 
-  logical            :: flag_optmz_nsteps = .false.
-  logical            :: flag_optmz_tol    = .false.
-  logical            :: flag_optmz_memory = .false.
+  logical            :: flag_optmz_nsteps   = .false.
+  logical            :: flag_optmz_tol      = .false.
+  logical            :: flag_optmz_memory   = .false.
+  logical            :: flag_store_all_geom = .true.
   integer            :: optmz_nsteps
   real(DBL)          :: optmz_tol
-  integer            :: optmz_memory      = 17
+  integer            :: optmz_memory        = 17
 
 contains
 
@@ -168,6 +170,34 @@ subroutine set_optmz_memory(str)
   flag_optmz_memory = .true.
 
 end subroutine set_optmz_memory
+
+!====================================================================
+
+subroutine set_store_all_geom(str)
+
+  character(*), intent(INOUT) :: str
+
+  character(*), parameter     :: my_name    = "set_store_all_geom"
+  logical, save               :: first_call = .true.
+
+  if (first_call.eqv..false.) then
+    call error(my_name//": subroutine called more than once")
+  end if
+
+  call tolower(str)
+
+  select case (str)
+  case ("t","true",".true.")
+    flag_store_all_geom = .true.
+  case ("f","false",".false.")
+    flag_store_all_geom = .false.
+  case default
+    call error(my_name//": unknown argument """//trim(str)//""", expected logical value")
+  end select
+
+  first_call = .false.
+
+end subroutine set_store_all_geom
 
 !====================================================================
 

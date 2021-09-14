@@ -18,6 +18,7 @@
 module output
 
   use utility
+  use c_utility_wrapper
   use geometry
   use pes
   use elastic
@@ -38,6 +39,7 @@ module output
             write_perpen_pes_forces,     &
             write_gnuplot_pes_energy,    &
             last_geom_bkp,               &
+            all_geom_bkp,                &
             write_transition_state,      &
             write_input4gaussian,        &
             write_input4siesta,          &
@@ -362,6 +364,55 @@ subroutine last_geom_bkp(write_elabel,fname)
   end if
 
 end subroutine last_geom_bkp
+
+!====================================================================
+
+subroutine all_geom_bkp(i)
+
+  integer,     intent(IN) :: i
+
+  character(*), parameter :: my_name    = "all_geom_bkp"
+  character(*), parameter :: base_fname = "iteration_"
+  character(*), parameter :: ext_fname  = ".xyz"
+  character(*), parameter :: dirname    = "geometries"
+  logical, save           :: first_call = .true.
+  character(120)          :: cmd
+  character(8)            :: istr
+  character(30)           :: fname
+  integer                 :: exit_n
+  integer                 :: cmd_n
+
+  ! make backup directory ---------------------------------
+  if (first_call) then
+    cmd = "mkdir "//trim(dirname)
+    call execute_command_line(trim(cmd),wait=.true.,exitstat=exit_n,cmdstat=cmd_n)
+
+    if (cmd_n /= 0) then
+      call error(my_name//": cannot execute command """//trim(cmd)//"""")
+    end if
+
+    if (exit_n /= 0) then
+      write(istr,'(I8)') exit_n
+      istr = adjustl(istr)
+      call error(my_name//": """//trim(cmd)//""" terminated with exit code: "//trim(istr))
+    end if
+
+    first_call = .false.
+  end if
+
+  ! enter backup directory --------------------------------
+  call f_chdir(dirname)
+
+  ! write backup file -------------------------------------
+  write(istr,'(I5.5)') i
+  istr = adjustl(istr)
+  fname = base_fname//trim(istr)//ext_fname
+  call last_geom_bkp(.true.,trim(fname))
+
+  ! exit backup directory ---------------------------------
+  call f_chdir("..")
+
+end subroutine all_geom_bkp
 
 !====================================================================
 

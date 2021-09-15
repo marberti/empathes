@@ -563,6 +563,14 @@ subroutine write_input4gaussian(verbose)
   write(tmplt_fnumb,'(A)')
   if (verbose.eqv..true.) then
   write(tmplt_fnumb,'(A)') "! [Optional]"
+  write(tmplt_fnumb,'(A)') "! The #STOREALLGEOM keyword, followed by a logical,"
+  write(tmplt_fnumb,'(A)') "! specifies whether to keep the image geometries"
+  write(tmplt_fnumb,'(A)') "! at each optimization step."
+  end if
+  write(tmplt_fnumb,'(A)') "!#STOREALLGEOM true"
+  write(tmplt_fnumb,'(A)')
+  if (verbose.eqv..true.) then
+  write(tmplt_fnumb,'(A)') "! [Optional]"
   write(tmplt_fnumb,'(A)') "! If the #IDPP keyword is specified,"
   write(tmplt_fnumb,'(A)') "! an interpolation technique called"
   write(tmplt_fnumb,'(A)') "! Image Dependent Pair Potential will be performed."
@@ -818,6 +826,7 @@ subroutine write_input4siesta()
   write(tmplt_fnumb,'(A)')
   write(tmplt_fnumb,'(A)') "!#ONLYINTERPOLATION"
   write(tmplt_fnumb,'(A)') "!#IDPP"
+  write(tmplt_fnumb,'(A)') "!#STOREALLGEOM true"
   write(tmplt_fnumb,'(A)')
   write(tmplt_fnumb,'(A)') "#OPTCYCLE -1"
   write(tmplt_fnumb,'(A)') "#OPTCONV  1.0E-3"
@@ -845,6 +854,10 @@ subroutine write_input4siesta()
   write(tmplt_fnumb,'(A)')
   write(tmplt_fnumb,'(A)') "#CLIMBING 1"
   write(tmplt_fnumb,'(A)') "!#CLIMBINGQUICKSTART"
+  write(tmplt_fnumb,'(A)')
+  write(tmplt_fnumb,'(A)') "! Use this keyword if the #PESPROGRAM you want to use"
+  write(tmplt_fnumb,'(A)') "! has been compiled with MPI support."
+  write(tmplt_fnumb,'(A)') "!#PESPROGRAMWITHMPI"
   write(tmplt_fnumb,'(A)')
   write(tmplt_fnumb,'(A)') "#PESPROGRAM siesta"
   write(tmplt_fnumb,'(A)') "#PESEXEC siesta_psml_omp"

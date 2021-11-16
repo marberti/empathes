@@ -31,6 +31,10 @@ To confirm that the build process was successful, run Empathes with the -v argum
 
     ./empathes -v
 
+## Cite
+
+If you found Empathes useful for your research, please cite this article as: M. Bertini, F. Ferrante and D. Duca, Empathes: A general code for nudged elastic band transition states search,Computer Physics Communications, 108224, doi:https://doi.org/10.1016/j.cpc.2021.108224
+
 ## References
 
 1. Henkelman et al., Improved tangent estimate in the nudged elastic band method for finding minimum energy paths and saddle points (doi: 10.1063/1.1323224)

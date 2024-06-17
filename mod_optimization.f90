@@ -1313,7 +1313,7 @@ subroutine write_opt_results(mode,total_conv,p_tol)
 
   ! write the results -------------------------------------
   total_conv = .false.
-  write(FILEOUT,'(5X,"Image",12X,"Energy",9X,"Tot Force",4X,"Conv (",ES10.3,")")') p_tol
+  write(FILEOUT,'(5X,"Image",12X,"Energy",10X,"Spin",9X,"Tot Force",4X,"Conv (",ES10.3,")")') p_tol
   do j=1, image_n
     rtmp = norm(total_forces(j,:))
     if (rtmp<p_tol) then
@@ -1322,7 +1322,11 @@ subroutine write_opt_results(mode,total_conv,p_tol)
 
     select case (mode)
     case (PES_MODE)
-      write(FILEOUT,'(7X,I3,3X,F15.6,8X,ES10.3,7X,L1)') j, pes_energy(j), rtmp, total_conv(j)
+      if (pes_spin(j) >= 0.0) then
+        write(FILEOUT,'(7X,I3,3X,F15.6,4X,F10.5,8X,ES10.3,7X,L1)') j, pes_energy(j), pes_spin(j), rtmp, total_conv(j)
+      else
+        write(FILEOUT,'(7X,I3,3X,F15.6,12X,"--",8X,ES10.3,7X,L1)') j, pes_energy(j), rtmp, total_conv(j)
+      end if
     case (IDPP_MODE)
       write(FILEOUT,'(7X,I3,3X,F15.6,8X,ES10.3,7X,L1)') j, idpp_energy(j), rtmp, total_conv(j)
     end select

@@ -2112,11 +2112,9 @@ subroutine get_siesta_output(i,fnumb_out,fname_out,flag_conv)
     do
       read(fnumb_out,'(A200)',iostat=err_n,iomsg=err_msg) str
       ! spin info are not mandatory
-      !if (err_n/=0) then
-      !  write(FILEOUT,*) "WAR get_siesta_output: ",&
-      !    &"string ""     spin moment:"" not found"
-      !  call error("get_siesta_output: "//trim(err_msg))
-      !end if
+      if (err_n/=0) then
+        exit
+      end if
 
       if (str(1:17)=="     spin moment:") then
         call get_field(str,field,7,err_n,err_msg)

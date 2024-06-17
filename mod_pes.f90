@@ -42,6 +42,7 @@ module pes
                pes_exec,                  &
                pes_forces,                &
                pes_energy,                &
+               pes_spin,                  &
                start_energy,              &
                end_energy,                &
                flag_init_pes_module,      &
@@ -50,6 +51,7 @@ module pes
                pes_exec,                  &
                pes_forces,                &
                pes_energy,                &
+               pes_spin,                  &
                start_energy,              &
                end_energy,                &
                flag_init_pes_module,      &
@@ -68,6 +70,7 @@ module pes
                get_pes_forces,            &
                update_pes_energy,         &
                update_pes_forces,         &
+               update_pes_spin,           &
                get_scfconv,               &
                get_scfcycle
 
@@ -91,6 +94,7 @@ module pes
   character                                 :: pes_mem_scale
   real(DBL), allocatable, dimension(:)      :: pes_energy
   real(DBL), allocatable, dimension(:,:)    :: pes_forces
+  real(DBL), allocatable, dimension(:)      :: pes_spin
   real(DBL)                                 :: start_energy
   real(DBL)                                 :: end_energy
 
@@ -357,6 +361,11 @@ subroutine init_pes_module()
     call error("init_pes_module: "//trim(err_msg))
   end if
 
+  allocate(pes_spin(image_n),stat=err_n,errmsg=err_msg)
+  if (err_n/=0) then
+    call error("init_pes_module: "//trim(err_msg))
+  end if
+
   ! initialize pes parameters -----------------------------
   pes_energy            = 0.0_DBL
   pes_energy(0)         = start_energy
@@ -593,6 +602,26 @@ subroutine update_pes_forces(arr)
   pes_forces = arr
 
 end subroutine update_pes_forces
+
+!====================================================================
+
+subroutine update_pes_spin(arr)
+
+  real(DBL), dimension(:), intent(IN) :: arr
+
+  ! preliminary checks ------------------------------------
+  if (flag_init_pes_module.eqv..false.) then
+    call error("update_pes_spin: module pes not initialized")
+  end if
+
+  if (size(arr,1)/=image_n) then
+    call error("update_pes_spin: wrong argument size")
+  end if
+
+  ! update ------------------------------------------------
+  pes_spin = arr
+
+end subroutine update_pes_spin
 
 !====================================================================
 
@@ -911,6 +940,14 @@ subroutine mmpi_init_pes_module()
         &trim(istr)//": "//trim(err_msg))
     end if
 
+    allocate(pes_spin(image_n),stat=err_n,errmsg=err_msg)
+    if (err_n/=0) then
+      write(istr,'(I8)') proc_id
+      istr = adjustl(istr)
+      call error("mmpi_init_pes_module: process "//&
+        &trim(istr)//": "//trim(err_msg))
+    end if
+
     ! finalize --------------------------------------------
     flag_init_pes_module = .true.
 
@@ -956,6 +993,7 @@ subroutine mmpi_compute_pes_forces()
   real(DBL), allocatable, dimension(:)   :: real_r1_buff
   real(DBL), allocatable, dimension(:)   :: energies_buff
   real(DBL), allocatable, dimension(:,:) :: forces_buff
+  real(DBL), allocatable, dimension(:)   :: spin_buff
   real(DBL), allocatable, dimension(:,:) :: image_geom_buff
   real(DBL)                              :: conv_threshold
   logical                                :: converged
@@ -1010,6 +1048,13 @@ subroutine mmpi_compute_pes_forces()
       istr = adjustl(istr)
       call error(my_name//": process "//trim(istr)//": "//trim(err_msg))
     end if
+
+    allocate (spin_buff(image_n),stat=err_n,errmsg=err_msg)
+    if (err_n/=0) then
+      write(istr,'(I8)') proc_id
+      istr = adjustl(istr)
+      call error(my_name//": process "//trim(istr)//": "//trim(err_msg))
+    end if
   end if
 
   ! bcast image_geom --------------------------------------
@@ -1050,11 +1095,13 @@ subroutine mmpi_compute_pes_forces()
     ! write master results into buffers
     energies_buff = 0.0_DBL
     forces_buff   = 0.0_DBL
+    spin_buff     = -1.0_DBL
 
     do i=1, image_n 
       if (proc_id==mod(i,comm_sz)) then
         energies_buff(i) = pes_energy(i)
         forces_buff(i,:) = pes_forces(i,:)
+        spin_buff(i)     = pes_spin(i)
       end if
     end do
 
@@ -1069,6 +1116,17 @@ subroutine mmpi_compute_pes_forces()
     ! meet the slaves at the barrier
     call mpi_barrier(MPI_COMM_WORLD,err_n)
 
+    ! get spin from slaves
+    do i=1, image_n-total_computations
+      call mpi_recv(real_buff,1,MPI_REAL8,MPI_ANY_SOURCE,&
+        &MPI_ANY_TAG,MPI_COMM_WORLD,mstatus,err_n)
+      spin_buff(mstatus(MPI_TAG)) = real_buff
+    end do
+
+    ! all spin received -----------------------------------
+    ! meet the slaves at the barrier
+    call mpi_barrier(MPI_COMM_WORLD,err_n)
+
     ! get forces from slaves
     do i=1, image_n-total_computations
       call mpi_recv(real_r1_buff,size(real_r1_buff,1),MPI_REAL8,&
@@ -1079,6 +1137,7 @@ subroutine mmpi_compute_pes_forces()
     ! update results
     call update_pes_energy(energies_buff)
     call update_pes_forces(forces_buff)
+    call update_pes_spin(spin_buff)
 
   else                 ! slaves stuffs --------------------
 
@@ -1091,6 +1150,18 @@ subroutine mmpi_compute_pes_forces()
     end do
 
     ! all energies sended ---------------------------------
+    ! meet the master and other slaves at the barrier
+    call mpi_barrier(MPI_COMM_WORLD,err_n)
+
+    ! send spin to master
+    do i=1, image_n
+      if (proc_id==mod(i,comm_sz)) then
+        real_buff = pes_spin(i)
+        call mpi_send(real_buff,1,MPI_REAL8,0,i,MPI_COMM_WORLD,err_n)
+      end if
+    end do
+
+    ! all spin sended -------------------------------------
     ! meet the master and other slaves at the barrier
     call mpi_barrier(MPI_COMM_WORLD,err_n)
 
@@ -1129,6 +1200,13 @@ subroutine mmpi_compute_pes_forces()
     end if
 
     deallocate (forces_buff,stat=err_n,errmsg=err_msg)
+    if (err_n/=0) then
+      write(istr,'(I8)') proc_id
+      istr = adjustl(istr)
+      call error(my_name//": process "//trim(istr)//": "//trim(err_msg))
+    end if
+
+    deallocate (spin_buff,stat=err_n,errmsg=err_msg)
     if (err_n/=0) then
       write(istr,'(I8)') proc_id
       istr = adjustl(istr)
@@ -2027,6 +2105,32 @@ subroutine get_siesta_output(i,fnumb_out,fname_out,flag_conv)
             &trim(field)//""" while reading atomic forces")
         end if
       end do
+    end do
+
+    ! get spin
+    pes_spin(i) = -1.0
+    do
+      read(fnumb_out,'(A200)',iostat=err_n,iomsg=err_msg) str
+      ! spin info are not mandatory
+      !if (err_n/=0) then
+      !  write(FILEOUT,*) "WAR get_siesta_output: ",&
+      !    &"string ""     spin moment:"" not found"
+      !  call error("get_siesta_output: "//trim(err_msg))
+      !end if
+
+      if (str(1:17)=="     spin moment:") then
+        call get_field(str,field,7,err_n,err_msg)
+        if (err_n/=0) then
+          call error("get_siesta_output: "//trim(err_msg))
+        end if
+
+        if (isreal(trim(adjustl(field)))) then
+          read(field,*) pes_spin(i)
+        else
+          call error("get_siesta_output: wrong field """//&
+            &trim(field)//""" while reading spin")
+        end if
+      end if
     end do
   end if
 

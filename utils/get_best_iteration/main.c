@@ -30,7 +30,7 @@ void close_file(const char *fname, FILE **fstream);
 int  search_string(FILE *fstream, const char searched_str[],
         char returned_str[], size_t returned_str_len);
 void get_best_iteration(FILE *fstream, int *iteration_n,
-        double *highest_norm);
+        double *highest_norm, int flag_spin);
 
 /*** Main *******************************************************************/
 
@@ -43,6 +43,7 @@ main(int argc, char *argv[])
     int iteration_n;
     double highest_norm;
     const char searched_str[] = "PES Mode";
+    const int flag_spin = 1;
 
     if (argc != 2) {
         help(argv[0]);
@@ -60,7 +61,7 @@ main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
     printf("String \"%s\" founded on line %d\n",searched_str,str_n);
-    get_best_iteration(fstream,&iteration_n,&highest_norm);
+    get_best_iteration(fstream,&iteration_n,&highest_norm,flag_spin);
     printf("Best iteration     : %d\n",iteration_n);
     printf("Highest force norm : %e\n",highest_norm);
     close_file(fname,&fstream);
@@ -165,7 +166,8 @@ search_string(FILE *fstream, const char searched_str[],
 /****************************************************************************/
 
 void
-get_best_iteration(FILE *fstream, int *iteration_n, double *highest_norm)
+get_best_iteration(FILE *fstream, int *iteration_n, double *highest_norm,
+    int flag_spin)
 {
 
 /****************************************************************************
@@ -176,6 +178,8 @@ get_best_iteration(FILE *fstream, int *iteration_n, double *highest_norm)
  * is taken, being the best iteration the one whith the smallest,           *
  * highest norm. The best iteration is returned in iteration_n, while the   *
  * corresponding highest norm is returned in highest_norm.                  *
+ * The flag_spin parameter states if the spin column is present (1) or      *
+ * absent (0) in the empathes output file.                                  *
  ****************************************************************************/
 
     const char start_iteration[] = "Iteration";
@@ -195,7 +199,12 @@ get_best_iteration(FILE *fstream, int *iteration_n, double *highest_norm)
         if (line == 0) break;
         if (i == 1) {
             for (int j = 0;; ++j) {
-                readed = fscanf(fstream,"%d %*f %lf %*s",&image_n,&norm);
+                if (flag_spin) {
+                    readed = fscanf(fstream,"%d %*f %*f %lf %*s",&image_n,&norm);
+                }
+                else {
+                    readed = fscanf(fstream,"%d %*f %lf %*s",&image_n,&norm);
+                }
                 if (readed < 2) break;
                 if (j == 0) {
                     max_norm = norm;
@@ -207,7 +216,12 @@ get_best_iteration(FILE *fstream, int *iteration_n, double *highest_norm)
             *highest_norm = max_norm;
         } else {
             for (int j = 0; j < image_n; ++j) {
-                readed = fscanf(fstream,"%*d %*f %lf %*s",&norm);
+                if (flag_spin) {
+                    readed = fscanf(fstream,"%*d %*f %*f %lf %*s",&norm);
+                }
+                else {
+                    readed = fscanf(fstream,"%*d %*f %lf %*s",&norm);
+                }
                 if (readed < 1) {
                     printf("Error while reading iteration %d\n",i);
                     exit(EXIT_FAILURE);

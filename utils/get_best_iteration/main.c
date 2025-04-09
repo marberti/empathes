@@ -42,17 +42,26 @@ main(int argc, char *argv[])
     int str_n;
     int iteration_n;
     double highest_norm;
+    int i;
     const char searched_str[] = "PES Mode";
-    const int flag_spin = 1;
+    int flag_help = 0;
+    int flag_spin = 1;
 
-    if (argc != 2) {
-        help(argv[0]);
-        exit(EXIT_FAILURE);
-    } else if ((strcmp(argv[1],"-h")==0)||(strcmp(argv[1],"--help")==0)) {
+    for (i = 1; i < argc; i++) {
+      if ((strcmp(argv[i],"-h")==0)||(strcmp(argv[i],"--help")==0)) {
+        flag_help = 1;
+      }
+      else if (strcmp(argv[i],"--no-spin")==0) {
+        flag_spin = 0;
+      }
+    }
+
+    if (flag_help) {
         help(argv[0]);
         exit(EXIT_SUCCESS);
     }
-    fname = argv[1];
+
+    fname = argv[argc-1];
     open_file(fname,&fstream);
     str_n = search_string(fstream,searched_str,NULL,0);
     if (str_n == 0) {
@@ -74,11 +83,14 @@ void
 help(char *prog_name)
 {
     const char *msg = 
-    "Get informations about the NEB iteration closest to convergence,\n"
-    "namely the highest norm on the total force of the best iteration.\n"
-    "This script is intended to be used on a failed Empathes calculation.\n";
-    printf("Usage: %s <file>\n",prog_name);
+    "  Get informations about the NEB iteration closest to convergence,\n"
+    "  namely the highest norm on the total force of the best iteration.\n"
+    "  This script is intended to be used on a failed Empathes calculation.\n";
+    printf("Usage: %s [options] <file>\n",prog_name);
+    printf("Description:\n");
     printf("%s",msg);
+    printf("Options:\n");
+    printf("  --no-spin        use when there is no spin column in output file\n");
 }
 
 /****************************************************************************/

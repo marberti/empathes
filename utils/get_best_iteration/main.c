@@ -200,7 +200,7 @@ get_best_iteration(FILE *fstream, int *iteration_n, double *highest_norm,
         if (i == 1) {
             for (int j = 0;; ++j) {
                 if (flag_spin) {
-                    readed = fscanf(fstream,"%d %*f %*f %lf %*s",&image_n,&norm);
+                    readed = fscanf(fstream,"%d %*f %*s %lf %*s",&image_n,&norm);
                 }
                 else {
                     readed = fscanf(fstream,"%d %*f %lf %*s",&image_n,&norm);
@@ -217,7 +217,7 @@ get_best_iteration(FILE *fstream, int *iteration_n, double *highest_norm,
         } else {
             for (int j = 0; j < image_n; ++j) {
                 if (flag_spin) {
-                    readed = fscanf(fstream,"%*d %*f %*f %lf %*s",&norm);
+                    readed = fscanf(fstream,"%*d %*f %*s %lf %*s",&norm);
                 }
                 else {
                     readed = fscanf(fstream,"%*d %*f %lf %*s",&norm);
